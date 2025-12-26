@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}
+    {{ trip.title }} <small class="text-muted" style="font-size: 0.6em;">{{ trip.get_status_display }}</small>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    
+    <div class="col-md-8">
+        
+        <div class="mb-3">
+            <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Adicionar Voo/Hotel
+            </a>
+        </div>
+
+        <div class="timeline">
+            
+            {% if items %}
+                {% regroup items by start_datetime|date:"d/m/Y" as dates %}
+                
+                {% for date in dates %}
+                    <div class="time-label">
+                        <span class="bg-red">{{ date.grouper }}</span>
+                    </div>
+
+                    {% for item in date.list %}
+                    <div>
+                        <i class="fas 
+                            {% if item.item_type == 'FLIGHT' %}fa-plane bg-blue
+                            {% elif item.item_type == 'HOTEL' %}fa-bed bg-purple
+                            {% elif item.item_type == 'RESTAURANT' %}fa-utensils bg-orange
+                            {% else %}fa-map-marker-alt bg-gray{% endif %}">
+                        </i>
+
+                        <div class="timeline-item">
+                            <span class="time"><i class="fas fa-clock"></i> {{ item.start_datetime|date:"H:i" }}</span>
+                            
+                            <h3 class="timeline-header">
+                                <strong>{{ item.get_item_type_display }}:</strong> {{ item.name }}
+                            </h3>
+
+                            <div class="timeline-body">
+                                {% if item.location_address %}
+                                    <p class="text-muted mb-1"><i class="fas fa-map-pin"></i> {{ item.location_address }}</p>
+                                {% endif %}
+                                
+                                {% if item.details %}
+                                    <div class="mt-2 p-2 bg-light rounded text-muted text-sm">
+                                        {% if item.details.notes %}
+                                            <i class="fas fa-info-circle mr-1"></i> {{ item.details.notes|linebreaksbr }}
+                                        {% else %}
+                                            {% for key, value in item.details.items %}
+                                                <strong>{{ key|title }}:</strong> {{ value }}<br>
+                                        {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                            </div>
+                            
+                            <div class="timeline-footer">
+                                <a href="{% url 'trip_item_expense_manage' item.id %}" 
+                                    class="mr-2 {% if item.related_expenses.exists %}text-success{% else %}text-muted{% endif %}"
+                                    title="Gerenciar Gastos deste Item">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </a>
+                                
+                               <a href="{% url 'trip_item_update' item.id %}" class="text-primary mr-2"><i class="fas fa-edit"></i></a>
+                               <a href="{% url 'trip_item_delete' item.id %}" class="text-danger"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+                
+                <div>
+                    <i class="fas fa-clock bg-gray"></i>
+                </div>
+
+            {% else %}
+                <div class="alert alert-light">
+                    Nenhum item adicionado ao roteiro ainda.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Mapa do Roteiro</h3>
+            </div>
+            <div class="card-body p-0">
+                <div id="map" style="height: 300px; width: 100%; background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
+                    <span class="text-muted">Mapa carregará aqui</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title text-success"><i class="fas fa-wallet"></i> Resumo Financeiro</h3>
+                <div class="card-tools">
+                    <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
+                        <i class="fas fa-plus"></i> Add Gasto
+                    </a>
+                </div>
+            </div>
+    
+    <div class="card-body">
+        <h3 class="card-title text-success"><i class="fas fa-coins"></i> Total da Viagem (BRL)</h3>
+    </div>
+    <div class="card-body">
+        <h2 class="text-bold text-success">R$ {{ total_spent_brl|floatformat:2 }}</h2>
+        <p class="text-muted small">Câmbio atualizado automaticamente via AwesomeAPI.</p>
+        <hr>
+        
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Gasto</th>
+                    <th class="text-right">Original</th>
+                    <th class="text-right">Em Reais (R$)</th> </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td>
+                        {{ expense.description }}
+                        <br>
+                        <small class="text-muted">{{ expense.category }}</small>
+                    </td>
+                    
+                    <td class="text-right">
+                        <span class="badge badge-light" style="font-size: 0.9em;">
+                            {{ expense.currency }} {{ expense.amount }}
+                        </span>
+                    </td>
+                    
+                    <td class="text-right text-success font-weight-bold">
+                        R$ {{ expense.converted_value|floatformat:2 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Nenhum gasto registrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initMap&loading=async" async defer></script>
+<script>
+    function initMap() {
+        // Ponto inicial padrão (caso não tenha itens)
+        const defaultLocation = { lat: -23.5505, lng: -46.6333 }; // SP
+        
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 10,
+            center: defaultLocation,
+        });
+
+        const geocoder = new google.maps.Geocoder();
+        const bounds = new google.maps.LatLngBounds();
+        const infoWindow = new google.maps.InfoWindow();
+
+        // 2. Recebendo os dados do Django para o JS
+        // Criamos uma lista de objetos JS com os dados que vieram do banco
+        const tripItems = [
+            {% for item in items %}
+            {
+                name: "{{ item.name|escapejs }}",
+                type: "{{ item.get_item_type_display }}",
+                address: "{{ item.location_address|default_if_none:''|escapejs }}",
+                lat: "{{ item.location_lat|default_if_none:'' }}",
+                lng: "{{ item.location_lng|default_if_none:'' }}"
+            },
+            {% endfor %}
+        ];
+
+        let markersCount = 0;
+
+        // 3. Função para adicionar Marcador no Mapa
+        const addMarker = (location, title, type) => {
+            const marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                title: title,
+                // Opcional: Você pode customizar o ícone baseando-se no 'type' aqui
+            });
+
+            // Adiciona clique para ver o nome
+            marker.addListener("click", () => {
+                infoWindow.setContent(`<strong>${type}</strong><br>${title}`);
+                infoWindow.open(map, marker);
+            });
+
+            // Expande o mapa para incluir este novo ponto
+            bounds.extend(location);
+            map.fitBounds(bounds);
+            markersCount++;
+        };
+
+        // 4. Processar os Itens
+        tripItems.forEach(item => {
+            // Cenário A: Já temos latitude e longitude salvas (ainda não implementamos o salvamento, mas fica pronto)
+            if (item.lat && item.lng) {
+                const loc = { lat: parseFloat(item.lat), lng: parseFloat(item.lng) };
+                addMarker(loc, item.name, item.type);
+            } 
+            // Cenário B: Temos apenas o endereço -> Usar Geocoding
+            else if (item.address) {
+                geocoder.geocode({ address: item.address }, (results, status) => {
+                    if (status === "OK") {
+                        const location = results[0].geometry.location;
+                        addMarker(location, item.name, item.type);
+                        
+                        // Nota: Idealmente, deveríamos salvar essas coordenadas no banco via AJAX
+                        // para não gastar API do Google toda vez que carregar a página.
+                    } else {
+                        console.error("Geocode falhou para o item " + item.name + ": " + status);
+                    }
+                });
+            }
+        });
+
+        // Se não houver itens, centraliza no padrão
+        if (tripItems.length === 0) {
+            map.setCenter(defaultLocation);
+        }
+    }
+</script>
+{% endblock %}

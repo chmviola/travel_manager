@@ -1,0 +1,48 @@
+services:
+  # Container do Banco de Dados
+  travel_db:
+    image: postgres:15-alpine
+    container_name: travel_manager_db
+    volumes:
+      - ./travel_db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=travel_db
+      - POSTGRES_USER=travel_user
+      - POSTGRES_PASSWORD=travel_pass
+#    ports:
+#      - "5432:5432"
+    restart: always
+    networks:
+      - chmviola
+
+  # Container da Aplicação (Backend + Frontend Django)
+  travel_web:
+    build: ./app
+    container_name: travel_manager_web
+    command: python manage.py runserver 0.0.0.0:8080
+    volumes:
+      - ./app:/usr/src/app
+#    ports:
+#      - "8080:8080"
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=changeme
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=travel_db
+      - SQL_USER=travel_user
+      - SQL_PASSWORD=travel_pass
+      - SQL_HOST=travel_db
+      - SQL_PORT=5432
+    depends_on:
+      - travel_db
+    restart: always
+    networks:
+      - chmviola
+
+networks:
+  chmviola:
+    external: true
+
+volumes:
+  travel_db_data:

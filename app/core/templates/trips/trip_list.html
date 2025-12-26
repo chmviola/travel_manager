@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Minhas Viagens{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 text-right">
+        <a href="{% url 'trip_create' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nova Viagem
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for trip in trips %}
+    <div class="col-md-4">
+        <div class="card card-outline 
+            {% if trip.status == 'CONFIRMED' %}card-success{% elif trip.status == 'COMPLETED' %}card-secondary{% else %}card-warning{% endif %}">
+            
+            <div class="card-header">
+                <h3 class="card-title font-weight-bold">{{ trip.title }}</h3>
+                <div class="card-tools">
+                    <span class="badge 
+                        {% if trip.status == 'CONFIRMED' %}badge-success{% elif trip.status == 'COMPLETED' %}badge-secondary{% else %}badge-warning{% endif %}">
+                        {{ trip.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <p class="text-muted">
+                    <i class="far fa-calendar-alt mr-1"></i> 
+                    {% if trip.start_date %}
+                        {{ trip.start_date|date:"d/m/Y" }} até {{ trip.end_date|date:"d/m/Y" }}
+                    {% else %}
+                        Datas não definidas
+                    {% endif %}
+                </p>
+                
+                <p>
+                    <small>Cadastrada em: {{ trip.created_at|date:"d/m/Y" }}</small>
+                </p>
+            </div>
+
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-4">
+                        <a href="{% url 'trip_detail' trip.id %}" class="btn btn-primary btn-block btn-sm">
+                            <i class="fas fa-map-marked-alt"></i> Detalhes
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="{% url 'trip_update' trip.id %}" class="btn btn-default btn-block btn-sm">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="{% url 'trip_delete' trip.id %}" class="btn btn-danger btn-block btn-sm">
+                            <i class="fas fa-trash"></i> Apagar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="icon fas fa-info"></i> Nenhuma viagem encontrada!</h5>
+            Você ainda não cadastrou nenhuma viagem. Clique no botão "Nova Viagem" para começar.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
