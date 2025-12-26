@@ -22,6 +22,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8080
     volumes:
       - ./app:/usr/src/app
+      - ./media_data:/usr/src/app/media
 #    ports:
 #      - "8080:8080"
     environment:

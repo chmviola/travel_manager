@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from .models import Trip, TripItem, Expense  
-from .forms import TripForm, TripItemForm, ExpenseForm
+from .models import Trip, TripItem, Expense, TripAttachment  
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from .utils import get_exchange_rate # Importe a função nova
 from django.db.models import Sum
 
@@ -213,3 +213,32 @@ def trip_item_expense_manage(request, item_id):
         'trip': item.trip,
         'item_name': item.name # Para mostrar no título qual item estamos gerenciando
     })
+
+@login_required
+def trip_item_attachments(request, item_id):
+    item = get_object_or_404(TripItem, pk=item_id, trip__user=request.user)
+    attachments = item.attachments.all() # Pega os arquivos já salvos
+    
+    if request.method == 'POST':
+        form = AttachmentForm(request.POST, request.FILES) # request.FILES é obrigatório para upload
+        if form.is_valid():
+            attachment = form.save(commit=False)
+            attachment.item = item
+            attachment.save()
+            return redirect('trip_item_attachments', item_id=item.id)
+    else:
+        form = AttachmentForm()
+    
+    return render(request, 'trips/attachment_list.html', {
+        'item': item,
+        'attachments': attachments,
+        'form': form,
+        'trip': item.trip
+    })
+
+@login_required
+def attachment_delete(request, pk):
+    attachment = get_object_or_404(TripAttachment, pk=pk, item__trip__user=request.user)
+    item_id = attachment.item.id
+    attachment.delete()
+    return redirect('trip_item_attachments', item_id=item_id)

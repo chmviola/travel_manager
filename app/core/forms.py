@@ -1,5 +1,5 @@
 from django import forms
-from .models import Expense, Trip, TripItem
+from .models import Expense, Trip, TripItem, TripAttachment
 
 class TripForm(forms.ModelForm):
     class Meta:
@@ -73,3 +73,12 @@ class ExpenseForm(forms.ModelForm):
         if trip_id:
             self.fields['item'].queryset = TripItem.objects.filter(trip_id=trip_id)
             self.fields['item'].empty_label = "Gasto Geral (Nenhum item específico)"
+
+class AttachmentForm(forms.ModelForm):
+    class Meta:
+        model = TripAttachment
+        fields = ['file', 'description']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': 'form-control-file'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Voucher do Hotel'}),
+        }

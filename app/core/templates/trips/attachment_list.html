@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Anexos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">Arquivos de: <strong>{{ item.name }}</strong></h3>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped">
+                    <tbody>
+                        {% for attach in attachments %}
+                        <tr>
+                            <td style="width: 10px"><i class="fas fa-paperclip"></i></td>
+                            <td>
+                                {% if attach.description %}
+                                    {{ attach.description }}
+                                {% else %}
+                                    {{ attach.file.name }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                <a href="{{ attach.file.url }}" target="_blank" class="btn btn-xs btn-primary">
+                                    <i class="fas fa-download"></i> Ver
+                                </a>
+                                <a href="{% url 'attachment_delete' attach.id %}" class="btn btn-xs btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted p-4">Nenhum arquivo anexado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card card-default">
+            <div class="card-header">
+                <h3 class="card-title">Adicionar Novo Arquivo</h3>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Arquivo</label>
+                        {{ form.file }}
+                    </div>
+                    <div class="form-group">
+                        <label>Descrição (Opcional)</label>
+                        {{ form.description }}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success">Upload</button>
+                    <a href="{% url 'trip_detail' trip.id %}" class="btn btn-default float-right">Voltar para Viagem</a>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -19,6 +19,11 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core import views as core_views # Importaremos a view da home
 
+# --- IMPORTS OBRIGATÓRIOS PARA MÍDIA ---
+from django.conf import settings
+from django.conf.urls.static import static
+# ---------------------------------------
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     
@@ -32,3 +37,7 @@ urlpatterns = [
     # Inclui as URLs do app Core
     path('', include('core.urls')),
 ]
+
+# --- BLOCO DE CONFIGURAÇÃO DE MÍDIA (FORA DA LISTA) ---
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

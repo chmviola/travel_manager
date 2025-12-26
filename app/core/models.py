@@ -122,3 +122,13 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.description} - {self.currency} {self.amount}"
+
+   
+class TripAttachment(models.Model):
+    item = models.ForeignKey(TripItem, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='trip_files/', verbose_name="Arquivo (PDF/Img)")
+    description = models.CharField(max_length=100, blank=True, verbose_name="Descrição (Opcional)")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Anexo de {self.item.name}"

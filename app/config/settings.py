@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 from decouple import config
 
@@ -133,3 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = 'home'  # Redireciona para a view com name='home' após logar
 LOGOUT_REDIRECT_URL = 'login' # Redireciona para a tela de login após sair
 LOGIN_URL = 'login' # Caso o usuário tente acessar uma página restrita sem estar logado
+
+# Configuração de Arquivos de Mídia (Uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
