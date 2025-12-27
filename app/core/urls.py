@@ -26,4 +26,6 @@ urlpatterns = [
 
     # Dashboard Financeiro
     path('financeiro/', views.financial_dashboard, name='financial_dashboard'),
+
+    path('fix-locations/', views.fix_locations, name='fix_locations'),
 ]

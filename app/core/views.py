@@ -1,3 +1,4 @@
+import json # Para enviar dados ao JS
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
@@ -6,13 +7,53 @@ from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from .utils import get_exchange_rate # Importe a função nova
 from django.db.models import Sum
 from collections import defaultdict # Para agrupar dados manualmente
-import json # Para enviar dados ao JS
 
 @login_required
 def home(request):
-    # Vamos reaproveitar a home para mostrar um resumo,
-    # mas por enquanto ela renderiza o dashboard
-    return render(request, 'dashboard.html')
+    # 1. Busca as viagens
+    trips = Trip.objects.filter(user=request.user).order_by('-start_date')
+    
+    # 2. Cálculo Financeiro
+    total_spent = 0
+    rates_cache = {}
+    all_expenses = Expense.objects.filter(trip__user=request.user)
+    
+    for expense in all_expenses:
+        if expense.currency not in rates_cache:
+            rates_cache[expense.currency] = get_exchange_rate(expense.currency)
+        total_spent += float(expense.amount) * rates_cache[expense.currency]
+
+    # 3. Dados para o Mapa (CORREÇÃO AQUI)
+    # Buscamos os itens com coordenadas
+    raw_locations = TripItem.objects.filter(
+        trip__user=request.user
+    ).exclude(
+        location_lat__isnull=True
+    ).exclude(
+        location_lng__isnull=True
+    ).values('name', 'location_lat', 'location_lng', 'trip__title')
+
+    # Lista limpa para o Javascript
+    map_locations = []
+    for loc in raw_locations:
+        map_locations.append({
+            'name': loc['name'],
+            'trip__title': loc['trip__title'],
+            # Convertendo Decimal do Python para Float do JS
+            'location_lat': float(loc['location_lat']), 
+            'location_lng': float(loc['location_lng']),
+        })
+
+    context = {
+        'trips': trips,
+        'total_spent': total_spent,
+        'trip_count': trips.count(),
+        # Usamos json.dumps para garantir que vá como texto JSON válido
+        'map_locations': json.dumps(map_locations), 
+        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
+    }
+
+    return render(request, 'index.html', context)
 
 @login_required
 def trip_list(request):
@@ -292,3 +333,17 @@ def financial_dashboard(request):
     }
 
     return render(request, 'financial_dashboard.html', context)
+
+@login_required
+def fix_locations(request):
+    # Pega todos os itens que têm endereço mas não têm latitude
+    items = TripItem.objects.filter(location_address__isnull=False, location_lat__isnull=True)
+
+    count = 0
+    for item in items:
+        # Ao chamar .save(), a lógica nova do models.py será executada automaticamente
+        item.save()
+        count += 1
+
+    print(f"{count} itens atualizados com coordenadas.")
+    return redirect('home')

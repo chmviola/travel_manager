@@ -1,3 +1,5 @@
+import requests # Para chamar a API do Google pelo Python
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
@@ -77,6 +79,34 @@ class TripItem(models.Model):
 
     def __str__(self):
         return f"[{self.get_item_type_display()}] {self.name}"
+
+    def save(self, *args, **kwargs):
+        # Verifica se tem endereço mas NÃO tem coordenada salva
+        if self.location_address and (not self.location_lat or not self.location_lng):
+            try:
+                # Chama a API de Geocoding do Google (Server-Side)
+                api_key = settings.GOOGLE_MAPS_API_KEY
+                base_url = "https://maps.googleapis.com/maps/api/geocode/json"
+                params = {
+                    "address": self.location_address,
+                    "key": api_key
+                }
+
+                response = requests.get(base_url, params=params)
+                data = response.json()
+
+                if data['status'] == 'OK':
+                    location = data['results'][0]['geometry']['location']
+                    self.location_lat = location['lat']
+                    self.location_lng = location['lng']
+                    print(f"Coordenadas encontradas para {self.name}: {self.location_lat}, {self.location_lng}")
+                else:
+                    print(f"Google não encontrou o endereço: {self.location_address}")
+
+            except Exception as e:
+                print(f"Erro ao geocodificar: {e}")
+
+        super().save(*args, **kwargs)
 
 
 class Expense(models.Model):
