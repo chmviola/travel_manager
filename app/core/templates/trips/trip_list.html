@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block page_title %}Minhas Viagens{% endblock %}
+{% block page_title %}
+    {{ trip.title }} <small class="text-muted" style="font-size: 0.6em;">{{ trip.get_status_display }}</small>
+{% endblock %}
 
 {% block content %}
 <div class="row mb-3">
