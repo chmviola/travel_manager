@@ -61,6 +61,21 @@
                             </div>
                             
                             <div class="timeline-footer">
+
+                                {% if item.location_lat and item.location_lng or item.location_address %}
+                                    <button type="button" 
+                                            class="btn btn-xs btn-outline-primary mr-2"
+                                            data-toggle="modal" 
+                                            data-target="#modalItemMap"
+                                            data-lat="{{ item.location_lat|default_if_none:'' }}"
+                                            data-lng="{{ item.location_lng|default_if_none:'' }}"
+                                            data-address="{{ item.location_address|default_if_none:'' }}" 
+                                            data-title="{{ item.name }}"
+                                            title="Ver no Mapa">
+                                        <i class="fas fa-map-marker-alt"></i> Ver Mapa
+                                    </button>
+                                {% endif %}
+
                                 <a href="{% url 'trip_item_attachments' item.id %}" 
                                     class="mr-2 {% if item.attachments.exists %}text-info{% else %}text-muted{% endif %}"
                                     title="Anexos (PDFs/Imagens)">
@@ -72,10 +87,12 @@
                                     title="Gerenciar Gastos deste Item">
                                     <i class="fas fa-file-invoice-dollar"></i>
                                 </a>
-                                
-                               <a href="{% url 'trip_item_update' item.id %}" class="text-primary mr-2"><i class="fas fa-edit"></i></a>
                                
-                               <a href="{% url 'trip_item_delete' item.id %}" class="text-danger"><i class="fas fa-trash"></i></a>
+                                <span class="float-right"></span>
+                                    <a href="{% url 'trip_item_update' item.id %}" class="text-primary mr-2"><i class="fas fa-edit"></i></a>
+                               
+                                    <a href="{% url 'trip_item_delete' item.id %}" class="text-danger"><i class="fas fa-trash"></i></a>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -160,6 +177,24 @@
 
     </div>
 </div>
+
+<!-- Modal para exibir o mapa do item -->
+<div class="modal fade" id="modalItemMap" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="modalMapTitle">Localização</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="itemMap" style="width: 100%; height: 450px;"></div>
+            </div>
+        </div>
+    </div>
+</div> 
+
 {% endblock %}
 
 {% block extra_js %}
@@ -243,5 +278,59 @@
             map.setCenter(defaultLocation);
         }
     }
+
+// Variável global para o mapa do modal
+let modalMap;
+let modalMarker;
+let modalGeocoder; // Novo
+
+$('#modalItemMap').on('shown.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const title = button.data('title');
+    $('#modalMapTitle').text(title);
+
+    // Tenta pegar Lat/Lng
+    const latStr = button.data('lat');
+    const lngStr = button.data('lng');
+    const address = button.data('address'); // Pega o endereço
+
+    // Função auxiliar para desenhar o mapa
+    const drawMap = (location) => {
+        if (!modalMap) {
+            modalMap = new google.maps.Map(document.getElementById('itemMap'), {
+                center: location,
+                zoom: 15
+            });
+            modalMarker = new google.maps.Marker({
+                position: location,
+                map: modalMap
+            });
+        } else {
+            modalMap.setCenter(location);
+            modalMap.setZoom(15);
+            modalMarker.setPosition(location);
+            google.maps.event.trigger(modalMap, "resize");
+        }
+    };
+
+    // Cenário 1: Temos Lat/Lng salvos
+    if (latStr && lngStr) {
+        const location = { lat: parseFloat(latStr), lng: parseFloat(lngStr) };
+        drawMap(location);
+    } 
+    // Cenário 2: Temos apenas Endereço (Fazemos o Geocoding na hora)
+    else if (address) {
+        if (!modalGeocoder) modalGeocoder = new google.maps.Geocoder();
+        
+        modalGeocoder.geocode({ 'address': address }, function(results, status) {
+            if (status === 'OK') {
+                const location = results[0].geometry.location;
+                drawMap(location);
+            } else {
+                alert('Não foi possível encontrar este endereço no mapa.');
+            }
+        });
+    }
+});
 </script>
 {% endblock %}
