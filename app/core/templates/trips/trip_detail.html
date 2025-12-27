@@ -139,35 +139,40 @@
         <p class="text-muted small">Câmbio atualizado automaticamente via AwesomeAPI.</p>
         <hr>
         
-        <table class="table table-sm table-striped">
+<table class="table table-sm table-striped">
             <thead>
                 <tr>
-                    <th>Gasto</th>
+                    <th>Data</th> <th>Gasto</th>
                     <th class="text-right">Original</th>
-                    <th class="text-right">Em Reais (R$)</th> </tr>
+                    <th class="text-right">Em Reais (R$)</th>
+                </tr>
             </thead>
             <tbody>
                 {% for expense in expenses %}
                 <tr>
-                    <td>
+                    <td class="align-middle">
+                        <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ expense.date|date:"d/m" }}</small>
+                    </td>
+
+                    <td class="align-middle">
                         {{ expense.description }}
                         <br>
                         <small class="text-muted">{{ expense.category }}</small>
                     </td>
                     
-                    <td class="text-right">
+                    <td class="text-right align-middle">
                         <span class="badge badge-light" style="font-size: 0.9em;">
                             {{ expense.currency }} {{ expense.amount }}
                         </span>
                     </td>
                     
-                    <td class="text-right text-success font-weight-bold">
+                    <td class="text-right text-success font-weight-bold align-middle">
                         R$ {{ expense.converted_value|floatformat:2 }}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="3" class="text-center text-muted">Nenhum gasto registrado.</td>
+                    <td colspan="4" class="text-center text-muted">Nenhum gasto registrado.</td>
                 </tr>
                 {% endfor %}
             </tbody>
