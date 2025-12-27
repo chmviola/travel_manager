@@ -357,6 +357,39 @@ def financial_dashboard(request):
     return render(request, 'financial_dashboard.html', context)
 
 @login_required
+def expense_update(request, pk):
+    """
+    Edita um gasto existente (seja ele vinculado a um item ou solto).
+    """
+    expense = get_object_or_404(Expense, pk=pk, trip__user=request.user)
+    
+    if request.method == 'POST':
+        # Passamos trip_id para o form saber filtrar os itens corretamente
+        form = ExpenseForm(request.POST, instance=expense, trip_id=expense.trip.id)
+        if form.is_valid():
+            form.save()
+            return redirect('trip_detail', pk=expense.trip.id)
+    else:
+        form = ExpenseForm(instance=expense, trip_id=expense.trip.id)
+    
+    return render(request, 'trips/expense_form.html', {
+        'form': form,
+        'trip': expense.trip,
+        'item_name': expense.item.name if expense.item else None # Mostra no título se tiver item
+    })
+
+@login_required
+def expense_delete(request, pk):
+    """
+    Exclui o gasto. Se ele estava vinculado a um item, o vínculo some
+    e o ícone da timeline volta a ficar cinza automaticamente.
+    """
+    expense = get_object_or_404(Expense, pk=pk, trip__user=request.user)
+    trip_id = expense.trip.id # Guarda o ID para voltar para a página certa
+    expense.delete()
+    return redirect('trip_detail', pk=trip_id)
+
+@login_required
 def fix_locations(request):
     # Pega todos os itens que têm endereço mas não têm latitude
     items = TripItem.objects.filter(location_address__isnull=False, location_lat__isnull=True)

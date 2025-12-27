@@ -20,6 +20,10 @@ urlpatterns = [
     path('viagens/<int:trip_id>/adicionar-gasto/', views.trip_expense_create, name='trip_expense_create'),
     path('itens/<int:item_id>/financeiro/', views.trip_item_expense_manage, name='trip_item_expense_manage'),
 
+    # Rotas para Gestão de Gastos (Genéricas)
+    path('gasto/<int:pk>/editar/', views.expense_update, name='expense_update'),
+    path('gasto/<int:pk>/excluir/', views.expense_delete, name='expense_delete'),
+
     # Rotas de Anexos (Uploads)
     path('itens/<int:item_id>/anexos/', views.trip_item_attachments, name='trip_item_attachments'),
     path('anexos/<int:pk>/excluir/', views.attachment_delete, name='attachment_delete'),
