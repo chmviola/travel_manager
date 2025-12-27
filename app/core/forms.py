@@ -1,5 +1,6 @@
 from django import forms
 from .models import Expense, Trip, TripItem, TripAttachment
+from django.contrib.auth.models import User, Group
 
 class TripForm(forms.ModelForm):
     class Meta:
@@ -96,3 +97,44 @@ class AttachmentForm(forms.ModelForm):
             'file': forms.FileInput(attrs={'class': 'form-control-file'}),
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Voucher do Hotel'}),
         }
+
+class UserCreateForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label="Senha")
+    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-control'}), required=False, label="Grupos de Acesso")
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password', 'groups', 'is_active', 'is_superuser']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password"]) # Criptografa a senha
+        if commit:
+            user.save()
+            self.save_m2m() # Salva os grupos
+        return user
+
+class UserEditForm(forms.ModelForm):
+    # Na edição, não mostramos o campo de senha para evitar erros de recriptografia
+    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-control'}), required=False, label="Grupos de Acesso")
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'groups', 'is_active', 'is_superuser']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
+        }
+

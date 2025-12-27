@@ -32,4 +32,10 @@ urlpatterns = [
     path('financeiro/', views.financial_dashboard, name='financial_dashboard'),
 
     path('fix-locations/', views.fix_locations, name='fix_locations'),
+
+    # Rotas de Gestão de Usuários
+    path('usuarios/', views.user_list, name='user_list'),
+    path('usuarios/novo/', views.user_create, name='user_create'),
+    path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
+    path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
 ]

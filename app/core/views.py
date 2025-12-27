@@ -7,6 +7,10 @@ from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from .utils import get_exchange_rate, get_currency_by_country
 from django.db.models import Sum
 from collections import defaultdict # Para agrupar dados manualmente
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import user_passes_test
+from .forms import UserCreateForm, UserEditForm
+
 
 @login_required
 def home(request):
@@ -402,3 +406,50 @@ def fix_locations(request):
 
     print(f"{count} itens atualizados com coordenadas.")
     return redirect('home')
+
+# --- VERIFICAÇÃO DE SEGURANÇA ---
+def is_admin(user):
+    # Retorna True se for Superuser (root) OU se pertencer ao grupo 'admin'
+    return user.is_superuser or user.groups.filter(name='admin').exists()
+
+@login_required
+@user_passes_test(is_admin) # Só passa se for admin
+def user_list(request):
+    users = User.objects.all().order_by('username')
+    return render(request, 'users/user_list.html', {'users': users})
+
+@login_required
+@user_passes_test(is_admin)
+def user_create(request):
+    if request.method == 'POST':
+        form = UserCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('user_list')
+    else:
+        form = UserCreateForm()
+    return render(request, 'users/user_form.html', {'form': form, 'title': 'Novo Usuário'})
+
+@login_required
+@user_passes_test(is_admin)
+def user_update(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        form = UserEditForm(request.POST, instance=user_obj)
+        if form.is_valid():
+            form.save()
+            return redirect('user_list')
+    else:
+        form = UserEditForm(instance=user_obj)
+    return render(request, 'users/user_form.html', {'form': form, 'title': f'Editar: {user_obj.username}'})
+
+@login_required
+@user_passes_test(is_admin)
+def user_delete(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+    if user_obj == request.user:
+        # Impede que o usuário se delete
+        return redirect('user_list')
+    
+    user_obj.delete()
+    return redirect('user_list')
