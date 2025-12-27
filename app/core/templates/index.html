@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block page_title %}Dashboard Global{% endblock %}
 
@@ -20,7 +21,7 @@
     <div class="col-lg-6 col-6">
         <div class="small-box bg-success">
             <div class="inner">
-                <h3>R$ {{ total_spent|floatformat:2 }}</h3>
+                <h3>R$ {{ total_spent|floatformat:2|intcomma }}</h3>
                 <p>Investimento Total (BRL)</p>
             </div>
             <div class="icon">

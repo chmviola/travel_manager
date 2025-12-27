@@ -54,13 +54,27 @@ class TripItemForm(forms.ModelForm):
         return {}
     
 class ExpenseForm(forms.ModelForm):
+    # Sobrescrevemos o campo amount para aceitar vírgula (localize=True)
+    amount = forms.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        localize=True, # <--- ESSENCIAL: Diz ao Django que a entrada virá com vírgula (pt-br)
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': '0,00',
+            # Javascript simples para mascarar e ajudar na digitação (opcional, mas ajuda)
+            'onkeyup': "this.value = this.value.replace(/[^0-9,.]/g, '')"
+        }),
+        label="Valor"
+    )
+
     class Meta:
         model = Expense
         fields = ['item', 'description', 'amount', 'currency', 'category', 'date']
         widgets = {
             'item': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Jantar em Paris'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            # Removemos o 'amount' daqui pois definimos ele manualmente acima
             'currency': forms.Select(attrs={'class': 'form-control'}),
             'category': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Alimentação, Transporte...'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),

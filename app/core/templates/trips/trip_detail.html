@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% load static %}
 
 {% block page_title %}
@@ -162,12 +163,12 @@
                     
                     <td class="text-right align-middle">
                         <span class="badge badge-light" style="font-size: 0.9em;">
-                            {{ expense.currency }} {{ expense.amount }}
+                            {{ expense.currency }} {{ expense.amount|intcomma }}
                         </span>
                     </td>
                     
                     <td class="text-right text-success font-weight-bold align-middle">
-                        R$ {{ expense.converted_value|floatformat:2 }}
+                        R$ {{ expense.converted_value|floatformat:2|intcomma }}
                     </td>
                 </tr>
                 {% empty %}

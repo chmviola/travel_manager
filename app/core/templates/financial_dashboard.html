@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block page_title %}Visão Financeira Global{% endblock %}
 
 {% block content %}
@@ -9,7 +9,7 @@
         <div class="col-lg-6 col-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>R$ {{ total_global|floatformat:2 }}</h3>
+                    <h3>R$ {{ total_global|floatformat:2|intcomma }}</h3>
                     <p>Total Gasto em Viagens (Convertido)</p>
                 </div>
                 <div class="icon">

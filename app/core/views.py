@@ -21,7 +21,9 @@ def home(request):
     for expense in all_expenses:
         if expense.currency not in rates_cache:
             rates_cache[expense.currency] = get_exchange_rate(expense.currency)
-        total_spent += float(expense.amount) * rates_cache[expense.currency]
+        # ARREDONDAMENTO AQUI:
+        val_converted = float(expense.amount) * rates_cache[expense.currency]
+        total_spent += round(val_converted, 2)
 
     # 3. Dados para o Mapa (CORREÇÃO AQUI)
     # Buscamos os itens com coordenadas
@@ -111,9 +113,10 @@ def trip_detail(request, pk):
         
         rate = rates_cache[currency]
         
-        # Calcula o valor em BRL deste item específico
+        # CÁLCULO E ARREDONDAMENTO AQUI:
         val_brl = float(expense.amount) * rate
-        
+        val_brl = round(val_brl, 2)  # <--- Isso limpa as casas decimais extras
+
         # ATENÇÃO: Criamos um atributo temporário 'converted_value' no objeto expense
         # Isso não salva no banco, existe apenas aqui na memória para exibir na tela
         expense.converted_value = val_brl
@@ -121,6 +124,9 @@ def trip_detail(request, pk):
         # Soma ao total geral
         total_converted_brl += val_brl
     
+    # É bom garantir que o total também esteja arredondado
+    total_converted_brl = round(total_converted_brl, 2)
+
     return render(request, 'trips/trip_detail.html', {
         'trip': trip,
         'items': items,
@@ -307,11 +313,18 @@ def financial_dashboard(request):
         
         rate = rates_cache[currency]
         val_brl = float(expense.amount) * rate
+
+        # CÁLCULO E ARREDONDAMENTO AQUI:
+        val_brl = float(expense.amount) * rate
+        val_brl = round(val_brl, 2) # <--- Arredonda antes de somar
         
         # Soma Globais
         total_global_brl += val_brl
         expenses_by_category[expense.category] += val_brl
         expenses_by_trip[expense.trip.title] += val_brl
+
+    # Arredonda o total final por segurança
+    total_global_brl = round(total_global_brl, 2)
 
     # Prepara dados para os Gráficos (Chart.js espera listas)
     # 1. Gráfico de Categoria (Donut)
