@@ -5,6 +5,8 @@ from .models import Trip, TripItem, Expense, TripAttachment
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from .utils import get_exchange_rate # Importe a função nova
 from django.db.models import Sum
+from collections import defaultdict # Para agrupar dados manualmente
+import json # Para enviar dados ao JS
 
 @login_required
 def home(request):
@@ -242,3 +244,51 @@ def attachment_delete(request, pk):
     item_id = attachment.item.id
     attachment.delete()
     return redirect('trip_item_attachments', item_id=item_id)
+
+@login_required
+def financial_dashboard(request):
+    # Pega todas as despesas do usuário
+    expenses = Expense.objects.filter(trip__user=request.user).select_related('trip')
+    
+    total_global_brl = 0
+    expenses_by_category = defaultdict(float)
+    expenses_by_trip = defaultdict(float)
+    
+    rates_cache = {}
+
+    # Processamento dos dados (Conversão e Agrupamento)
+    for expense in expenses:
+        currency = expense.currency
+        
+        # Busca cotação (usando nossa função utils)
+        if currency not in rates_cache:
+            rates_cache[currency] = get_exchange_rate(currency)
+        
+        rate = rates_cache[currency]
+        val_brl = float(expense.amount) * rate
+        
+        # Soma Globais
+        total_global_brl += val_brl
+        expenses_by_category[expense.category] += val_brl
+        expenses_by_trip[expense.trip.title] += val_brl
+
+    # Prepara dados para os Gráficos (Chart.js espera listas)
+    # 1. Gráfico de Categoria (Donut)
+    cat_labels = list(expenses_by_category.keys())
+    cat_data = [round(v, 2) for v in expenses_by_category.values()]
+
+    # 2. Gráfico de Viagens (Barra)
+    trip_labels = list(expenses_by_trip.keys())
+    trip_data = [round(v, 2) for v in expenses_by_trip.values()]
+
+    context = {
+        'total_global': total_global_brl,
+        'expense_count': expenses.count(),
+        # Enviamos como JSON seguro para o Javascript ler
+        'cat_labels': json.dumps(cat_labels),
+        'cat_data': json.dumps(cat_data),
+        'trip_labels': json.dumps(trip_labels),
+        'trip_data': json.dumps(trip_data),
+    }
+
+    return render(request, 'financial_dashboard.html', context)

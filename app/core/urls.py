@@ -23,4 +23,7 @@ urlpatterns = [
     # Rotas de Anexos (Uploads)
     path('itens/<int:item_id>/anexos/', views.trip_item_attachments, name='trip_item_attachments'),
     path('anexos/<int:pk>/excluir/', views.attachment_delete, name='attachment_delete'),
+
+    # Dashboard Financeiro
+    path('financeiro/', views.financial_dashboard, name='financial_dashboard'),
 ]
