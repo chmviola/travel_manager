@@ -114,7 +114,36 @@
     </div>
     
     <div class="col-md-6">
+
+{% if trip_rates %}
+    <div class="row mb-2">
+        <div class="col-12">
+            <h5 class="text-muted mb-2"><i class="fas fa-coins"></i> Cotações Locais (Hoje)</h5>
+        </div>
         
+        {% for rate in trip_rates %}
+        <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon border">
+                    {% if rate.code == 'USD' %}<i class="fas fa-dollar-sign text-success"></i>
+                    {% elif rate.code == 'EUR' %}<i class="fas fa-euro-sign text-primary"></i>
+                    {% elif rate.code == 'GBP' %}<i class="fas fa-pound-sign text-danger"></i>
+                    {% else %}<i class="fas fa-money-bill text-secondary"></i>
+                    {% endif %}
+                </span>
+
+                <div class="info-box-content">
+                    <span class="info-box-text">1 {{ rate.code }} vale</span>
+                    <span class="info-box-number">
+                        R$ {{ rate.rate|floatformat:2|intcomma }}
+                    </span>
+                </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
         <div class="card card-outline card-primary">
             <div class="card-header">
                 <h3 class="card-title">Mapa do Roteiro</h3>

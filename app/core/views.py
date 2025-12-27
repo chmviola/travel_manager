@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from .models import Trip, TripItem, Expense, TripAttachment  
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
-from .utils import get_exchange_rate # Importe a função nova
+from .utils import get_exchange_rate, get_currency_by_country
 from django.db.models import Sum
 from collections import defaultdict # Para agrupar dados manualmente
 
@@ -94,18 +94,12 @@ def trip_create(request):
 
 @login_required
 def trip_detail(request, pk):
-    """
-    Exibe os detalhes da viagem, o mapa e a timeline de itens.
-    """
     # get_object_or_404 garante que retorna erro se o ID não existir
     # e o filtro user=request.user impede que um usuário veja viagem de outro
     trip = get_object_or_404(Trip, pk=pk, user=request.user)
-    
     # Buscamos os itens ordenados por data para a timeline
     items = trip.items.all().order_by('start_datetime')
-
     expenses = trip.expenses.all()
-    
     # Lógica de Conversão
     total_converted_brl = 0
     # Cache simples para não bater na API várias vezes para a mesma moeda na mesma página
@@ -116,30 +110,37 @@ def trip_detail(request, pk):
         currency = expense.currency
         
         # Busca cotação (com cache simples para não repetir chamadas)
-        if currency not in rates_cache:
-            rates_cache[currency] = get_exchange_rate(currency)
-        
-        rate = rates_cache[currency]
-        
-        # CÁLCULO E ARREDONDAMENTO AQUI:
-        val_brl = float(expense.amount) * rate
-        val_brl = round(val_brl, 2)  # <--- Isso limpa as casas decimais extras
-
-        # ATENÇÃO: Criamos um atributo temporário 'converted_value' no objeto expense
-        # Isso não salva no banco, existe apenas aqui na memória para exibir na tela
-        expense.converted_value = val_brl
-        
-        # Soma ao total geral
-        total_converted_brl += val_brl
+        if expense.currency not in rates_cache:
+            rates_cache[expense.currency] = get_exchange_rate(expense.currency)
+        expense.converted_value = round(float(expense.amount) * rates_cache[expense.currency], 2)
+        total_converted_brl += expense.converted_value
     
-    # É bom garantir que o total também esteja arredondado
-    total_converted_brl = round(total_converted_brl, 2)
+    # --- NOVA LÓGICA: COTAÇÕES POR PAÍS DOS ITENS ---
+    detected_currencies = set() # Usamos set para não repetir moedas (ex: 2 hoteis na frança = 1 Euro)
+    
+    for item in items:
+        if item.location_address:
+            # Tenta descobrir a moeda baseada no endereço do item
+            currency_code = get_currency_by_country(item.location_address)
+            if currency_code and currency_code != 'BRL': # Ignora Real
+                detected_currencies.add(currency_code)
+
+    # Agora buscamos a cotação de HOJE para essas moedas encontradas
+    trip_rates = []
+    for currency in detected_currencies:
+        # Reutiliza do cache se já tivermos buscado para os gastos
+        rate = rates_cache.get(currency) or get_exchange_rate(currency)
+        trip_rates.append({
+            'code': currency,
+            'rate': rate
+        })
 
     return render(request, 'trips/trip_detail.html', {
         'trip': trip,
         'items': items,
-        'expenses': expenses, # Agora os objetos expenses têm o campo .converted_value
-        'total_spent_brl': total_converted_brl,
+        'expenses': expenses,
+        'total_spent_brl': round(total_converted_brl, 2),
+        'trip_rates': trip_rates, # <--- ENVIAMOS AS COTAÇÕES AQUI
         'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
     })
 

@@ -36,3 +36,43 @@ def get_exchange_rate(from_currency):
             'PEN': 1.60
         }
         return fallback_rates.get(from_currency, 1.0)
+    
+def get_currency_by_country(country_name):
+    """
+    Mapeia nomes de países E CIDADES (que vêm do Google Maps) para códigos de moeda.
+    """
+    if not country_name:
+        return None
+        
+    text = country_name.lower().strip()
+    
+    mapping = {
+        # Europa (Países e Capitais Principais)
+        'france': 'EUR', 'frança': 'EUR', 'paris': 'EUR',
+        'germany': 'EUR', 'alemanha': 'EUR', 'berlin': 'EUR', 'berlim': 'EUR',
+        'italy': 'EUR', 'itália': 'EUR', 'rome': 'EUR', 'roma': 'EUR',
+        'spain': 'EUR', 'espanha': 'EUR', 'madrid': 'EUR', 'barcelona': 'EUR',
+        'portugal': 'EUR', 'lisbon': 'EUR', 'lisboa': 'EUR',
+        'netherlands': 'EUR', 'holanda': 'EUR', 'amsterdam': 'EUR',
+        'united kingdom': 'GBP', 'reino unido': 'GBP', 'england': 'GBP', 'inglaterra': 'GBP', 'london': 'GBP', 'londres': 'GBP',
+        'switzerland': 'CHF', 'suíça': 'CHF', 'zurich': 'CHF',
+        
+        # Américas
+        'united states': 'USD', 'estados unidos': 'USD', 'usa': 'USD', 'ny': 'USD', 'miami': 'USD', 'orlando': 'USD',
+        'canada': 'CAD', 'canadá': 'CAD', 'toronto': 'CAD', 'vancouver': 'CAD',
+        'chile': 'CLP', 'santiago': 'CLP',
+        'argentina': 'ARS', 'buenos aires': 'ARS',
+        'uruguay': 'UYU', 'uruguai': 'UYU', 'montevideo': 'UYU',
+        'colombia': 'COP', 'colômbia': 'COP',
+        'peru': 'PEN', 'lima': 'PEN',
+        
+        # Ásia / Oceania
+        'japan': 'JPY', 'japão': 'JPY', 'tokyo': 'JPY',
+        'australia': 'AUD', 'austrália': 'AUD', 'sydney': 'AUD',
+    }
+    
+    for key, currency in mapping.items():
+        if key in text:
+            return currency
+            
+    return None
