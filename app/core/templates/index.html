@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-lg-6 col-6">
+    <div class="col-lg-3 col-6">
         <div class="small-box bg-info">
             <div class="inner">
                 <h3>{{ trip_count }}</h3>
@@ -18,7 +18,7 @@
         </div>
     </div>
     
-    <div class="col-lg-6 col-6">
+    <div class="col-lg-3 col-6">
         <div class="small-box bg-success">
             <div class="inner">
                 <h3>R$ {{ total_spent|floatformat:2|intcomma }}</h3>
@@ -30,6 +30,33 @@
             <a href="{% url 'financial_dashboard' %}" class="small-box-footer">Detalhes Financeiros <i class="fas fa-arrow-circle-right"></i></a>
         </div>
     </div>
+    
+<div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h3>R$ {{ usd_rate|floatformat:2|intcomma }}</h3>
+                <p>Dólar Hoje (USD)</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="small-box-footer">Cotação Atual</div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h3>R$ {{ eur_rate|floatformat:2|intcomma }}</h3>
+                <p>Euro Hoje (EUR)</p>
+            </div>
+            <div class="icon">
+                <i class="fas fa-euro-sign"></i>
+            </div>
+            <div class="small-box-footer">Cotação Atual</div>
+        </div>
+    </div>
+
 </div>
 
 <div class="row">

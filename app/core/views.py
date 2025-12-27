@@ -25,7 +25,12 @@ def home(request):
         val_converted = float(expense.amount) * rates_cache[expense.currency]
         total_spent += round(val_converted, 2)
 
-    # 3. Dados para o Mapa (CORREÇÃO AQUI)
+    # 3. Cotações de Referência (Dólar e Euro) para os Widgets
+    # Se já tivermos buscado no loop acima, usamos do cache. Se não, buscamos agora.
+    usd_rate = rates_cache.get('USD') or get_exchange_rate('USD')
+    eur_rate = rates_cache.get('EUR') or get_exchange_rate('EUR')
+
+    # 4. Dados para o Mapa (CORREÇÃO AQUI)
     # Buscamos os itens com coordenadas
     raw_locations = TripItem.objects.filter(
         trip__user=request.user
@@ -50,6 +55,9 @@ def home(request):
         'trips': trips,
         'total_spent': total_spent,
         'trip_count': trips.count(),
+        # Passamos as taxas para o template
+        'usd_rate': usd_rate,
+        'eur_rate': eur_rate,
         # Usamos json.dumps para garantir que vá como texto JSON válido
         'map_locations': json.dumps(map_locations), 
         'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
