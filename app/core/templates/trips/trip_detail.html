@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load l10n %}
 {% load static %}
 
 {% block page_title %}
@@ -68,8 +69,8 @@
                                             class="btn btn-xs btn-outline-primary mr-2"
                                             data-toggle="modal" 
                                             data-target="#modalItemMap"
-                                            data-lat="{{ item.location_lat|default_if_none:'' }}"
-                                            data-lng="{{ item.location_lng|default_if_none:'' }}"
+                                            data-lat="{{ item.location_lat|unlocalize|default_if_none:'' }}"
+                                            data-lng="{{ item.location_lng|unlocalize|default_if_none:'' }}"
                                             data-address="{{ item.location_address|default_if_none:'' }}" 
                                             data-title="{{ item.name }}"
                                             title="Ver no Mapa">
