@@ -50,19 +50,20 @@
                                 {% endif %}
     
                                 {% if item.details %}
-                                    <div class="mt-2 p-2 bg-light rounded text-muted text-sm">
-                                        <i class="fas fa-info-circle mr-1"></i>
+                            <div class="mt-2 p-2 bg-light rounded text-muted text-sm">
+                                <i class="fas fa-info-circle mr-1"></i>
             
-                                        {# Verifica se existe a chave específica 'notes' #}
-                                        {% if item.details.notes %}
-                                        {{ item.details.notes|linebreaksbr }}
-                                    {% else %}
-                                        {# Fallback: se for um texto antigo ou formato diferente, imprime direto #}
-                                        {{ item.details|linebreaksbr }}
-                                    {% endif %}
-                                </div>
+                                {# Verifica se existe a chave específica 'notes' #}
+                                {% if item.details.notes %}
+                                {{ item.details.notes|linebreaksbr }}
+                            {% else %}
+                                {# Fallback: se for um texto antigo ou formato diferente, imprime direto #}
+                                {{ item.details|linebreaksbr }}
                             {% endif %}
                         </div>
+                        {% endif %}
+                            </div>
+                        {% endif %}
                             </div>
                             
                             <div class="timeline-footer">
