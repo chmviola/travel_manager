@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout Develop') {
             steps {
                 // Baixa o código da branch develop
-                git branch: 'develop', url: 'https://github.com/SEU_USUARIO/SEU_REPO.git'
+                git branch: 'develop', url: 'https://github.com/chmviola/travel_manager.git'
             }
         }
 

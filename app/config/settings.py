@@ -146,3 +146,10 @@ LOGIN_URL = 'login' # Caso o usuário tente acessar uma página restrita sem est
 # Configuração de Arquivos de Mídia (Uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Adicione esta lógica para ler a variável de ambiente
+# O .split(' ') permite que coloquemos múltiplos domínios separados por espaço se necessário
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost').split(' ')
+
+# Como você está atrás de um proxy (Nginx), é bom garantir essas configurações também:
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
