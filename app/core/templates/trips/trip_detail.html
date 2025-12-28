@@ -271,8 +271,8 @@
                 name: "{{ item.name|escapejs }}",
                 type: "{{ item.get_item_type_display }}",
                 address: "{{ item.location_address|default_if_none:''|escapejs }}",
-                lat: "{{ item.location_lat|default_if_none:'' }}",
-                lng: "{{ item.location_lng|default_if_none:'' }}"
+                lat: "{{ item.location_lat|unlocalize|default_if_none:'' }}",
+                lng: "{{ item.location_lng|unlocalize|default_if_none:'' }}"
             },
             {% endfor %}
         ];

@@ -10,8 +10,8 @@ class TripForm(forms.ModelForm):
         # Aqui injetamos o CSS do Bootstrap nos campos
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Férias em Paris'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'start_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
 
@@ -33,15 +33,31 @@ class TripItemForm(forms.ModelForm):
             'location_address': forms.TextInput(attrs={'class': 'form-control'}),
             
             # O type='datetime-local' cria o calendário com hora
-            'start_datetime': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
-            'end_datetime': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            # DateTimeInput precisa do formato exato com 'T'
+            'start_datetime': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M', 
+                attrs={'class': 'form-control', 'type': 'datetime-local'}
+            ),
+            'end_datetime': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M', 
+                attrs={'class': 'form-control', 'type': 'datetime-local'}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Define que o Django deve aceitar o formato com 'T' que o HTML5 envia
-        self.fields['start_datetime'].input_formats = ['%Y-%m-%dT%H:%M']
-        self.fields['end_datetime'].input_formats = ['%Y-%m-%dT%H:%M']
+        # Se estiver editando (instance existe) e tiver detalhes
+        if self.instance and self.instance.pk and self.instance.details:
+            # Pega apenas o valor de 'notes' para mostrar no campo
+            self.initial['details'] = self.instance.details.get('notes', '')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Ao salvar, reempacota o texto dentro da estrutura JSON {'notes': ...}
+        instance.details = {'notes': self.cleaned_data['details']}
+        if commit:
+            instance.save()
+        return instance
 
     def clean_details(self):
         """
@@ -78,7 +94,7 @@ class ExpenseForm(forms.ModelForm):
             # Removemos o 'amount' daqui pois definimos ele manualmente acima
             'currency': forms.Select(attrs={'class': 'form-control'}),
             'category': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Alimentação, Transporte...'}),
-            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'date': forms.DateInput(format='%Y-%m-%d', attrs={'class': 'form-control', 'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -137,4 +153,3 @@ class UserEditForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
             'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
         }
-
