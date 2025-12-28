@@ -87,12 +87,31 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Configuração Dinâmica de Banco de Dados
+# Se houver variáveis de ambiente (Docker), usa Postgres.
+# Caso contrário (rodando local sem docker), usa SQLite como fallback.
+
+if os.environ.get('SQL_DATABASE') and os.environ.get('SQL_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('SQL_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('SQL_DATABASE'),
+            'USER': os.environ.get('SQL_USER'),
+            'PASSWORD': os.environ.get('SQL_PASSWORD'),
+            'HOST': os.environ.get('SQL_HOST'),
+            'PORT': os.environ.get('SQL_PORT', '5432'),
+        }
     }
-}
+else:
+    # Fallback apenas para desenvolvimento local fora do Docker
+    print("⚠️  AVISO: Usando SQLite local (Variáveis de ambiente do Postgres não encontradas)")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 
 
 # Password validation
