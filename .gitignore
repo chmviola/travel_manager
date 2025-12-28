@@ -77,4 +77,5 @@ log/
 # Arquivos temporários do sistema operacional
 *.swp
 *.swo
-*~
+*~db.sqlite3
+app/db.sqlite3
