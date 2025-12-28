@@ -51,10 +51,10 @@
                                 
                                 {% if item.details %}
                                     <div class="mt-2 p-2 bg-light rounded text-muted text-sm">
-                                        {% if item.details.notes %}
+                                        {% if item.details.notes|linebreaksbr %}
                                             <i class="fas fa-info-circle mr-1"></i> {{ item.details.notes|linebreaksbr }}
                                         {% else %}
-                                            {% for key, value in item.details.items %}
+                                            {% for key, value in item.details.items|linebreaksbr %}
                                                 <strong>{{ key|title }}:</strong> {{ value }}<br>
                                         {% endfor %}
                                 {% endif %}
