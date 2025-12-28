@@ -21,7 +21,7 @@ services:
     container_name: travel_manager_web
     command: python manage.py runserver 0.0.0.0:8080
     volumes:
-      - ./app:/usr/src/app
+#      - ./app:/usr/src/app
       - /var/data/media_data:/usr/src/app/media
     ports:
       - "8080:8080"
