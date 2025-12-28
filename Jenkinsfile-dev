@@ -2,15 +2,22 @@ pipeline {
     agent any
 
     environment {
-        // Define o nome do projeto para o compose não misturar com outros
-        COMPOSE_PROJECT_NAME = "travel_project_dev"
+        COMPOSE_PROJECT_NAME = "travel_manager_dev"
+        DJANGO_ENV = "development"
     }
 
     stages {
-        stage('Checkout Develop') {
+        // REMOVIDA A ETAPA DE CHECKOUT MANUAL
+        // O Jenkins já fez o checkout automaticamente ao iniciar o job.
+        
+        stage('Validar Arquivos') {
             steps {
-                // Baixa o código da branch develop
-                git branch: 'develop', url: 'https://github.com/chmviola/travel_manager.git'
+                script {
+                    // Vamos listar os arquivos só para garantir que tudo está lá
+                    sh 'ls -la'
+                    echo 'Verificando se o docker-compose-dev.yml existe...'
+                    sh 'ls -la docker-compose-dev.yml'
+                }
             }
         }
 
@@ -19,11 +26,11 @@ pipeline {
                 script {
                     echo 'Iniciando deploy do ambiente DEVELOP...'
                     
-                    // Derruba containers antigos de dev (se existirem) e remove órfãos
-                    sh 'docker compose -f docker-compose-dev.yml down --remove-orphans'
+                    // 1. Derruba containers antigos de dev (se existirem)
+                    // O "|| true" evita erro se for a primeira vez
+                    sh 'docker compose -f docker-compose-dev.yml down --remove-orphans || true'
                     
-                    // Sobe os novos containers recriando o build da imagem
-                    // O -d roda em background (detached)
+                    // 2. Sobe os novos containers recriando o build
                     sh 'docker compose -f docker-compose-dev.yml up -d --build'
                 }
             }
@@ -32,8 +39,9 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    // Aguarda 10 segundos e verifica se os containers estão rodando
-                    sleep 10
+                    echo 'Aguardando containers subirem...'
+                    sleep 15
+                    // Verifica se o container web dev está rodando
                     sh 'docker ps | grep travel_manager_web_dev'
                 }
             }
@@ -42,10 +50,10 @@ pipeline {
 
     post {
         success {
-            echo 'Sucesso! O ambiente de desenvolvimento foi atualizado.'
+            echo 'Sucesso! O ambiente DEVELOP foi atualizado.'
         }
         failure {
-            echo 'Falha no deploy da branch develop.'
+            echo 'FALHA no deploy da branch develop.'
         }
     }
 }
