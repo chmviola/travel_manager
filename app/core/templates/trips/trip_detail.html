@@ -45,7 +45,7 @@
                                 <strong>{{ item.get_item_type_display }}:</strong> {{ item.name }}
                             </h3>
 
-<div class="timeline-body">
+                        <div class="timeline-body">
     {% if item.location_address %}
         <p class="text-muted mb-1"><i class="fas fa-map-pin"></i> {{ item.location_address }}</p>
     {% endif %}
@@ -61,7 +61,7 @@
             {% endif %}
         {% endwith %}
     {% endif %}
-</div>                            
+                        </div>                            
                             <div class="timeline-footer">
 
                                 {% if item.location_lat and item.location_lng or item.location_address %}
