@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define o nome do projeto para o compose não misturar com outros
+        COMPOSE_PROJECT_NAME = "travel_project_dev"
+    }
+
+    stages {
+        stage('Checkout Develop') {
+            steps {
+                // Baixa o código da branch develop
+                git branch: 'develop', url: 'https://github.com/SEU_USUARIO/SEU_REPO.git'
+            }
+        }
+
+        stage('Build and Deploy Dev') {
+            steps {
+                script {
+                    echo 'Iniciando deploy do ambiente DEVELOP...'
+                    
+                    // Derruba containers antigos de dev (se existirem) e remove órfãos
+                    sh 'docker compose -f docker-compose-dev.yml down --remove-orphans'
+                    
+                    // Sobe os novos containers recriando o build da imagem
+                    // O -d roda em background (detached)
+                    sh 'docker compose -f docker-compose-dev.yml up -d --build'
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                script {
+                    // Aguarda 10 segundos e verifica se os containers estão rodando
+                    sleep 10
+                    sh 'docker ps | grep travel_manager_web_dev'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Sucesso! O ambiente de desenvolvimento foi atualizado.'
+        }
+        failure {
+            echo 'Falha no deploy da branch develop.'
+        }
+    }
+}

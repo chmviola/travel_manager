@@ -1,0 +1,80 @@
+# =============================================
+#           .gitignore - Django 2025
+# =============================================
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Ambientes virtuais
+venv/
+.env/
+.venv/
+env/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Arquivos de ambiente (sensíveis)
+.env
+.env.local
+.env.*.local
+!.env.example          # ← versão de exemplo pode ser versionada
+
+# Arquivos de banco de dados locais (SQLite padrão)
+db.sqlite3
+db.sqlite3-journal
+
+# === PASTAS DE MÍDIA E DADOS QUE VOCÊ PEDIU ===
+media_data/
+media_data_dev/
+travel_db_data/
+travel_db_data_dev/
+
+# Arquivos grandes que costumam aparecer em projetos Django
+*.bak
+*.backup
+*.old
+*.log
+*.dump
+*.sql.gz
+*.sql
+
+# Pastas de build / deploy / cache comuns
+staticfiles/
+collectstatic/
+media/                 # ← pasta media padrão do Django (opcional)
+*.collectstatic-manifest.json
+
+# IDEs e editores
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# Testes e cobertura
+htmlcov/
+.coverage.*
+coverage.xml
+*.cover
+
+# Logs do Django e do servidor
+*.log
+logs/
+log/
+
+# Migrações geradas automaticamente (opcional - descomente se quiser)
+#migrations/
+
+# Arquivos temporários do sistema operacional
+*.swp
+*.swo
+*~

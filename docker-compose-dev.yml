@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # --- Banco de Dados (Ambiente DEV) ---
+  travel_db_dev:
+    image: postgres:15-alpine
+    container_name: travel_manager_db_dev
+    volumes:
+      # Mapeia para uma pasta diferente da produção
+      - /var/data/travel_manager/travel_db_data_dev:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=travel_db
+      - POSTGRES_USER=travel_user
+      - POSTGRES_PASSWORD=travel_pass
+    restart: always
+    networks:
+      - chmviola
+
+  # --- Aplicação Web (Ambiente DEV) ---
+  travel_web_dev:
+    build: ./app
+    container_name: travel_manager_web_dev
+    command: python manage.py runserver 0.0.0.0:8080
+    volumes:
+      - ./app:/usr/src/app
+      # Mapeia media para pasta de dev
+      - /var/data/travel_manager/media_data_dev:/usr/src/app/media
+    environment:
+      - DEBUG=1
+      - SECRET_KEY=changeme-dev-key
+      - DJANGO_ALLOWED_HOSTS=*
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=travel_db
+      - SQL_USER=travel_user
+      - SQL_PASSWORD=travel_pass
+      # Importante: Aponta para o container de banco de DEV
+      - SQL_HOST=travel_db_dev 
+      - SQL_PORT=5432
+    depends_on:
+      - travel_db_dev
+    restart: always
+    networks:
+      - chmviola
+
+networks:
+  chmviola:
+    external: true
