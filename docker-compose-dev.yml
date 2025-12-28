@@ -18,7 +18,7 @@ services:
   travel_web_dev:
     build: ./app
     container_name: travel_manager_web_dev
-    command: python manage.py runserver 0.0.0.0:8080
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app:/usr/src/app
       # Mapeia media para pasta de dev
