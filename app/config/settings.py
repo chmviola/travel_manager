@@ -31,6 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'travel.chmviola.com.br',
+    'travel-dev.chmviola.com.br',
     'localhost',
     '127.0.0.1',
 ]
