@@ -21,21 +21,20 @@ pipeline {
             }
         }
 
-        stage('Build and Deploy Dev') {
+        stage('Deploy via Portainer') {
             steps {
                 script {
-                    echo 'Iniciando deploy do ambiente DEVELOP...'
+                    echo 'Solicitando atualização ao Portainer...'
                     
-                    // 1. Derruba containers antigos de dev (se existirem)
-                    // O "|| true" evita erro se for a primeira vez
-                    sh 'docker compose -f docker-compose-dev.yml down --remove-orphans || true'
+                    // Substitua pela URL que você copiou no Passo 3
+                    // O comando curl faz uma requisição POST que aciona o Portainer
+                    sh 'curl -X POST -d "" "https://portainer.chmviola.com.br/api/stacks/webhooks/e73c7629-a0eb-4e05-aaca-a94b51f3a871"'
                     
-                    // 2. Sobe os novos containers recriando o build
-                    sh 'docker compose -f docker-compose-dev.yml up -d --build'
+                    echo 'Sinal enviado! O Portainer vai baixar o código e recriar a stack.'
                 }
             }
         }
-        
+
         stage('Health Check') {
             steps {
                 script {
