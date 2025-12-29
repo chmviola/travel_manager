@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -42,6 +43,13 @@
   </nav>
   <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <a href="{% url 'home' %}" class="brand-link">
+      <img src="{% static 'img/logo.png' %}" 
+         alt="Logo" 
+         class="brand-image img-circle elevation-3" 
+         style="opacity: .8">
+    
+      <span class="brand-text font-weight-light">TravelManager</span>
+    </a>
       <span class="brand-text font-weight-light pl-3">Travel Manager</span>
     </a>
 
@@ -103,12 +111,16 @@
       </div></div>
     </div>
         
-  <footer class="main-footer">
+<footer class="main-footer">
     <div class="float-right d-none d-sm-inline">
-      <b>Versão</b> {{ app_version }}
+        <img src="{% static 'img/logo.png' %}" alt="Logo" class="img-circle" style="height: 20px; width: 20px; margin-right: 5px; vertical-align: sub;">
+        
+        <b>Versão</b> {{ app_version }}
     </div>
-    <strong>Copyright &copy; 2025 Travel Manager.</strong>
-  </footer>
+    
+    <strong>Copyright &copy; 2025 <a href="#">Carlos Viola</a>.</strong> Todos os direitos reservados.
+</footer>
+
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>

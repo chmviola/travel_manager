@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -12,10 +13,16 @@
 
 <body class="hold-transition login-page">
 <div class="login-box">
-  <div class="login-logo">
-    <a href="#"><b>Travel</b>Manager</a>
-  </div>
-  
+<div class="login-logo">
+    <a href="#">
+        <img src="{% static 'img/logo.png' %}" 
+             alt="Logo" 
+             class="img-circle elevation-2" 
+             style="height: 80px; width: 80px; margin-right: 10px; vertical-align: middle;">
+             
+        <b>Travel</b>Manager
+    </a>
+</div>  
   <div class="text-center mt-2 text-muted">
       <small>Versão {{ app_version }}</small>
   </div>
