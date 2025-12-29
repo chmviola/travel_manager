@@ -307,6 +307,39 @@ def attachment_delete(request, pk):
 
 @login_required
 def financial_dashboard(request):
+    # 1. Dados para os Gráficos (Lógica Existente resumida)
+    trips = Trip.objects.filter(user=request.user)
+    
+    # 2. Busca TODAS as despesas do usuário
+    # Usamos select_related para evitar lentidão ao buscar o nome da viagem de cada gasto
+    all_expenses = Expense.objects.filter(trip__user=request.user).select_related('trip', 'item').order_by('-date')
+    
+    # 3. Processamento de Câmbio (Necessário para a tabela mostrar R$)
+    rates_cache = {}
+    total_general = 0
+    
+    for expense in all_expenses:
+        # Se a moeda não estiver no cache, busca a cotação
+        if expense.currency not in rates_cache:
+            rates_cache[expense.currency] = get_exchange_rate(expense.currency)
+            
+        # Calcula o valor convertido e "anexa" ao objeto expense temporariamente
+        rate = rates_cache[expense.currency]
+        expense.converted_value = float(expense.amount) * rate
+        total_general += expense.converted_value
+
+    context = {
+        # Seus dados de gráficos existentes continuam aqui...
+        # ...
+        # Novos dados para a tabela:
+        'all_expenses': all_expenses,
+        'total_general': total_general, # Total somado de todas as viagens
+    }
+    
+    return render(request, 'financial_dashboard.html', context)
+
+#@login_required
+#def financial_dashboard(request):
     # Pega todas as despesas do usuário
     expenses = Expense.objects.filter(trip__user=request.user).select_related('trip')
     

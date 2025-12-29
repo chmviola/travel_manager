@@ -49,6 +49,85 @@
             </div>
         </div>
 
+        <div class="row mt-4">
+    <div class="col-12">
+        <div class="card card-primary card-outline">
+            <div class="card-header border-0">
+                <h3 class="card-title">
+                    <i class="fas fa-file-invoice-dollar mr-1"></i> Histórico Completo de Gastos
+                </h3>
+                <div class="card-tools">
+                    <a href="#" class="btn btn-tool btn-sm">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-striped table-valign-middle">
+                    <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Viagem</th> <th>Descrição / Item</th>
+                        <th class="text-right">Original</th>
+                        <th class="text-right">Em Reais (R$)</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for expense in all_expenses %}
+                    <tr>
+                        <td>
+                            {{ expense.date|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+                            <a href="{% url 'trip_detail' expense.trip.id %}" class="text-dark font-weight-bold">
+                                <i class="fas fa-plane-departure text-muted text-xs"></i> {{ expense.trip.title }}
+                            </a>
+                        </td>
+
+                        <td>
+                            {{ expense.description }}
+                            {% if expense.item %}
+                                <br><small class="text-info"><i class="fas fa-link"></i> {{ expense.item.name }}</small>
+                            {% else %}
+                                <br><small class="text-muted">{{ expense.category }}</small>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-right">
+                            <small class="badge badge-light border">
+                                {{ expense.currency }} {{ expense.amount|floatformat:2|intcomma }}
+                            </small>
+                        </td>
+
+                        <td class="text-right text-success font-weight-bold">
+                            R$ {{ expense.converted_value|floatformat:2|intcomma }}
+                        </td>
+
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar">
+                                    <i class="fas fa-pen text-primary"></i>
+                                </a>
+                                <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir" onclick="return confirm('Deseja realmente excluir este gasto?');">
+                                    <i class="fas fa-trash text-danger"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum gasto registrado no sistema.</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
         <div class="col-md-6">
             <div class="card card-primary">
                 <div class="card-header">
