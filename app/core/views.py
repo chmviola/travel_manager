@@ -320,6 +320,8 @@ def financial_dashboard(request):
     # 2. Inicialização de Variáveis
     total_global_brl = 0
     total_year_brl = 0  # Variável para o novo Widget
+
+    # Garante que pegamos o ano certo (inteiro)
     current_year = timezone.now().year # Pega o ano atual (ex: 2025)
     
     expenses_by_category = defaultdict(float)
@@ -334,16 +336,19 @@ def financial_dashboard(request):
             
         rate = rates_cache[expense.currency]
         
-        # Valor convertido para uso interno
+        # CÁLCULO CRÍTICO: Valor * Taxa
         val_brl = float(expense.amount) * rate
         val_brl = round(val_brl, 2)
         
+        # Debug no Terminal: Mostra o que está acontecendo com cada gasto
+        print(f"Item: {expense.description} | Moeda: {expense.currency} | Valor: {expense.amount} | Taxa: {rate} | Convertido: {val_brl}")
+
         # Salva no objeto para exibir na Tabela (coluna R$)
         expense.converted_value = val_brl
         
-        # --- Acumuladores ---
+        # --- SOMAS (Acumuladores) ---
         
-        # Total Global
+        # 1. Soma Global (Tudo desde sempre)
         total_global_brl += val_brl
         
         # Total do Ano Atual (NOVO)
