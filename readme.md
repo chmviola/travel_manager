@@ -85,6 +85,8 @@ O **TravelManager** nasceu da necessidade de centralizar todas as informações 
 * **Nginx:** Proxy reverso (geralmente configurado via Portainer/Host).
 * **Google Maps API:** Geocoding e Maps JavaScript API.
 
+![Screenshot do Logo](app/core/static/img/infografico1.png)
+
 ---
 
 ## 🏗 Arquitetura e Infraestrutura
