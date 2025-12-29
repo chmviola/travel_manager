@@ -17,75 +17,61 @@ from .forms import UserCreateForm, UserEditForm
 
 
 @login_required
-def financial_dashboard(request):
-    # 1. Busca ÚNICA e Otimizada
-    # Trazemos 'trip' e 'item' para não travar o banco na hora de gerar a tabela
-    all_expenses = Expense.objects.filter(
-        trip__user=request.user
-    ).select_related('trip', 'item').order_by('-date')
+def home(request):
+    # 1. Busca as viagens
+    trips = Trip.objects.filter(user=request.user).order_by('-start_date')
     
-    # 2. Inicialização de Variáveis
-    total_global_brl = 0
-    total_year_brl = 0  # Variável para o novo Widget
-    current_year = timezone.now().year # Pega o ano atual (ex: 2025)
-    
-    expenses_by_category = defaultdict(float)
-    expenses_by_trip = defaultdict(float)
+    # 2. Cálculo Financeiro
+    total_spent = 0
     rates_cache = {}
-
-    # 3. Loop Único (Processa Tabela, Gráficos e Widgets ao mesmo tempo)
+    all_expenses = Expense.objects.filter(trip__user=request.user)
+    
     for expense in all_expenses:
-        # --- Conversão de Moeda ---
         if expense.currency not in rates_cache:
             rates_cache[expense.currency] = get_exchange_rate(expense.currency)
-            
-        rate = rates_cache[expense.currency]
-        
-        # Valor convertido para uso interno
-        val_brl = float(expense.amount) * rate
-        val_brl = round(val_brl, 2)
-        
-        # Salva no objeto para exibir na Tabela (coluna R$)
-        expense.converted_value = val_brl
-        
-        # --- Acumuladores ---
-        
-        # Total Global
-        total_global_brl += val_brl
-        
-        # Total do Ano Atual (NOVO)
-        if expense.date.year == current_year:
-            total_year_brl += val_brl
+        # ARREDONDAMENTO AQUI:
+        val_converted = float(expense.amount) * rates_cache[expense.currency]
+        total_spent += round(val_converted, 2)
 
-        # Dados para Gráficos
-        expenses_by_category[expense.category] += val_brl
-        expenses_by_trip[expense.trip.title] += val_brl
+    # 3. Cotações de Referência (Dólar e Euro) para os Widgets
+    # Se já tivermos buscado no loop acima, usamos do cache. Se não, buscamos agora.
+    usd_rate = rates_cache.get('USD') or get_exchange_rate('USD')
+    eur_rate = rates_cache.get('EUR') or get_exchange_rate('EUR')
 
-    # 4. Preparação dos Gráficos
-    cat_labels = list(expenses_by_category.keys())
-    cat_data = [round(v, 2) for v in expenses_by_category.values()]
+    # 4. Dados para o Mapa (CORREÇÃO AQUI)
+    # Buscamos os itens com coordenadas
+    raw_locations = TripItem.objects.filter(
+        trip__user=request.user
+    ).exclude(
+        location_lat__isnull=True
+    ).exclude(
+        location_lng__isnull=True
+    ).values('name', 'location_lat', 'location_lng', 'trip__title')
 
-    trip_labels = list(expenses_by_trip.keys())
-    trip_data = [round(v, 2) for v in expenses_by_trip.values()]
+    # Lista limpa para o Javascript
+    map_locations = []
+    for loc in raw_locations:
+        map_locations.append({
+            'name': loc['name'],
+            'trip__title': loc['trip__title'],
+            # Convertendo Decimal do Python para Float do JS
+            'location_lat': float(loc['location_lat']), 
+            'location_lng': float(loc['location_lng']),
+        })
 
     context = {
-        # Widgets / KPIs
-        'total_global': total_global_brl,
-        'expense_count': all_expenses.count(),
-        'total_year': total_year_brl,      # <--- Dado Novo
-        'current_year': current_year,      # <--- Para mostrar no label
-        
-        # Tabela
-        'all_expenses': all_expenses,
-        
-        # Gráficos (JSON)
-        'cat_labels': json.dumps(cat_labels),
-        'cat_data': json.dumps(cat_data),
-        'trip_labels': json.dumps(trip_labels),
-        'trip_data': json.dumps(trip_data),
+        'trips': trips,
+        'total_spent': total_spent,
+        'trip_count': trips.count(),
+        # Passamos as taxas para o template
+        'usd_rate': usd_rate,
+        'eur_rate': eur_rate,
+        # Usamos json.dumps para garantir que vá como texto JSON válido
+        'map_locations': json.dumps(map_locations), 
+        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
     }
-    
-    return render(request, 'financial_dashboard.html', context)
+
+    return render(request, 'index.html', context)
 
 @login_required
 def trip_list(request):
