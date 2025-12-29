@@ -5,8 +5,8 @@
 {% block content %}
 <div class="container-fluid">
     
-    <div class="row">
-        <div class="col-lg-6 col-6">
+    <div class="row"> #-- Indicadores Principais ---#
+        <div class="col-lg-3 col-6"> #-- Total Gasto em Viagens --#
             <div class="small-box bg-success">
                 <div class="inner">
                     <h3>R$ {{ total_global|floatformat:2|intcomma }}</h3>
@@ -18,7 +18,7 @@
             </div>
         </div>
         
-        <div class="col-lg-6 col-6">
+        <div class="col-lg-3 col-6"> #-- Total de Viagens --#
             <div class="small-box bg-info">
                 <div class="inner">
                     <h3>{{ expense_count }}</h3>
@@ -29,11 +29,36 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-lg-3 col-6"> #-- Gasto no Ano Atual --#
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>R$ {{ total_year|floatformat:2|intcomma }}</h3>
+                    <p>Gasto em {{ current_year }}</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-6"> #-- Placeholder para Futuro Indicador --#
+            <div class="small-box bg-secondary">
+                <div class="inner">
+                    <h3>---</h3>
+                    <p>Em breve...</p>
+                </div>
+            <div class="icon">
+                <i class="fas fa-ellipsis-h"></i>
+            </div>
+        </div>
+        </div>
+    
     </div>
 
-    <div class="row">
+    <div class="row"> #-- Gráficos e Tabela de Gastos --#
         
-        <div class="col-md-6">
+        <div class="col-md-6"> #-- Gráfico de Donut (Categorias) --#
             <div class="card card-danger">
                 <div class="card-header">
                     <h3 class="card-title">Gastos por Categoria</h3>
@@ -49,7 +74,7 @@
             </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-6">  #-- Gráfico de Barras (Viagens) --#
             <div class="card card-primary">
                 <div class="card-header">
                     <h3 class="card-title">Custo por Viagem</h3>
@@ -66,20 +91,21 @@
                 </div>
             </div>
         </div>
+    </div>
 
-                <div class="row mt-4">
-    <div class="col-12">
-        <div class="card card-primary card-outline">
-            <div class="card-header border-0">
-                <h3 class="card-title">
-                    <i class="fas fa-file-invoice-dollar mr-1"></i> Histórico Completo de Gastos
-                </h3>
-                <div class="card-tools">
-                    <a href="#" class="btn btn-tool btn-sm">
-                        <i class="fas fa-download"></i>
-                    </a>
+    <div class="row mt-12"> #-- Tabela de Gastos --#
+            <div class="col-12">
+            <div class="card card-primary card-outline">
+                <div class="card-header border-0">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-invoice-dollar mr-1"></i> Histórico Completo de Gastos
+                    </h3>
+                    <div class="card-tools">
+                        <a href="#" class="btn btn-tool btn-sm">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
                 </div>
-            </div>
             <div class="card-body table-responsive p-0">
                 <table class="table table-striped table-valign-middle">
                     <thead>
@@ -146,7 +172,6 @@
     </div>
 </div>
 
-    </div>
 </div>
 {% endblock %}
 
