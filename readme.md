@@ -1,4 +1,6 @@
-![Screenshot do Logo](app/core/static/img/logo.png)
+<p align="center">
+  <img src="app/core/static/img/logo.png" alt="Logo do App" width="200">
+</p>
 
 # TravelManager
 
@@ -250,10 +252,10 @@ O projeto utiliza uma esteira automatizada de DevOps:
 ## 🗺 Roadmap
 
 * [ ] Integração com API de Clima para previsão do tempo nas datas da viagem.
-* [ ] Upload de anexos (PDFs de passagens/reservas) nos itens da timeline.
+* [X] Upload de anexos (PDFs de passagens/reservas) nos itens da timeline.
 * [ ] Exportação do roteiro completo em PDF.
 * [ ] Compartilhamento de viagem (Link público "somente leitura").
-* [ ] Widget de cotação de moedas em tempo real no Dashboard.
+* [X] Widget de cotação de moedas em tempo real no Dashboard.
 
 ---
 
