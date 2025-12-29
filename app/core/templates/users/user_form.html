@@ -50,14 +50,14 @@
                         <div class="col-md-6">
                             <div class="form-check">
                                 {{ form.is_active }}
-                                <label class="form-check-label font-weight-bold ml-2">Usuário Ativo</label>
+                                <label class="form-check-label font-weight-bold ml-2">    Usuário Ativo</label>
                                 <small class="d-block text-muted">Desmarque para bloquear acesso sem excluir.</small>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-check">
                                 {{ form.is_superuser }}
-                                <label class="form-check-label font-weight-bold ml-2">Superusuário</label>
+                                <label class="form-check-label font-weight-bold ml-2">    Superusuário</label>
                                 <small class="d-block text-muted">Acesso total ao sistema.</small>
                             </div>
                         </div>
@@ -80,6 +80,19 @@
                                         {{ form.password.errors|join:", " }}
                                     </div>
                                 {% endif %}
+
+                                <div class="mt-2 p-2 bg-light rounded border">
+                                    <small class="text-muted">
+                                        <strong>Requisitos obrigatórios:</strong>
+                                        <ul class="pl-3 mb-0 mt-1" style="line-height: 1.4;">
+                                            <li>Mínimo de 8 caracteres</li>
+                                            <li>Pelo menos 1 letra maiúscula (A-Z)</li>
+                                            <li>Pelo menos 1 número (0-9)</li>
+                                            <li>Pelo menos 1 caractere especial (!, @, #, etc.)</li>
+                                        </ul>
+                                    </small>
+                                </div>
+
                             </div>
                         </div>
                         <div class="col-md-6">
