@@ -11,6 +11,7 @@ from .models import Trip, TripItem, Expense, TripAttachment
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from django.db.models import Sum
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
 from .forms import UserCreateForm, UserEditForm

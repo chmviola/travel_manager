@@ -1,6 +1,7 @@
 from django import forms
 from .models import Expense, Trip, TripItem, TripAttachment
 from django.contrib.auth.models import User, Group
+import re  # <--- Importante para validação regex
 
 class TripForm(forms.ModelForm):
     class Meta:
@@ -140,7 +141,26 @@ class UserCreateForm(forms.ModelForm):
 
 class UserEditForm(forms.ModelForm):
     # Na edição, não mostramos o campo de senha para evitar erros de recriptografia
-    groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-control'}), required=False, label="Grupos de Acesso")
+    groups = forms.ModelMultipleChoiceField(
+        queryset=Group.objects.all(),
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        required=False,
+        label="Grupos de Acesso"
+    )
+
+    # --- NOVOS CAMPOS DE SENHA ---
+    # required=False permite editar outros dados sem obrigar a mudar a senha
+    password = forms.CharField(
+        label='Nova Senha', 
+        required=False, 
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Deixe vazio para manter a atual'})
+    )
+    confirm_password = forms.CharField(
+        label='Confirmar Senha', 
+        required=False, 
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Repita a nova senha'})
+    )
+    # -----------------------------
 
     class Meta:
         model = User
@@ -150,6 +170,51 @@ class UserEditForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
-            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
+            # Checkboxes com estilo customizado
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'style': 'margin-left: 10px;'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input', 'style': 'margin-left: 10px;'}),
         }
+
+    # --- VALIDAÇÃO DA SENHA ---
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if password:
+            # 1. Verificar se conferem
+            if password != confirm_password:
+                self.add_error('confirm_password', "As senhas não conferem.")
+
+            # 2. Complexidade (Regex)
+            if len(password) < 8:
+                self.add_error('password', "A senha deve ter no mínimo 8 caracteres.")
+            
+            if not re.search(r'\d', password):
+                self.add_error('password', "A senha deve conter pelo menos um número.")
+
+            if not re.search(r'[A-Z]', password):
+                self.add_error('password', "A senha deve conter pelo menos uma letra maiúscula.")
+
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+                self.add_error('password', "A senha deve conter pelo menos um caractere especial.")
+
+        return cleaned_data
+
+    # --- SALVAMENTO ---
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get('password')
+        
+        # Se o campo senha foi preenchido, fazemos o hash
+        if password:
+            user.set_password(password)
+            
+        if commit:
+            user.save()
+            self.save_m2m() # Importante para salvar os Grupos!
+            
+        return user
+    # -----------------------
+
+
