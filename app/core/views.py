@@ -1,13 +1,16 @@
-import json # Para enviar dados ao JS
-from django.utils import timezone # Importante para saber o ano atual
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
-from .models import Trip, TripItem, Expense, TripAttachment  
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
+from django.contrib import messages
+from django.utils import timezone # Importante para saber o ano atual
+from collections import defaultdict     # <--- Essencial para os gráficos
+import json                             # <--- Essencial para os gráficos
+# Seus Models e Utils (Geralmente já estavam aí)
+from .models import Trip, Expense, Item
 from .utils import get_exchange_rate, get_currency_by_country
+from .models import Trip, TripItem, Expense, TripAttachment 
+from django.conf import settings
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from django.db.models import Sum
-from collections import defaultdict # Para agrupar dados manualmente
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
 from .forms import UserCreateForm, UserEditForm
