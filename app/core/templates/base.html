@@ -45,8 +45,8 @@
     <a href="{% url 'home' %}" class="brand-link">
       <img src="{% static 'img/logo.png' %}" 
          alt="Logo" 
-         class="brand-image img-circle elevation-3" 
-         style="opacity: .8">
+         class="brand-image" 
+         style="opacity: .9; max-height: 33px; margin-top: 1px;">
     
       <span class="brand-text font-weight-light">TravelManager</span>
     </a>
@@ -113,7 +113,7 @@
         
 <footer class="main-footer">
     <div class="float-right d-none d-sm-inline">
-        <img src="{% static 'img/logo.png' %}" alt="Logo" class="img-circle" style="height: 20px; width: 20px; margin-right: 5px; vertical-align: sub;">
+        <img src="{% static 'img/logo.png' %}" alt="Logo" style="height: 18px; width: auto; margin-right: 5px; vertical-align: text-bottom;">
         
         <b>Versão</b> {{ app_version }}
     </div>
