@@ -2,6 +2,12 @@
 {% load humanize %}
 {% block page_title %}Visão Financeira Global{% endblock %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap4.min.css">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     
@@ -93,92 +99,117 @@
         </div>
     </div>
 
-    <div class="row mt-12"> <!-- Tabela de Gastos -->
+        <div class="row mt-12"> <!-- Tabela de Gastos -->
             <div class="col-12">
-            <div class="card card-primary card-outline">
-                <div class="card-header border-0">
-                    <h3 class="card-title">
-                        <i class="fas fa-file-invoice-dollar mr-1"></i> Histórico Completo de Gastos
-                    </h3>
-                    <div class="card-tools">
-                        <a href="#" class="btn btn-tool btn-sm">
-                            <i class="fas fa-download"></i>
-                        </a>
+                <div class="card card-primary card-outline">
+                    <div class="card-header border-0">
+                        <h3 class="card-title">
+                            <i class="fas fa-file-invoice-dollar mr-1"></i> Histórico Completo de Gastos
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <table id="expensesTable" class="table table-bordered table-striped table-hover">
+                            <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Viagem</th>
+                                <th>Descrição / Item</th>
+                                <th class="text-right">Original</th>
+                                <th class="text-right">Em Reais (R$)</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for expense in all_expenses %}
+                            <tr>
+                                <td data-order="{{ expense.date|date:'Ymd' }}">
+                                    {{ expense.date|date:"d/m/Y" }}
+                                </td>
+
+                                <td>
+                                    <a href="{% url 'trip_detail' expense.trip.id %}" class="text-dark font-weight-bold">
+                                        {{ expense.trip.title }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    {{ expense.description }}
+                                    {% if expense.item %}
+                                        <br><small class="text-info"><i class="fas fa-link"></i> {{ expense.item.name }}</small>
+                                    {% else %}
+                                        <br><small class="text-muted">{{ expense.category }}</small>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-right" data-order="{{ expense.amount }}">
+                                    <small class="badge badge-light border">
+                                        {{ expense.currency }} {{ expense.amount|floatformat:2|intcomma }}
+                                    </small>
+                                </td>
+
+                                <td class="text-right text-success font-weight-bold" data-order="{{ expense.converted_value }}">
+                                    R$ {{ expense.converted_value|floatformat:2|intcomma }}
+                                </td>
+
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar">
+                                            <i class="fas fa-pen text-primary"></i>
+                                        </a>
+                                        <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir" onclick="return confirm('Deseja realmente excluir este gasto?');">
+                                            <i class="fas fa-trash text-danger"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                            
+                            <tfoot>
+                                <tr class="bg-light">
+                                    <th colspan="4" class="text-right text-uppercase">Total Geral Acumulado:</th>
+                                    <th class="text-right text-success" style="font-size: 1.1em;">R$ {{ total_global|floatformat:2|intcomma }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
-            <div class="card-body table-responsive p-0">
-                <table class="table table-striped table-valign-middle">
-                    <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Viagem</th> <th>Descrição / Item</th>
-                        <th class="text-right">Original</th>
-                        <th class="text-right">Em Reais (R$)</th>
-                        <th class="text-center">Ações</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for expense in all_expenses %}
-                    <tr>
-                        <td>
-                            {{ expense.date|date:"d/m/Y" }}
-                        </td>
-
-                        <td>
-                            <a href="{% url 'trip_detail' expense.trip.id %}" class="text-dark font-weight-bold">
-                                <i class="fas fa-plane-departure text-muted text-xs"></i> {{ expense.trip.title }}
-                            </a>
-                        </td>
-
-                        <td>
-                            {{ expense.description }}
-                            {% if expense.item %}
-                                <br><small class="text-info"><i class="fas fa-link"></i> {{ expense.item.name }}</small>
-                            {% else %}
-                                <br><small class="text-muted">{{ expense.category }}</small>
-                            {% endif %}
-                        </td>
-
-                        <td class="text-right">
-                            <small class="badge badge-light border">
-                                {{ expense.currency }} {{ expense.amount|floatformat:2|intcomma }}
-                            </small>
-                        </td>
-
-                        <td class="text-right text-success font-weight-bold">
-                            R$ {{ expense.converted_value|floatformat:2|intcomma }}
-                        </td>
-
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm">
-                                <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar">
-                                    <i class="fas fa-pen text-primary"></i>
-                                </a>
-                                <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir" onclick="return confirm('Deseja realmente excluir este gasto?');">
-                                    <i class="fas fa-trash text-danger"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-4">Nenhum gasto registrado no sistema.</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
-</div>
-
-</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+  $(function () {
+    $("#expensesTable").DataTable({
+      "responsive": true, 
+      "lengthChange": false, 
+      "autoWidth": false,
+      "pageLength": 25, // Mostra 25 itens por página
+      "order": [[ 0, "desc" ]], // Ordena pela primeira coluna (Data) decrescente
+      "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json" // Tradução para Português
+        },
+      "buttons": ["copy", "csv", "excel", "pdf", "print", "colVis"]
+    }).buttons().container().appendTo('#expensesTable_wrapper .col-md-6:eq(0)');
+  });
+  
     $(function () {
         // --- 1. CONFIGURAÇÃO DO GRÁFICO DE CATEGORIAS (DONUT) ---
         var donutChartCanvas = $('#donutChart').get(0).getContext('2d')

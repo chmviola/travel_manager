@@ -340,8 +340,8 @@ def financial_dashboard(request):
         val_brl = float(expense.amount) * rate
         val_brl = round(val_brl, 2)
         
-        # Debug no Terminal: Mostra o que está acontecendo com cada gasto
-        print(f"Item: {expense.description} | Moeda: {expense.currency} | Valor: {expense.amount} | Taxa: {rate} | Convertido: {val_brl}")
+    #    # Debug no Terminal: Mostra o que está acontecendo com cada gasto
+    #    print(f"Item: {expense.description} | Moeda: {expense.currency} | Valor: {expense.amount} | Taxa: {rate} | Convertido: {val_brl}")
 
         # Salva no objeto para exibir na Tabela (coluna R$)
         expense.converted_value = val_brl
