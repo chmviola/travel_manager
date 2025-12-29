@@ -307,6 +307,13 @@ def attachment_delete(request, pk):
 
 @login_required
 def financial_dashboard(request):
+    # Pega todas as despesas do usuário
+    expenses = Expense.objects.filter(trip__user=request.user).select_related('trip')
+    
+    total_global_brl = 0
+    expenses_by_category = defaultdict(float)
+    expenses_by_trip = defaultdict(float)
+
     # 1. Dados para os Gráficos (Lógica Existente resumida)
     trips = Trip.objects.filter(user=request.user)
     
@@ -328,10 +335,35 @@ def financial_dashboard(request):
         expense.converted_value = float(expense.amount) * rate
         total_general += expense.converted_value
 
+        # CÁLCULO E ARREDONDAMENTO AQUI:
+        val_brl = float(expense.amount) * rate
+        val_brl = round(val_brl, 2) # <--- Arredonda antes de somar
+        
+        # Soma Globais
+        total_global_brl += val_brl
+        expenses_by_category[expense.category] += val_brl
+        expenses_by_trip[expense.trip.title] += val_brl
+
+    # Arredonda o total final por segurança
+    total_global_brl = round(total_global_brl, 2)
+
+    # Prepara dados para os Gráficos (Chart.js espera listas)
+    # 1. Gráfico de Categoria (Donut)
+    cat_labels = list(expenses_by_category.keys())
+    cat_data = [round(v, 2) for v in expenses_by_category.values()]
+
+    # 2. Gráfico de Viagens (Barra)
+    trip_labels = list(expenses_by_trip.keys())
+    trip_data = [round(v, 2) for v in expenses_by_trip.values()]
+
     context = {
-        # Seus dados de gráficos existentes continuam aqui...
-        # ...
-        # Novos dados para a tabela:
+        'total_global': total_global_brl,
+        'expense_count': expenses.count(),
+        # Enviamos como JSON seguro para o Javascript ler
+        'cat_labels': json.dumps(cat_labels),
+        'cat_data': json.dumps(cat_data),
+        'trip_labels': json.dumps(trip_labels),
+        'trip_data': json.dumps(trip_data),
         'all_expenses': all_expenses,
         'total_general': total_general, # Total somado de todas as viagens
     }
