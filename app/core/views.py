@@ -325,65 +325,71 @@ def attachment_delete(request, pk):
 
 @login_required
 def financial_dashboard(request):
-    # Pega todas as despesas do usuário
-    expenses = Expense.objects.filter(trip__user=request.user).select_related('trip')
+    # 1. Busca ÚNICA e Otimizada
+    # Trazemos 'trip' e 'item' para não travar o banco na hora de gerar a tabela
+    all_expenses = Expense.objects.filter(
+        trip__user=request.user
+    ).select_related('trip', 'item').order_by('-date')
     
+    # 2. Inicialização de Variáveis
     total_global_brl = 0
+    total_year_brl = 0  # Variável para o novo Widget
+    current_year = timezone.now().year # Pega o ano atual (ex: 2025)
+    
     expenses_by_category = defaultdict(float)
     expenses_by_trip = defaultdict(float)
-
-    # 1. Dados para os Gráficos (Lógica Existente resumida)
-    trips = Trip.objects.filter(user=request.user)
-    
-    # 2. Busca TODAS as despesas do usuário
-    # Usamos select_related para evitar lentidão ao buscar o nome da viagem de cada gasto
-    all_expenses = Expense.objects.filter(trip__user=request.user).select_related('trip', 'item').order_by('-date')
-    
-    # 3. Processamento de Câmbio (Necessário para a tabela mostrar R$)
     rates_cache = {}
-    total_general = 0
-    
+
+    # 3. Loop Único (Processa Tabela, Gráficos e Widgets ao mesmo tempo)
     for expense in all_expenses:
-        # Se a moeda não estiver no cache, busca a cotação
+        # --- Conversão de Moeda ---
         if expense.currency not in rates_cache:
             rates_cache[expense.currency] = get_exchange_rate(expense.currency)
             
-        # Calcula o valor convertido e "anexa" ao objeto expense temporariamente
         rate = rates_cache[expense.currency]
-        expense.converted_value = float(expense.amount) * rate
-        total_general += expense.converted_value
-
-        # CÁLCULO E ARREDONDAMENTO AQUI:
-        val_brl = float(expense.amount) * rate
-        val_brl = round(val_brl, 2) # <--- Arredonda antes de somar
         
-        # Soma Globais
+        # Valor convertido para uso interno
+        val_brl = float(expense.amount) * rate
+        val_brl = round(val_brl, 2)
+        
+        # Salva no objeto para exibir na Tabela (coluna R$)
+        expense.converted_value = val_brl
+        
+        # --- Acumuladores ---
+        
+        # Total Global
         total_global_brl += val_brl
+        
+        # Total do Ano Atual (NOVO)
+        if expense.date.year == current_year:
+            total_year_brl += val_brl
+
+        # Dados para Gráficos
         expenses_by_category[expense.category] += val_brl
         expenses_by_trip[expense.trip.title] += val_brl
 
-    # Arredonda o total final por segurança
-    total_global_brl = round(total_global_brl, 2)
-
-    # Prepara dados para os Gráficos (Chart.js espera listas)
-    # 1. Gráfico de Categoria (Donut)
+    # 4. Preparação dos Gráficos
     cat_labels = list(expenses_by_category.keys())
     cat_data = [round(v, 2) for v in expenses_by_category.values()]
 
-    # 2. Gráfico de Viagens (Barra)
     trip_labels = list(expenses_by_trip.keys())
     trip_data = [round(v, 2) for v in expenses_by_trip.values()]
 
     context = {
+        # Widgets / KPIs
         'total_global': total_global_brl,
-        'expense_count': expenses.count(),
-        # Enviamos como JSON seguro para o Javascript ler
+        'expense_count': all_expenses.count(),
+        'total_year': total_year_brl,      # <--- Dado Novo
+        'current_year': current_year,      # <--- Para mostrar no label
+        
+        # Tabela
+        'all_expenses': all_expenses,
+        
+        # Gráficos (JSON)
         'cat_labels': json.dumps(cat_labels),
         'cat_data': json.dumps(cat_data),
         'trip_labels': json.dumps(trip_labels),
         'trip_data': json.dumps(trip_data),
-        'all_expenses': all_expenses,
-        'total_general': total_general, # Total somado de todas as viagens
     }
     
     return render(request, 'financial_dashboard.html', context)
