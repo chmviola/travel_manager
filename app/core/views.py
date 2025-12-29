@@ -5,7 +5,7 @@ from django.utils import timezone # Importante para saber o ano atual
 from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 # Seus Models e Utils (Geralmente já estavam aí)
-from .models import Trip, Expense, Item
+from .models import Trip, Expense, TripItem
 from .utils import get_exchange_rate, get_currency_by_country
 from .models import Trip, TripItem, Expense, TripAttachment 
 from django.conf import settings
