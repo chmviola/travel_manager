@@ -81,6 +81,45 @@ def trip_list(request):
     """
     # O filtro user=request.user garante a segurança dos dados
     trips = Trip.objects.filter(user=request.user).order_by('-start_date')
+
+    # --- Lógica para Identificar Bandeiras ---
+    # Dicionário de mapeamento (Nome no endereço -> Código ISO)
+    # Adicione mais países conforme sua necessidade
+    country_map = {
+        'alemanha': 'de', 'germany': 'de',
+        'argentina': 'ar',
+        'austrália': 'au', 'australia': 'au',
+        'brasil': 'br', 'brazil': 'br',
+        'canadá': 'ca', 'canada': 'ca',
+        'chile': 'cl',
+        'china': 'cn',
+        'espanha': 'es', 'spain': 'es',
+        'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
+        'finlândia': 'fi', 'finland': 'fi',
+        'frança': 'fr', 'france': 'fr',
+        'itália': 'it', 'italy': 'it',
+        'japão': 'jp', 'japan': 'jp',
+        'portugal': 'pt',
+        'méxico': 'mx', 'mexico': 'mx',
+        'reino unido': 'gb', 'uk': 'gb', 'london': 'gb',
+        'uruguai': 'uy', 'uruguay': 'uy',
+    }
+
+    for trip in trips:
+        trip.flags = set() # Usamos um Set para evitar bandeiras repetidas
+        
+        # Pega todos os itens dessa viagem que tenham endereço
+        items = trip.items.exclude(location_address__isnull=True).exclude(location_address__exact='')
+        
+        for item in items:
+            address_lower = item.location_address.lower()
+            
+            # Verifica se algum país do dicionário está no endereço
+            for country_name, country_code in country_map.items():
+                if country_name in address_lower:
+                    trip.flags.add(country_code)
+                    # Não damos break aqui, caso haja múltiplos países num texto estranho, 
+                    # mas geralmente um endereço só tem um país.
     
     return render(request, 'trips/trip_list.html', {'trips': trips})
 

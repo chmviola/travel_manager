@@ -22,11 +22,20 @@
             
             <div class="card-header">
                 <h3 class="card-title font-weight-bold">{{ trip.title }}</h3>
+                
                 <div class="card-tools">
+                    {% if trip.flags %}
+                        {% for flag_code in trip.flags %}
+                            <span class="flag-icon flag-icon-{{ flag_code }} mr-2 shadow-sm" 
+                                  style="font-size: 1.2em; border-radius: 2px;" 
+                                  title="País identificado"></span>
+                        {% endfor %}
+                    {% endif %}
                     <span class="badge 
                         {% if trip.status == 'CONFIRMED' %}badge-success{% elif trip.status == 'COMPLETED' %}badge-secondary{% else %}badge-warning{% endif %}">
                         {{ trip.get_status_display }}
                     </span>
+
                 </div>
             </div>
 
