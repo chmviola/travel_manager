@@ -1,3 +1,4 @@
+from multiprocessing import context
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -145,6 +146,37 @@ def trip_detail(request, pk):
     # get_object_or_404 garante que retorna erro se o ID não existir
     # e o filtro user=request.user impede que um usuário veja viagem de outro
     trip = get_object_or_404(Trip, pk=pk, user=request.user)
+
+# 1. Lógica das Bandeiras (Cópia da trip_list)
+    country_map = {
+        'alemanha': 'de', 'germany': 'de',
+        'argentina': 'ar',
+        'austrália': 'au', 'australia': 'au',
+        'brasil': 'br', 'brazil': 'br',
+        'canadá': 'ca', 'canada': 'ca',
+        'chile': 'cl',
+        'china': 'cn',
+        'espanha': 'es', 'spain': 'es',
+        'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
+        'finlândia': 'fi', 'finland': 'fi',
+        'frança': 'fr', 'france': 'fr',
+        'itália': 'it', 'italy': 'it',
+        'japão': 'jp', 'japan': 'jp',
+        'portugal': 'pt',
+        'méxico': 'mx', 'mexico': 'mx',
+        'reino unido': 'gb', 'uk': 'gb', 'london': 'gb',
+        'uruguai': 'uy', 'uruguay': 'uy',
+    }
+
+    trip.flags = set()
+    items_with_address = trip.items.exclude(location_address__isnull=True).exclude(location_address__exact='')
+    
+    for item in items_with_address:
+        address_lower = item.location_address.lower()
+        for country_name, country_code in country_map.items():
+            if country_name in address_lower:
+                trip.flags.add(country_code)
+
     # Buscamos os itens ordenados por data para a timeline
     items = trip.items.all().order_by('start_datetime')
     expenses = trip.expenses.all()
@@ -183,14 +215,16 @@ def trip_detail(request, pk):
             'rate': rate
         })
 
-    return render(request, 'trips/trip_detail.html', {
+    context = {
         'trip': trip,
         'items': items,
         'expenses': expenses,
         'total_spent_brl': round(total_converted_brl, 2),
         'trip_rates': trip_rates, # <--- ENVIAMOS AS COTAÇÕES AQUI
         'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
-    })
+    }
+
+    return render(request, 'trips/trip_detail.html', context)
 
 @login_required
 def trip_item_create(request, trip_id):
