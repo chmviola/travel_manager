@@ -28,13 +28,13 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Configurações de API',
             },
         ),
-        migrations.CreateModel(
-            name='Checklist',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-            ],
-        ),
+        # migrations.CreateModel(
+        #     name='Checklist',
+        #     fields=[
+        #         ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+        #         ('created_at', models.DateTimeField(auto_now_add=True)),
+        #     ],
+        # ),
         # migrations.CreateModel(
         #     name='ChecklistItem',
         #     fields=[
