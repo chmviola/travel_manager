@@ -40,13 +40,15 @@ urlpatterns = [
     path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
     path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
 
+    path('profile/', views.profile_view, name='user_profile'),
+
     # Rotas de Configuração de API
     path('config/apis/', views.api_list, name='api_list'),
     path('config/apis/add/', views.api_update, name='api_add'),
     path('config/apis/edit/<int:pk>/', views.api_update, name='api_edit'),
     path('config/apis/delete/<int:pk>/', views.api_delete, name='api_delete'),
 
-    # ... suas urls existentes ...
+    # CHECKLIST
     path('trips/<int:trip_id>/checklist/', views.checklist_view, name='checklist_view'),
     path('trips/<int:trip_id>/checklist/generate/', views.checklist_generate, name='checklist_generate'),
     path('trips/<int:trip_id>/checklist/add/', views.checklist_add_item, name='checklist_add_item'),

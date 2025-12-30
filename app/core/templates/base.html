@@ -21,30 +21,33 @@
 
   <nav class="main-header navbar navbar-expand navbar-white navbar-light">
 
-    <ul class="navbar-nav align-items-center"> <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-        </li>
-        
-        <li class="nav-item ml-2">
-            {% block header_flags %}{% endblock %}
-        </li>
-
-        <li class="nav-item d-flex align-items-center ml-2">
-            <h5 class="m-0 text-dark font-weight-bold">
-                {% block page_title %}Travel Manager{% endblock %}
-            </h5>
-        </li>
-    </ul>
-
-    <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-            <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
-                {% csrf_token %}
-            </form>
-
-            <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt"></i> Sair
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#">
+                <i class="far fa-user mr-1"></i>
+                <span class="d-none d-md-inline">
+                    Olá, {{ request.user.first_name|default:request.user.username }}
+                </span>
             </a>
+            
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <span class="dropdown-item dropdown-header">Minha Conta</span>
+                <div class="dropdown-divider"></div>
+                
+                <a href="{% url 'user_profile' %}" class="dropdown-item">
+                    <i class="fas fa-id-card mr-2"></i> Meu Perfil
+                </a>
+                
+                <div class="dropdown-divider"></div>
+                
+                <a href="#" class="dropdown-item dropdown-footer text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Sair do Sistema
+                </a>
+                
+                <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
+                    {% csrf_token %}
+                </form>
+            </div>
         </li>
     </ul>
   </nav>
@@ -65,7 +68,7 @@
            <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=random" class="img-circle elevation-2" alt="User Image">
         </div>
         <div class="info">
-          <a href="#" class="d-block">{{ request.user.username }}</a>
+          <a href="{% url 'user_profile' %}" class="d-block">{{ request.user.username }}</a>
         </div>
       </div>
 

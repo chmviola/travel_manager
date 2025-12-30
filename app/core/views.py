@@ -10,7 +10,7 @@ from .models import Trip, Expense, TripItem, APIConfiguration, Checklist, Checkl
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai
 from .models import Trip, TripItem, Expense, TripAttachment, Checklist, ChecklistItem
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm
 from django.db.models import Sum
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -75,6 +75,7 @@ def home(request):
 
     return render(request, 'index.html', context)
 
+# --- VIEWS PARA VIAGEM (TRIP) ---
 @login_required
 def trip_list(request):
     """
@@ -277,8 +278,6 @@ def trip_expense_create(request, trip_id):
     
     return render(request, 'trips/expense_form.html', {'form': form, 'trip': trip})
 
-# --- VIEWS PARA VIAGEM (TRIP) ---
-
 @login_required
 def trip_update(request, pk):
     trip = get_object_or_404(Trip, pk=pk, user=request.user)
@@ -300,7 +299,6 @@ def trip_delete(request, pk):
     return render(request, 'trips/trip_confirm_delete.html', {'trip': trip})
 
 # --- VIEWS PARA ITENS (TRIP ITEM) ---
-
 @login_required
 def trip_item_update(request, pk):
     # Buscamos o item
@@ -401,6 +399,7 @@ def attachment_delete(request, pk):
     attachment.delete()
     return redirect('trip_item_attachments', item_id=item_id)
 
+# --- VIEWS PARA FINANCIAL ---
 @login_required
 def financial_dashboard(request):
     # 1. Busca ÚNICA e Otimizada
@@ -510,6 +509,7 @@ def expense_delete(request, pk):
     expense.delete()
     return redirect('trip_detail', pk=trip_id)
 
+# --- VIEWS GOOGLE MAPS ---
 @login_required
 def fix_locations(request):
     # Pega todos os itens que têm endereço mas não têm latitude
@@ -655,6 +655,29 @@ def api_delete(request, pk):
     config.delete()
     messages.success(request, 'Configuração removida.')
     return redirect('api_list')
+
+# --- VIEWS DE USER PROFILE ---
+@login_required
+def profile_view(request):
+    user = request.user
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Seus dados foram atualizados com sucesso!")
+            return redirect('profile_view')
+        else:
+            messages.error(request, "Corrija os erros abaixo.")
+    else:
+        # Preenche o formulário com os dados atuais do usuário
+        form = UserProfileForm(instance=user)
+
+    context = {
+        'form': form,
+        'user': user
+    }
+    return render(request, 'config/profile.html', context)
 
 # --- VERIFICAÇÃO DE SEGURANÇA ---
 def is_admin(user):

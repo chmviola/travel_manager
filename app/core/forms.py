@@ -217,6 +217,30 @@ class UserEditForm(forms.ModelForm):
         return user
     # -----------------------
 
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'username']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Seu nome'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Seu sobrenome'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'seuemail@exemplo.com'}),
+            'username': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}), # Opcional: Bloquear troca de username
+        }
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'email': 'E-mail',
+            'username': 'Usuário (Login)',
+        }
+
+    def clean_email(self):
+        # Validação extra para garantir que o email é único (se outro usuário já não usa)
+        email = self.cleaned_data.get('email')
+        if email and User.objects.filter(email=email).exclude(id=self.instance.id).exists():
+            raise forms.ValidationError("Este e-mail já está em uso por outro usuário.")
+        return email
+
 class APIConfigurationForm(forms.ModelForm):
     class Meta:
         model = APIConfiguration
