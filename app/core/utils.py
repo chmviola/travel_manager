@@ -173,7 +173,7 @@ def generate_checklist_ai(trip):
     client = OpenAI(api_key=api_key)
 
     # Contexto para a IA
-    destination = trip.title or "um destino internacional"
+    destination = trip.title if trip.title else "um destino turístico"
     duration = (trip.end_date - trip.start_date).days if trip.end_date and trip.start_date else 5
     
     # Prompt engenharia para garantir JSON
@@ -193,7 +193,7 @@ def generate_checklist_ai(trip):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini-tts", # Modelo rápido e barato
+            model="gpt-4o-mini", # Modelo rápido e barato
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"}
         )
