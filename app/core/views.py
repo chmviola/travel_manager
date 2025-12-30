@@ -524,6 +524,7 @@ def fix_locations(request):
     print(f"{count} itens atualizados com coordenadas.")
     return redirect('home')
 
+# --- CHECKLIST ---
 @login_required
 def checklist_view(request, trip_id):
     trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
@@ -583,6 +584,35 @@ def checklist_toggle(request, item_id):
     item.save()
     return redirect('checklist_view', trip_id=item.checklist.trip.id)
 
+@login_required
+def checklist_add_item(request, trip_id):
+    if request.method == 'POST':
+        trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+        checklist, _ = Checklist.objects.get_or_create(trip=trip)
+        
+        category = request.POST.get('category', 'Geral')
+        item_text = request.POST.get('item')
+        
+        if item_text:
+            ChecklistItem.objects.create(
+                checklist=checklist,
+                category=category,
+                item=item_text
+            )
+            messages.success(request, f"Item '{item_text}' adicionado.")
+            
+    return redirect('checklist_view', trip_id=trip_id)
+
+@login_required
+def checklist_delete_item(request, item_id):
+    item = get_object_or_404(ChecklistItem, pk=item_id, checklist__trip__user=request.user)
+    trip_id = item.checklist.trip.id
+    item_text = item.item
+    item.delete()
+    messages.info(request, f"Item '{item_text}' removido.")
+    return redirect('checklist_view', trip_id=trip_id)
+
+# --- VIEWS DE CONFIGURAÇÃO DE API ---
 @login_required
 def api_list(request):
     # Apenas superusuários podem ver isso

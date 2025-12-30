@@ -17,18 +17,23 @@
 
 <div class="row">
     {% for category, items in items_by_category.items %}
-    <div class="col-md-4">
-        <div class="card card-primary card-outline">
-            <div class="card-header">
-                <h5 class="card-title">{{ category }}</h5>
+<div class="col-md-4">
+    <div class="card card-primary card-outline">
+        <div class="card-header">
+            <h5 class="card-title">{{ category }}</h5>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-toggle="modal" data-target="#modalAddItem" onclick="setCategory('{{ category }}')">
+                    <i class="fas fa-plus"></i>
+                </button>
             </div>
-            <div class="card-body p-0">
-                <ul class="todo-list" data-widget="todo-list">
-                    {% for item in items %}
-                    <li>
+        </div>
+        <div class="card-body p-0">
+            <ul class="todo-list">
+                {% for item in items %}
+                <li class="d-flex justify-content-between align-items-center">
+                    <div>
                         <div class="icheck-primary d-inline ml-2">
-                            <input type="checkbox" value="" name="todo{{ item.id }}" id="todoCheck{{ item.id }}" 
-                                   {% if item.is_checked %}checked{% endif %}
+                            <input type="checkbox" id="todoCheck{{ item.id }}" {% if item.is_checked %}checked{% endif %}
                                    onclick="window.location.href='{% url 'checklist_toggle' item.id %}'">
                             <label for="todoCheck{{ item.id }}"></label>
                         </div>
@@ -36,12 +41,18 @@
                               style="{% if item.is_checked %}text-decoration: line-through;{% endif %}">
                             {{ item.item }}
                         </span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
+                    </div>
+                    <div class="pr-2">
+                        <a href="{% url 'checklist_delete_item' item.id %}" class="text-danger" onclick="return confirm('Excluir este item?')">
+                            <i class="fas fa-trash-alt fa-sm"></i>
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
+</div>    
     {% empty %}
     <div class="col-12 text-center mt-5">
         <i class="fas fa-suitcase fa-4x text-muted mb-3"></i>
@@ -50,4 +61,46 @@
     </div>
     {% endfor %}
 </div>
+
+<div class="modal fade" id="modalAddItem" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'checklist_add_item' trip.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Item à Mala</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select name="category" id="modalCategoryInput" class="form-control">
+                            <option value="Roupas">Roupas</option>
+                            <option value="Higiene">Higiene</option>
+                            <option value="Documentos">Documentos</option>
+                            <option value="Eletrônicos">Eletrônicos</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Item</label>
+                        <input type="text" name="item" class="form-control" placeholder="Ex: Protetor Solar" required autofocus>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Item</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function setCategory(cat) {
+        document.getElementById('modalCategoryInput').value = cat;
+    }
+</script>
 {% endblock %}
