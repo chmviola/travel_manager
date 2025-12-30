@@ -72,7 +72,7 @@ logs/
 log/
 
 # Migrações geradas automaticamente (opcional - descomente se quiser)
-#migrations/
+migrations/
 
 # Arquivos temporários do sistema operacional
 *.swp
