@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
 from datetime import timedelta
+from .models import APIConfiguration
 
 def get_exchange_rate(from_currency):
     """
@@ -80,25 +81,23 @@ def get_currency_by_country(country_name):
     return None
 
 def fetch_weather_data(location, date_obj):
-    # DEBUG 1: Verificando entradas
-    print(f"--- DEBUG WEATHER ---")
-    print(f"Tentando buscar: {location} para data: {date_obj}")
-    print(f"API Key presente? {'Sim' if settings.WEATHER_API_KEY else 'NÃO'}")
+    # 1. Busca a chave no Banco de Dados
+    try:
+        config = APIConfiguration.objects.get(key='WEATHER_API', is_active=True)
+        api_key = config.value
+    except APIConfiguration.DoesNotExist:
+        # Se não achar no banco, pode tentar um fallback para o settings (opcional)
+        # ou apenas retornar erro.
+        print("ERRO: Chave WEATHER_API não cadastrada ou inativa no banco.")
+        return None, None, None
 
-    """
-    Busca previsão do tempo no WeatherAPI.
-    Retorna uma tupla: (temp_c, condition_text, icon_url) ou (None, None, None)
-    """
-    if not location or not date_obj or not settings.WEATHER_API_KEY:
+    if not location or not date_obj:
         return None, None, None
 
     try:
-        # Formata a data para YYYY-MM-DD
         date_str = date_obj.strftime('%Y-%m-%d')
-        
-        # URL da WeatherAPI (Endpoint Forecast serve para futuro próximo e histórico recente)
-        url = f"http://api.weatherapi.com/v1/forecast.json?key={settings.WEATHER_API_KEY}&q={location}&dt={date_str}&lang=pt"
-        
+        # Usa a api_key que veio do banco
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={api_key}&q={location}&dt={date_str}&lang=pt"        
         response = requests.get(url, timeout=5)
 
         # DEBUG 2: Verificando resposta da API

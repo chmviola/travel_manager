@@ -1,5 +1,5 @@
 from django import forms
-from .models import Expense, Trip, TripItem, TripAttachment
+from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration
 from django.contrib.auth.models import User, Group
 import re  # <--- Importante para validação regex
 
