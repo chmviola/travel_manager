@@ -190,18 +190,18 @@ class APIConfiguration(models.Model):
         verbose_name = "Configuração de API"
         verbose_name_plural = "Configurações de API"
 
-# class Checklist(models.Model):
-#     trip = models.OneToOneField(Trip, on_delete=models.CASCADE, related_name='checklist')
-#     created_at = models.DateTimeField(auto_now_add=True)
+class Checklist(models.Model):
+    trip = models.OneToOneField(Trip, on_delete=models.CASCADE, related_name='checklist')
+    created_at = models.DateTimeField(auto_now_add=True)
 
-#     def __str__(self):
-#         return f"Checklist - {self.trip.title}"
+    def __str__(self):
+        return f"Checklist - {self.trip.title}"
 
-# class ChecklistItem(models.Model):
-#     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name='items')
-#     category = models.CharField(max_length=50, default="Geral") # Ex: Roupas, Higiene, Documentos
-#     item = models.CharField(max_length=200)
-#     is_checked = models.BooleanField(default=False)
+class ChecklistItem(models.Model):
+    checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name='items')
+    category = models.CharField(max_length=50, default="Geral") # Ex: Roupas, Higiene, Documentos
+    item = models.CharField(max_length=200)
+    is_checked = models.BooleanField(default=False)
 
-#     def __str__(self):
-#         return self.item
+    def __str__(self):
+        return self.item
