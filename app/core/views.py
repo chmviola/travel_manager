@@ -8,7 +8,7 @@ import json                             # <--- Essencial para os gráficos
 # Seus Models e Utils (Geralmente já estavam aí)
 from .models import Trip, Expense, TripItem, APIConfiguration, Checklist, ChecklistItem
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai
-from .models import Trip, TripItem, Expense, TripAttachment 
+from .models import Trip, TripItem, Expense, TripAttachment, Checklist, ChecklistItem
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
 from django.db.models import Sum
