@@ -235,11 +235,19 @@ class UserProfileForm(forms.ModelForm):
         }
 
     def clean_email(self):
-        # Validação extra para garantir que o email é único (se outro usuário já não usa)
         email = self.cleaned_data.get('email')
-        if email and User.objects.filter(email=email).exclude(id=self.instance.id).exists():
+        # CORREÇÃO: .exclude(pk=self.instance.pk) garante que não valida contra si mesmo
+        if email and User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("Este e-mail já está em uso por outro usuário.")
         return email
+
+# --- NOVO FORM DE SENHA ESTILIZADO ---
+class CustomPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Aplica a classe form-control do Bootstrap em todos os campos
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
 
 class APIConfigurationForm(forms.ModelForm):
     class Meta:

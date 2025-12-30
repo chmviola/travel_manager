@@ -41,6 +41,7 @@ urlpatterns = [
     path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
 
     path('profile/', views.profile_view, name='user_profile'),
+    path('profile/password/', views.change_password, name='change_password'),
 
     # Rotas de Configuração de API
     path('config/apis/', views.api_list, name='api_list'),

@@ -10,7 +10,7 @@ from .models import Trip, Expense, TripItem, APIConfiguration, Checklist, Checkl
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai
 from .models import Trip, TripItem, Expense, TripAttachment, Checklist, ChecklistItem
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm
 from django.db.models import Sum
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -662,22 +662,43 @@ def profile_view(request):
     user = request.user
     
     if request.method == 'POST':
+        # Esta parte processa apenas os dados cadastrais (Nome, Email)
         form = UserProfileForm(request.POST, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, "Seus dados foram atualizados com sucesso!")
-            return redirect('profile_view')
+            return redirect('user_profile')
         else:
-            messages.error(request, "Corrija os erros abaixo.")
+            messages.error(request, "Corrija os erros no formulário de dados.")
     else:
-        # Preenche o formulário com os dados atuais do usuário
         form = UserProfileForm(instance=user)
+
+    # Enviamos o form de senha vazio para ser renderizado no modal
+    password_form = CustomPasswordChangeForm(user)
 
     context = {
         'form': form,
+        'password_form': password_form,
         'user': user
     }
     return render(request, 'config/profile.html', context)
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            # Esta linha é CRUCIAL: mantém o usuário logado após mudar a senha
+            update_session_auth_hash(request, user) 
+            messages.success(request, "Sua senha foi alterada com sucesso!")
+        else:
+            # Se houver erro (ex: senha atual errada), mostramos via mensagem
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Erro na senha: {error}")
+                    
+    return redirect('user_profile')
 
 # --- VERIFICAÇÃO DE SEGURANÇA ---
 def is_admin(user):
