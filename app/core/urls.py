@@ -45,4 +45,9 @@ urlpatterns = [
     path('config/apis/add/', views.api_update, name='api_add'),
     path('config/apis/edit/<int:pk>/', views.api_update, name='api_edit'),
     path('config/apis/delete/<int:pk>/', views.api_delete, name='api_delete'),
+
+    # ... suas urls existentes ...
+    path('trips/<int:trip_id>/checklist/', views.checklist_view, name='checklist_view'),
+    path('trips/<int:trip_id>/checklist/generate/', views.checklist_generate, name='checklist_generate'),
+    path('checklist/toggle/<int:item_id>/', views.checklist_toggle, name='checklist_toggle'),
 ]

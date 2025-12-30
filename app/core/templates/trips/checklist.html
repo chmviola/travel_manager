@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Checklist: {{ trip.title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between">
+        <a href="{% url 'trip_detail' trip.id %}" class="btn btn-default">
+            <i class="fas fa-arrow-left"></i> Voltar para Viagem
+        </a>
+        
+        <a href="{% url 'checklist_generate' trip.id %}" class="btn btn-warning shadow-sm" onclick="return confirm('Isso vai apagar a lista atual e gerar uma nova com IA. Continuar?');">
+            <i class="fas fa-magic mr-1"></i> Gerar Sugestão com IA
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for category, items in items_by_category.items %}
+    <div class="col-md-4">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h5 class="card-title">{{ category }}</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="todo-list" data-widget="todo-list">
+                    {% for item in items %}
+                    <li>
+                        <div class="icheck-primary d-inline ml-2">
+                            <input type="checkbox" value="" name="todo{{ item.id }}" id="todoCheck{{ item.id }}" 
+                                   {% if item.is_checked %}checked{% endif %}
+                                   onclick="window.location.href='{% url 'checklist_toggle' item.id %}'">
+                            <label for="todoCheck{{ item.id }}"></label>
+                        </div>
+                        <span class="text {% if item.is_checked %}text-muted{% endif %}" 
+                              style="{% if item.is_checked %}text-decoration: line-through;{% endif %}">
+                            {{ item.item }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center mt-5">
+        <i class="fas fa-suitcase fa-4x text-muted mb-3"></i>
+        <h3>Sua mala está vazia!</h3>
+        <p class="text-muted">Clique no botão "Gerar Sugestão com IA" para criar uma lista personalizada.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

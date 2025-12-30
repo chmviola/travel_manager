@@ -1,9 +1,9 @@
 import requests
 from django.conf import settings
 from datetime import timedelta
-from .models import APIConfiguration
-from openai import OpenAI
 import json
+from openai import OpenAI
+from .models import APIConfiguration
 
 def get_travel_intel(destination):
     # 1. Busca chave no banco
@@ -159,3 +159,46 @@ def fetch_weather_data(location, date_obj):
         return None, None, None
     
     return None, None, None
+
+def generate_checklist_ai(trip):
+    """
+    Gera uma lista de itens de viagem baseada no destino e duração usando OpenAI.
+    """
+    try:
+        config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
+        api_key = config.value
+    except APIConfiguration.DoesNotExist:
+        return None
+
+    client = OpenAI(api_key=api_key)
+
+    # Contexto para a IA
+    destination = trip.location or "um destino internacional"
+    duration = (trip.end_date - trip.start_date).days if trip.end_date and trip.start_date else 5
+    
+    # Prompt engenharia para garantir JSON
+    prompt = f"""
+    Crie um checklist de bagagem para uma viagem para {destination} com duração de {duration} dias.
+    Considere o clima provável e cultura local.
+    
+    Retorne APENAS um JSON válido (sem markdown, sem ```json) com a seguinte estrutura:
+    {{
+        "Roupas": ["item 1", "item 2"],
+        "Higiene": ["item 1", "item 2"],
+        "Documentos": ["item 1"],
+        "Eletrônicos": ["item 1"],
+        "Outros": ["item 1"]
+    }}
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", # Modelo rápido e barato
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content
+        return json.loads(content)
+    except Exception as e:
+        print(f"Erro OpenAI Checklist: {e}")
+        return None

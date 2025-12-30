@@ -7,7 +7,7 @@ from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 # Seus Models e Utils (Geralmente já estavam aí)
 from .models import Trip, Expense, TripItem, APIConfiguration
-from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data
+from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai
 from .models import Trip, TripItem, Expense, TripAttachment 
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
@@ -523,6 +523,65 @@ def fix_locations(request):
 
     print(f"{count} itens atualizados com coordenadas.")
     return redirect('home')
+
+@login_required
+def checklist_view(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
+    # Tenta pegar ou cria um checklist vazio se não existir
+    checklist, created = Checklist.objects.get_or_create(trip=trip)
+    
+    # Agrupa itens por categoria para facilitar o template
+    items_by_category = {}
+    items = checklist.items.all().order_by('category', 'item')
+    
+    for item in items:
+        if item.category not in items_by_category:
+            items_by_category[item.category] = []
+        items_by_category[item.category].append(item)
+
+    context = {
+        'trip': trip,
+        'checklist': checklist,
+        'items_by_category': items_by_category
+    }
+    return render(request, 'trips/checklist.html', context)
+
+@login_required
+def checklist_generate(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
+    # Chama a IA
+    data = generate_checklist_ai(trip)
+    
+    if data:
+        # Pega ou cria o checklist pai
+        checklist, _ = Checklist.objects.get_or_create(trip=trip)
+        
+        # Limpa itens antigos para não duplicar (opcional, mas recomendado para "regenerar")
+        checklist.items.all().delete()
+        
+        # Salva os novos itens
+        for category, items_list in data.items():
+            for item_text in items_list:
+                ChecklistItem.objects.create(
+                    checklist=checklist,
+                    category=category,
+                    item=item_text
+                )
+        messages.success(request, "Checklist gerado com inteligência artificial!")
+    else:
+        messages.error(request, "Erro ao gerar checklist. Verifique a chave da API.")
+        
+    return redirect('checklist_view', trip_id=trip.id)
+
+@login_required
+def checklist_toggle(request, item_id):
+    # View simples para marcar/desmarcar (pode ser via AJAX futuramente)
+    item = get_object_or_404(ChecklistItem, pk=item_id, checklist__trip__user=request.user)
+    item.is_checked = not item.is_checked
+    item.save()
+    return redirect('checklist_view', trip_id=item.checklist.trip.id)
 
 @login_required
 def api_list(request):
