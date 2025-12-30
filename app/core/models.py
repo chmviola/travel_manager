@@ -173,6 +173,7 @@ class APIConfiguration(models.Model):
     KEY_CHOICES = [
         ('WEATHER_API', 'WeatherAPI (Clima)'),
         ('GOOGLE_MAPS', 'Google Maps API'),
+        ('OPENAI_API', 'OpenAI API'),
         # Futuramente você pode adicionar outras aqui (OpenAI, AWS, etc)
     ]
 

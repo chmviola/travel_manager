@@ -2,6 +2,37 @@ import requests
 from django.conf import settings
 from datetime import timedelta
 from .models import APIConfiguration
+from openai import OpenAI
+import json
+
+def get_travel_intel(destination):
+    # 1. Busca chave no banco
+    try:
+        config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
+        api_key = config.value
+    except APIConfiguration.DoesNotExist:
+        return None
+
+    client = OpenAI(api_key=api_key)
+
+    prompt = f"""
+    Você é um guia de viagem especialista. Para o destino '{destination}', forneça um resumo JSON com:
+    - currency_tip: Dica sobre moeda e se deve dar gorjeta.
+    - plug_type: Tipo de tomada usada.
+    - safety_tip: Uma dica rápida de segurança.
+    - basic_phrases: Uma string com 3 frases essenciais na lingua local (Olá, Obrigado, Quanto custa).
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", # Modelo barato e rápido
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception as e:
+        print(f"Erro OpenAI: {e}")
+        return None
 
 def get_exchange_rate(from_currency):
     """

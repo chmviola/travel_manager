@@ -10,17 +10,17 @@
 
 ## 📋 Índice
 
-1. [Sobre o Projeto](https://www.google.com/search?q=%23-sobre-o-projeto)
-2. [Funcionalidades](https://www.google.com/search?q=%23-funcionalidades)
-3. [Tecnologias Utilizadas](https://www.google.com/search?q=%23-tecnologias-utilizadas)
-4. [Arquitetura e Infraestrutura](https://www.google.com/search?q=%23-arquitetura-e-infraestrutura)
-5. [Estrutura do Projeto](https://www.google.com/search?q=%23-estrutura-do-projeto)
-6. [Instalação e Configuração](https://www.google.com/search?q=%23-instala%C3%A7%C3%A3o-e-configura%C3%A7%C3%A3o)
-7. [Como Executar](https://www.google.com/search?q=%23-como-executar)
-8. [Comandos Úteis](https://www.google.com/search?q=%23-comandos-%C3%BAteis)
-9. [CI/CD e Deploy](https://www.google.com/search?q=%23-cicd-e-deploy)
-10. [Roadmap](https://www.google.com/search?q=%23-roadmap)
-11. [Autor](https://www.google.com/search?q=%23-autor)
+1. [Sobre o Projeto](#-sobre-o-projeto)
+2. [Funcionalidades](#-funcionalidades)
+3. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+4. [Arquitetura e Infraestrutura](#-arquitetura-e-infraestrutura)
+5. [Estrutura do Projeto](#-estrutura-do-projeto)
+6. [Instalação e Configuração](#-instalação-e-configuração)
+7. [Como Executar](#-como-executar)
+8. [Comandos Úteis](#-comandos-úteis)
+9. [CI/CD e Deploy](#-cicd-e-deploy)
+10. [Roadmap](#-roadmap)
+11. [Autor](#-autor)
 
 ---
 
@@ -43,6 +43,8 @@ O **TravelManager** nasceu da necessidade de centralizar todas as informações 
 * **Linha do Tempo Visual:** Organização cronológica de eventos (Voos, Hotéis, Restaurantes, Atividades).
 * **Categorização:** Ícones e cores distintas para cada tipo de atividade.
 * **Integração com Mapas:** Visualização de endereços e coordenadas via Google Maps API (Modal e Links).
+* **Previsão do Tempo:** Exibição automática da condição climática e temperatura para cada item do roteiro (integrado via WeatherAPI), com cache inteligente em banco de dados.
+* **Anexos e Documentos:** Upload de arquivos (PDFs de reservas, tickets, imagens) vinculados diretamente aos itens da timeline.
 * **Detalhes Extras:** Campo de notas inteligente que processa dados JSON legados e formata textos com quebras de linha.
 
 ### 💰 Gestão Financeira
@@ -50,11 +52,16 @@ O **TravelManager** nasceu da necessidade de centralizar todas as informações 
 * **Multi-moeda:** Registro de gastos em diversas moedas (USD, EUR, GBP, etc.).
 * **Conversão Automática:** Cálculo estimativo do valor em BRL baseado em taxas de câmbio configuráveis.
 * **Dashboard Financeiro:**
-* KPIs de gastos totais, gastos do ano corrente e contagem de lançamentos.
-* Gráficos interativos (Donut e Barras) por categoria e por viagem.
-* Tabela detalhada (DataTables) com ordenação, pesquisa e exportação (PDF, Excel).
+    * KPIs de gastos totais, gastos do ano corrente e contagem de lançamentos.
+    * **Widget de Cotação:** Visualização de taxas de câmbio em tempo real para as moedas utilizadas na viagem.
+    * Gráficos interativos (Donut e Barras) por categoria e por viagem.
+    * Tabela detalhada (DataTables) com ordenação, pesquisa e exportação (PDF, Excel).
 
+### ⚙️ Configurações e Integrações
 
+* **Módulo de Cadastro de API:** Interface administrativa para gerenciamento dinâmico de chaves de API (ex: WeatherAPI, Google Maps).
+    * Armazenamento seguro em banco de dados.
+    * Permite a troca de chaves de API em tempo de execução sem necessidade de redeploy ou alteração de variáveis de ambiente.
 
 ### 🔐 Usuários e Segurança
 
@@ -86,8 +93,9 @@ O **TravelManager** nasceu da necessidade de centralizar todas as informações 
 * **Docker & Docker Compose:** Containerização da aplicação e banco de dados.
 * **Nginx:** Proxy reverso (geralmente configurado via Portainer/Host).
 * **Google Maps API:** Geocoding e Maps JavaScript API.
+* **WeatherAPI:** Dados meteorológicos.
 
-![Screenshot do Logo](app/core/static/img/infografico1.png)
+![Screenshot do Logo](app/core/static/img/infografico2.png)
 
 ---
 
@@ -114,7 +122,7 @@ travel_manager/
 │   │   ├── forms.py            # Formulários e validações
 │   │   ├── models.py           # Modelagem do banco de dados
 │   │   ├── views.py            # Lógica de negócio e Views
-│   │   └── utils.py            # Utilitários (ex: conversão de moeda)
+│   │   └── utils.py            # Utilitários (ex: conversão de moeda e clima)
 │   ├── manage.py
 │   └── Dockerfile              # Definição da imagem Python
 ├── docker-compose.yml          # Orquestração (Produção)
@@ -134,19 +142,20 @@ travel_manager/
 
 * Docker e Docker Compose instalados.
 * Git instalado.
-* Uma chave de API do Google Maps válida.
+* Chaves de API válidas (Google Maps, WeatherAPI).
 
 ### 1. Clonar o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/travel_manager.git
+git clone [https://github.com/seu-usuario/travel_manager.git](https://github.com/seu-usuario/travel_manager.git)
 cd travel_manager
 
 ```
 
 ### 2. Configurar Variáveis de Ambiente
 
-Crie um arquivo `.env` na raiz do projeto (ou configure as variáveis no seu ambiente de CI/CD/Docker).
+Crie um arquivo `.env` na raiz do projeto.
+*Nota: As chaves de API agora podem ser configuradas opcionalmente via Banco de Dados através do módulo administrativo.*
 
 | Variável | Descrição | Exemplo |
 | --- | --- | --- |
@@ -159,7 +168,6 @@ Crie um arquivo `.env` na raiz do projeto (ou configure as variáveis no seu amb
 | `SQL_PASSWORD` | Senha do Banco | `travel_pass` |
 | `SQL_HOST` | Host do Banco (Nome do serviço no Compose) | `travel_db_dev` |
 | `SQL_PORT` | Porta do Banco | `5432` |
-| `Maps_API_KEY` | Chave da API do Google | `AIzaSy...` |
 
 ---
 
@@ -170,25 +178,25 @@ Crie um arquivo `.env` na raiz do projeto (ou configure as variáveis no seu amb
 Para rodar a aplicação localmente utilizando o arquivo de composição de desenvolvimento:
 
 1. **Construir e subir os containers:**
+
 ```bash
 docker compose -f docker-compose-dev.yml up -d --build
 
 ```
 
-
 2. **Executar Migrações (Primeira vez):**
+
 ```bash
 docker exec -it travel_manager_web_dev python manage.py migrate
 
 ```
 
-
 3. **Criar Superusuário:**
+
 ```bash
 docker exec -it travel_manager_web_dev python manage.py createsuperuser
 
 ```
-
 
 4. **Acessar:**
 Abra o navegador em `http://localhost:8000`.
@@ -249,13 +257,9 @@ O projeto utiliza uma esteira automatizada de DevOps:
 
 ---
 
-## 🗺 Roadmap
-
-* [ ] Integração com API de Clima para previsão do tempo nas datas da viagem.
-* [X] Upload de anexos (PDFs de passagens/reservas) nos itens da timeline.
+## 🗺 Roadma
 * [ ] Exportação do roteiro completo em PDF.
 * [ ] Compartilhamento de viagem (Link público "somente leitura").
-* [X] Widget de cotação de moedas em tempo real no Dashboard.
 
 ---
 
@@ -267,4 +271,8 @@ O projeto utiliza uma esteira automatizada de DevOps:
 
 ---
 
-*Documentação gerada automaticamente com base na versão v0.0.40 do TravelManager.*
+*Documentação gerada automaticamente com base na versão v0.0.42 do TravelManager.*
+
+```
+
+```
