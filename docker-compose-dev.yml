@@ -34,6 +34,7 @@ services:
       # Importante: Aponta para o container de banco de DEV
       - SQL_HOST=travel_db_dev 
       - SQL_PORT=5432
+      - WEATHER_API_KEY=8bf7c0827daf456bbdb01057253012
     depends_on:
       - travel_db_dev
     restart: always
