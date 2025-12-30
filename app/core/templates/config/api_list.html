@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Configurações de API{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 text-right">
+        <a href="{% url 'api_add' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nova Configuração
+        </a>
+    </div>
+</div>
+
+<div class="card card-outline card-primary">
+    <div class="card-body p-0">
+        <table class="table table-striped projects">
+            <thead>
+                <tr>
+                    <th>Serviço</th>
+                    <th>Chave (Preview)</th>
+                    <th>Status</th>
+                    <th>Última Atualização</th>
+                    <th class="text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in configs %}
+                <tr>
+                    <td><strong>{{ config.get_key_display }}</strong></td>
+                    <td>
+                        <code class="text-muted">
+                            {{ config.value|slice:":10" }}...{{ config.value|slice:"-5:" }}
+                        </code>
+                    </td>
+                    <td>
+                        {% if config.is_active %}
+                            <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ config.updated_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-right">
+                        <a class="btn btn-info btn-sm" href="{% url 'api_edit' config.id %}">
+                            <i class="fas fa-pencil-alt"></i> Editar
+                        </a>
+                        <a class="btn btn-danger btn-sm" href="{% url 'api_delete' config.id %}" onclick="return confirm('Tem certeza?');">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhuma API cadastrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

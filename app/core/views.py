@@ -6,7 +6,7 @@ from django.utils import timezone # Importante para saber o ano atual
 from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 # Seus Models e Utils (Geralmente já estavam aí)
-from .models import Trip, Expense, TripItem
+from .models import Trip, Expense, TripItem, APIConfiguration
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data
 from .models import Trip, TripItem, Expense, TripAttachment 
 from django.conf import settings
@@ -15,7 +15,7 @@ from django.db.models import Sum
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
-from .forms import UserCreateForm, UserEditForm
+from .forms import UserCreateForm, UserEditForm, APIConfigurationForm
 
 
 @login_required
@@ -523,6 +523,49 @@ def fix_locations(request):
 
     print(f"{count} itens atualizados com coordenadas.")
     return redirect('home')
+
+@login_required
+def api_list(request):
+    # Apenas superusuários podem ver isso
+    if not request.user.is_superuser:
+        messages.error(request, "Acesso não autorizado.")
+        return redirect('home')
+        
+    configs = APIConfiguration.objects.all()
+    return render(request, 'config/api_list.html', {'configs': configs})
+
+@login_required
+def api_update(request, pk=None):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    if pk:
+        config = get_object_or_404(APIConfiguration, pk=pk)
+        title = "Editar API"
+    else:
+        config = None
+        title = "Nova API"
+
+    if request.method == 'POST':
+        form = APIConfigurationForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Configuração de API salva com sucesso!')
+            return redirect('api_list')
+    else:
+        form = APIConfigurationForm(instance=config)
+
+    return render(request, 'config/api_form.html', {'form': form, 'title': title})
+
+@login_required
+def api_delete(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+        
+    config = get_object_or_404(APIConfiguration, pk=pk)
+    config.delete()
+    messages.success(request, 'Configuração removida.')
+    return redirect('api_list')
 
 # --- VERIFICAÇÃO DE SEGURANÇA ---
 def is_admin(user):

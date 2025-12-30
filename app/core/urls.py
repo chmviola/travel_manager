@@ -38,4 +38,10 @@ urlpatterns = [
     path('usuarios/novo/', views.user_create, name='user_create'),
     path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
     path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
+
+    # Rotas de Configuração de API
+    path('config/apis/', views.api_list, name='api_list'),
+    path('config/apis/add/', views.api_update, name='api_add'),
+    path('config/apis/edit/<int:pk>/', views.api_update, name='api_edit'),
+    path('config/apis/delete/<int:pk>/', views.api_delete, name='api_delete'),
 ]

@@ -217,4 +217,13 @@ class UserEditForm(forms.ModelForm):
         return user
     # -----------------------
 
-
+class APIConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = APIConfiguration
+        fields = ['key', 'value', 'description', 'is_active']
+        widgets = {
+            'key': forms.Select(attrs={'class': 'form-control'}),
+            'value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cole a chave API aqui'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
+        }

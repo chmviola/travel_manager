@@ -167,3 +167,24 @@ class TripAttachment(models.Model):
 
     def __str__(self):
         return f"Anexo de {self.item.name}"
+    
+
+class APIConfiguration(models.Model):
+    KEY_CHOICES = [
+        ('WEATHER_API', 'WeatherAPI (Clima)'),
+        ('GOOGLE_MAPS', 'Google Maps API'),
+        # Futuramente você pode adicionar outras aqui (OpenAI, AWS, etc)
+    ]
+
+    key = models.CharField(max_length=50, choices=KEY_CHOICES, unique=True, verbose_name="Serviço/API")
+    value = models.CharField(max_length=255, verbose_name="Chave de Acesso (Key)")
+    is_active = models.BooleanField(default=True, verbose_name="Ativo")
+    description = models.TextField(blank=True, null=True, verbose_name="Descrição/Notas")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.get_key_display()
+
+    class Meta:
+        verbose_name = "Configuração de API"
+        verbose_name_plural = "Configurações de API"
