@@ -59,7 +59,16 @@
 
                             <div class="timeline-body">
                                 {% if item.location_address %}
-                                    <p class="text-muted mb-1"><i class="fas fa-map-pin"></i> {{ item.location_address }}</p>
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+            
+                                        <span class="text-muted text-sm mr-2">
+                                            <i class="fas fa-map-pin mr-1"></i> {{ item.location_address }}
+                                        </span>
+
+                                        <span class="badge badge-light border text-muted shadow-sm" style="font-weight: normal; white-space: nowrap;">
+                                            <i class="fas fa-cloud-sun text-warning mr-1"></i> 24°C
+                                        </span>
+                                    </div>
                                 {% endif %}
                                 
                                 {% if item.details %}
@@ -137,7 +146,7 @@
         {% for rate in trip_rates %}
         <div class="col-md-3 col-sm-6 col-12">
             <div class="info-box shadow-sm">
-                <span class="info-box-icon bg-gray border">
+                <span class="info-box-icon bg-yellow border">
                     {% if rate.code == 'USD' %}<i class="fas fa-dollar-sign text-success"></i>
                     {% elif rate.code == 'EUR' %}<i class="fas fa-euro-sign text-primary"></i>
                     {% elif rate.code == 'GBP' %}<i class="fas fa-pound-sign text-danger"></i>
