@@ -1,4 +1,6 @@
 import requests
+from django.conf import settings
+from datetime import timedelta
 
 def get_exchange_rate(from_currency):
     """
@@ -76,3 +78,40 @@ def get_currency_by_country(country_name):
             return currency
             
     return None
+
+def fetch_weather_data(location, date_obj):
+    """
+    Busca previsão do tempo no WeatherAPI.
+    Retorna uma tupla: (temp_c, condition_text, icon_url) ou (None, None, None)
+    """
+    if not location or not date_obj or not settings.WEATHER_API_KEY:
+        return None, None, None
+
+    try:
+        # Formata a data para YYYY-MM-DD
+        date_str = date_obj.strftime('%Y-%m-%d')
+        
+        # URL da WeatherAPI (Endpoint Forecast serve para futuro próximo e histórico recente)
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={settings.WEATHER_API_KEY}&q={location}&dt={date_str}&lang=pt"
+        
+        response = requests.get(url, timeout=5)
+        data = response.json()
+
+        if 'forecast' in data and len(data['forecast']['forecastday']) > 0:
+            day_data = data['forecast']['forecastday'][0]['day']
+            
+            temp = round(day_data['avgtemp_c']) # Temperatura média do dia
+            condition = day_data['condition']['text']
+            icon = day_data['condition']['icon'] # URL do ícone (ex: //cdn.weatherapi...)
+            
+            # Adiciona protocolo se faltar
+            if icon.startswith('//'):
+                icon = f"https:{icon}"
+                
+            return temp, condition, icon
+            
+    except Exception as e:
+        print(f"Erro ao buscar clima para {location}: {e}")
+        return None, None, None
+    
+    return None, None, None

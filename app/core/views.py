@@ -7,7 +7,7 @@ from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 # Seus Models e Utils (Geralmente já estavam aí)
 from .models import Trip, Expense, TripItem
-from .utils import get_exchange_rate, get_currency_by_country
+from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data
 from .models import Trip, TripItem, Expense, TripAttachment 
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm
@@ -214,6 +214,24 @@ def trip_detail(request, pk):
             'code': currency,
             'rate': rate
         })
+
+    # Verifica itens que tem endereço e data, mas não tem clima salvo
+    items_changed = False
+    for item in items:
+        if item.location_address and item.start_datetime and not item.weather_temp:
+            # Tenta buscar na API
+            temp, cond, icon = fetch_weather_data(item.location_address, item.start_datetime)
+            
+            if temp:
+                item.weather_temp = temp
+                item.weather_condition = cond
+                item.weather_icon = icon
+                item.save() # Salva no banco para não buscar de novo
+                items_changed = True
+    
+    # Se houve mudança, recarrega a query para garantir dados frescos
+    if items_changed:
+        items = trip.items.all().order_by('start_datetime')
 
     context = {
         'trip': trip,

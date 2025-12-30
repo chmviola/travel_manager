@@ -15,13 +15,16 @@ from pathlib import Path
 from decouple import config
 
 # Versão do Aplicativo (Edite apenas aqui!)
-APP_VERSION = '0.0.38'
+APP_VERSION = '0.0.39'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Google Maps API Key
 GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY', default='chave_nao_configurada')
+
+# Weather API Key
+WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/

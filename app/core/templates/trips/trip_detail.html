@@ -64,12 +64,18 @@
                                         <span class="text-muted text-sm mr-2">
                                             <i class="fas fa-map-pin mr-1"></i> {{ item.location_address }}
                                         </span>
+                                        
+                                        {% if item.weather_temp %}
+                                            <span class="badge badge-light border text-muted shadow-sm d-flex align-items-center"
+                                                  style="font-weight: normal; white-space: nowrap; cursor: help;"
+                                                  data-toggle="tooltip"
+                                                  data-placement="top"
+                                                  title="{{ item.weather_condition|title }}">
 
-                                        <span class="badge badge-light border text-muted shadow-sm"
-                                              style="font-weight: normal; white-space: nowrap;"
-                                              title="Previsão do tempo (Estimada)">
-                                            <i class="fas fa-cloud-sun text-warning mr-1"></i> 24°C
-                                        </span>
+                                                <img src="{{ item.weather_icon }}" alt="" style="width: 20px; height: 20px; margin-right: 4px;">
+
+                                                {{ item.weather_temp }}°C
+                                            </span>
                                     </div>
                                 {% endif %}
                                 

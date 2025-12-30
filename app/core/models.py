@@ -68,6 +68,11 @@ class TripItem(models.Model):
     location_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     location_address = models.CharField(max_length=255, null=True, blank=True, verbose_name="Endereço")
 
+    # NOVOS CAMPOS DE CLIMA
+    weather_temp = models.CharField(max_length=10, blank=True, null=True) # Ex: 24
+    weather_condition = models.CharField(max_length=100, blank=True, null=True) # Ex: Nublado
+    weather_icon = models.CharField(max_length=255, blank=True, null=True) # URL do ícone
+
     # A MÁGICA DA MODULARIDADE: Campo JSON
     # Aqui guardamos: gate do voo, número do quarto, confirmação de reserva, etc.
     details = models.JSONField(default=dict, blank=True, verbose_name="Detalhes Específicos")
