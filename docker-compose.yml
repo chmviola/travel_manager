@@ -5,6 +5,7 @@ services:
     container_name: travel_manager_db
     volumes:
       - /var/data/travel_db_data:/var/lib/postgresql/data
+      - /var/data/migrations:/usr/src/app/core/migrations
     environment:
       - POSTGRES_DB=travel_db
       - POSTGRES_USER=travel_user

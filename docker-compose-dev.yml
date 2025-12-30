@@ -23,6 +23,7 @@ services:
 #      - ./app:/usr/src/app
       # Mapeia media para pasta de dev
       - /var/data/media_data_dev:/usr/src/app/media
+      - /var/data/migrations-dev:/usr/src/app/core/migrations
     environment:
       - DEBUG=1
       - SECRET_KEY=changeme-dev-key
