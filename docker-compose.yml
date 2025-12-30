@@ -38,7 +38,7 @@ services:
       - SQL_PASSWORD=travel_pass
       - SQL_HOST=travel_db
       - SQL_PORT=5432
-      - WEATHER_API_KEY=8bf7c0827daf456bbdb01057253012
+#      - WEATHER_API_KEY=8bf7c0827daf456bbdb01057253012
     depends_on:
       - travel_db
     restart: always
