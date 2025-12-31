@@ -20,6 +20,10 @@
                 <i class="fas fa-trash-alt mr-1"></i> Limpar Marcados
             </a>
 
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modalAddCategory">
+                <i class="fas fa-folder-plus mr-1"></i> Nova Categoria
+            </button>
+
             <a href="{% url 'checklist_generate' trip.id %}" class="btn btn-warning shadow-sm" onclick="return confirm('Isso vai apagar a lista atual e gerar uma nova com IA. Continuar?');">
                 <i class="fas fa-magic mr-1"></i> Gerar com IA
             </a>
@@ -104,6 +108,40 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Salvar Item</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAddCategory" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'checklist_add_item' trip.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title text-white">Criar Nova Categoria</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Crie um novo grupo para organizar seus itens (ex: Ski, Camping, Trabalho).</p>
+                    
+                    <div class="form-group">
+                        <label>Nome da Nova Categoria</label>
+                        <input type="text" name="category" class="form-control" placeholder="Ex: Equipamentos de Ski" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Primeiro Item</label>
+                        <input type="text" name="item" class="form-control" placeholder="Ex: Óculos de proteção" required>
+                        <small class="text-muted">Para criar a caixa, é necessário adicionar pelo menos um item.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info">Criar Categoria</button>
                 </div>
             </div>
         </form>
