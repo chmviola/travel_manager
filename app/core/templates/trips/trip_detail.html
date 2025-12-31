@@ -187,9 +187,9 @@
             <div class="card-header">
                 <h3 class="card-title">Mapa do Roteiro</h3>
             </div>
-            <div class="card-body p-0">
-                <div id="map" style="height: 300px; width: 100%; background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                    <span class="text-muted">Mapa carregará aqui</span>
+            <div id="timelineMap" style="height: 400px; width: 100%; border-radius: 8px; margin-bottom: 20px;">
+                <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
+                    <i class="fas fa-map-marked-alt mr-2"></i> O mapa será carregado aqui...
                 </div>
             </div>
         </div>
@@ -321,8 +321,83 @@
 
 {% block extra_js %}
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+
 <script>
-    function initMap() {
+    // --- MAPA GERAL DA TIMELINE ---
+    function initTimelineMap() {
+        const mapEl = document.getElementById('timelineMap');
+        if (!mapEl) return; // Se não tiver a div, sai
+
+        // 1. Cria o Mapa
+        const map = new google.maps.Map(mapEl, {
+            zoom: 2,
+            center: { lat: 20, lng: 0 }, // Centro do mundo
+            styles: [] // Estilos opcionais
+        });
+
+        const bounds = new google.maps.LatLngBounds();
+        const geocoder = new google.maps.Geocoder();
+        let markersCount = 0;
+
+        // Dados vindos do Django
+        const locations = [
+            {% for item in items %}
+            {
+                name: "{{ item.name|escapejs }}",
+                address: "{{ item.location_address|default:''|escapejs }}",
+                lat: "{{ item.location_lat|default:'' }}",  // Supondo que você tenha esses campos
+                lng: "{{ item.location_lng|default:'' }}",
+                type: "{{ item.item_type }}"
+            },
+            {% endfor %}
+        ];
+
+        // Função para adicionar marcador
+        const addMarker = (position, title) => {
+            new google.maps.Marker({
+                position: position,
+                map: map,
+                title: title,
+                animation: google.maps.Animation.DROP
+            });
+            bounds.extend(position);
+            map.fitBounds(bounds);
+            markersCount++;
+        };
+
+        // 2. Processa os itens
+        locations.forEach((loc, index) => {
+            // CASO A: Já tem coordenada salva (Rápido e Preciso)
+            if (loc.lat && loc.lng) {
+                const pos = { lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) };
+                addMarker(pos, loc.name);
+            } 
+            // CASO B: Só tem endereço (Veio da IA) - Tenta descobrir
+            else if (loc.address) {
+                // Usamos timeout para não exceder o limite de requisições do Google (Rate Limit)
+                setTimeout(() => {
+                    geocoder.geocode({ 'address': loc.address }, function(results, status) {
+                        if (status === 'OK') {
+                            addMarker(results[0].geometry.location, loc.name);
+                        } else {
+                            console.log('Geocode falhou para ' + loc.name + ': ' + status);
+                        }
+                    });
+                }, index * 400); // Espera 400ms entre cada item
+            }
+        });
+
+        // Se não tiver nenhum item, centraliza num lugar padrão (ex: Paris)
+        if (locations.length === 0) {
+            map.setCenter({ lat: 48.8566, lng: 2.3522 });
+            map.setZoom(12);
+        }
+    }
+
+    // Inicializa o mapa assim que a janela carregar
+    window.addEventListener('load', initTimelineMap);
+
+   function initMap() {
         // Ponto inicial padrão (caso não tenha itens)
         const defaultLocation = { lat: -23.5505, lng: -46.6333 }; // SP
         
