@@ -170,7 +170,7 @@ def trip_detail(request, pk):
         'méxico': 'mx', 'mexico': 'mx',
         'reino unido': 'gb', 'uk': 'gb', 'london': 'gb',
         'uruguai': 'uy', 'uruguay': 'uy',
-        'suíça': 'sw', 'switzerland': 'sw'
+        'suíça': 'ch', 'switzerland': 'ch'
     }
 
     trip.flags = set()
