@@ -1,16 +1,3 @@
-Aqui está o `README.md` totalmente atualizado.
-
-Fiz as seguintes alterações principais:
-
-1. **Destaque para IA:** Criei uma seção específica para as funcionalidades de Generative AI (Roteiros e Guia de Bolso).
-2. **Exportação PDF:** Adicionei as funcionalidades de geração de PDF (Roteiro e Checklist).
-3. **Árvore de Diretórios:** Atualizei com a estrutura exata que você forneceu.
-4. **Persistência de Migrations:** Adicionei a seção explicativa sobre o mapeamento de volumes das migrações, conforme solicitado.
-5. **Roadmap:** Atualizei o que foi concluído e sugeri novas metas futuras.
-
----
-
-```markdown
 <p align="center">
   <img src="app/core/static/img/logo.png" alt="Logo do App" width="200">
 </p>
