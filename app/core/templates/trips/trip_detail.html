@@ -25,15 +25,19 @@
     
     <div class="col-md-6">
         
-        <div class="mb-3">
+        <div class="mb-3 d-flex justify-content-between">
             <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> Adicionar Voo/Hotel
+                <i class="fas fa-plus"></i> Novo Item
             </a>
 
             <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm">
                 <i class="fas fa-tasks"></i> Checklist de Bagagem
             </a>
         </div>
+
+        <button type="button" class="btn btn-warning btn-sm shadow-sm" data-toggle="modal" data-target="#modalAutoItinerary">
+            <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
+        </button>
 
         <div class="timeline">
             
@@ -279,6 +283,39 @@
         </div>
     </div>
 </div> 
+
+<!-- Modal para Sugerir Roteiro IA -->
+<div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Planejador Automático</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>A Inteligência Artificial vai analisar seu destino (<strong>{{ trip.title }}</strong>) e a duração da viagem para criar sugestões de passeios dia a dia.</p>
+                    
+                    <div class="form-group">
+                        <label>O que você gosta de fazer?</label>
+                        <textarea name="interests" class="form-control" rows="3" placeholder="Ex: Gosto de museus de arte, cafeterias históricas e parques. Não gosto de baladas. Quero um ritmo tranquilo."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info text-sm">
+                        <i class="fas fa-info-circle"></i> Os itens serão adicionados à sua linha do tempo. Você poderá editá-los ou excluí-los depois.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Gerar Roteiro</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% endblock %}
 
