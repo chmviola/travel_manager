@@ -261,7 +261,9 @@ def trip_list(request):
             for country_name, country_code in country_map.items():
                 if country_name in address_lower:
                     trip.flags.add(country_code)
-    
+        
+        trip.current_user_role = trip.get_user_role(request.user)
+
     return render(request, 'trips/trip_list.html', {'trips': trips})
 
 #--- VIEW PARA CRIAR NOVA VIAGEM ---

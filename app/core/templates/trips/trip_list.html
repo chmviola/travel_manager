@@ -70,11 +70,11 @@
                 {% else %}
                     <span class="badge badge-secondary" title="Compartilhado com você">
                         <i class="fas fa-user-friends"></i> 
-                        {% if trip.get_user_role(request.user) == 'editor' %}Editor{% else %}Leitor{% endif %}
+                        {% if trip.current_user_role == 'editor' %}Editor{% else %}Leitor{% endif %}
                     </span>
                     
-                    {% if trip.get_user_role(request.user) == 'editor' %}
-                        <a href="{% url 'trip_update' trip.id %}" class="btn btn-sm btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    {% if trip.current_user_role == 'editor' %}
+                         <a href="{% url 'trip_update' trip.id %}" class="btn btn-sm btn-warning"><i class="fas fa-pencil-alt"></i></a>
                     {% endif %}
                 {% endif %}
             </div>
