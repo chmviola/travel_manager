@@ -263,7 +263,7 @@
                             <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
                                 <i class="fas fa-trash text-danger"></i>
                             </a>
-                            {% else %}
+                            {% endfor %}
                         </div>
                     </td>
 
