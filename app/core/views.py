@@ -170,6 +170,7 @@ def trip_detail(request, pk):
         'méxico': 'mx', 'mexico': 'mx',
         'reino unido': 'gb', 'uk': 'gb', 'london': 'gb',
         'uruguai': 'uy', 'uruguay': 'uy',
+        'suíça': 'sw', 'switzerland': 'sw'
     }
 
     trip.flags = set()
@@ -237,13 +238,23 @@ def trip_detail(request, pk):
     if items_changed:
         items = trip.items.all().order_by('start_datetime')
 
+    # --- ALTERAÇÃO AQUI: BUSCAR CHAVE DO MAPA NO BANCO ---
+    try:
+        # Busca a chave ativa chamada 'GOOGLE_MAPS_API'
+        config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API', is_active=True)
+        google_maps_api_key = config.value
+    except APIConfiguration.DoesNotExist:
+        # Se não achar, envia vazio (o mapa ficará cinza, mas não quebra a página)
+        google_maps_api_key = ''
+
     context = {
         'trip': trip,
         'items': items,
         'expenses': expenses,
         'total_spent_brl': round(total_converted_brl, 2),
-        'trip_rates': trip_rates, # <--- ENVIAMOS AS COTAÇÕES AQUI
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
+        'trip_rates': trip_rates,
+        # ALERTA: Mudamos de settings... para a variável local que criamos acima
+        'google_maps_api_key': google_maps_api_key 
     }
 
     return render(request, 'trips/trip_detail.html', context)
@@ -429,6 +440,7 @@ def trip_generate_itinerary(request, trip_id):
                     TripItem.objects.create(
                         trip=trip,
                         name=event['name'],
+                        location=event.get('location', ''),
                         item_type=event['category'], # ACTIVITY, RESTAURANT
                         start_datetime=event_datetime,
                         details={'notes': event['description']} # Salvamos a descrição nas notas

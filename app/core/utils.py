@@ -227,13 +227,14 @@ def generate_itinerary_ai(trip, interests):
     - "day": número do dia (1, 2, 3...)
     - "time": horário sugerido (formato HH:MM, ex: "09:00", "14:30")
     - "name": nome do local ou atividade
+    - "location": O endereço aproximado ou nome da cidade (para geolocalização)
     - "category": use APENAS um destes valores: "ACTIVITY" (para passeios/museus), "RESTAURANT" (para comida), "HOTEL" (se for check-in)
     - "description": curta descrição (máx 100 caracteres)
     
     Exemplo de estrutura:
     {{
         "events": [
-            {{ "day": 1, "time": "09:00", "name": "Museu do Louvre", "category": "ACTIVITY", "description": "Arte clássica." }}
+            {{ "day": 1, "time": "09:00", "name": "Museu do Louvre", "location": "Rue de Rivoli, 75001 Paris", "category": "ACTIVITY", "description": "Arte clássica." }}
         ]
     }}
     """
