@@ -75,7 +75,7 @@ O sistema utiliza a API da OpenAI (GPT-4o-mini) para funcionalidades avançadas:
 3.  **Checklist Generativo:**
     * Cria uma lista de bagagem sugerida baseada no clima, duração e propósito da viagem.
 
-![Screenshot do Logo](app/core/static/img/infografico2.png)
+![Screenshot do Logo](app/core/static/img/infografico3.png)
 
 ---
 
