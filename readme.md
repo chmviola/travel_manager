@@ -1,10 +1,23 @@
+Aqui está o `README.md` totalmente atualizado.
+
+Fiz as seguintes alterações principais:
+
+1. **Destaque para IA:** Criei uma seção específica para as funcionalidades de Generative AI (Roteiros e Guia de Bolso).
+2. **Exportação PDF:** Adicionei as funcionalidades de geração de PDF (Roteiro e Checklist).
+3. **Árvore de Diretórios:** Atualizei com a estrutura exata que você forneceu.
+4. **Persistência de Migrations:** Adicionei a seção explicativa sobre o mapeamento de volumes das migrações, conforme solicitado.
+5. **Roadmap:** Atualizei o que foi concluído e sugeri novas metas futuras.
+
+---
+
+```markdown
 <p align="center">
   <img src="app/core/static/img/logo.png" alt="Logo do App" width="200">
 </p>
 
 # TravelManager
 
-**TravelManager** é uma aplicação web robusta desenvolvida para gerenciamento completo de viagens pessoais. O sistema permite planejar roteiros detalhados, controlar despesas em múltiplas moedas e visualizar itinerários de forma interativa.
+**TravelManager** é uma aplicação web robusta e inteligente desenvolvida para o gerenciamento completo de viagens pessoais. Além de controlar despesas e itinerários, o sistema agora utiliza **Inteligência Artificial (OpenAI)** para atuar como um agente de viagens pessoal, sugerindo roteiros, dicas culturais e gerando checklists automáticos.
 
 ---
 
@@ -12,12 +25,12 @@
 
 1. [Sobre o Projeto](#-sobre-o-projeto)
 2. [Funcionalidades](#-funcionalidades)
-3. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
-4. [Arquitetura e Infraestrutura](#-arquitetura-e-infraestrutura)
-5. [Estrutura do Projeto](#-estrutura-do-projeto)
-6. [Instalação e Configuração](#-instalação-e-configuração)
-7. [Como Executar](#-como-executar)
-8. [Comandos Úteis](#-comandos-úteis)
+3. [Inteligência Artificial](#-inteligência-artificial-genai)
+4. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+5. [Arquitetura e Persistência](#-arquitetura-e-persistência)
+6. [Estrutura do Projeto](#-estrutura-do-projeto)
+7. [Instalação e Configuração](#-instalação-e-configuração)
+8. [Como Executar](#-como-executar)
 9. [CI/CD e Deploy](#-cicd-e-deploy)
 10. [Roadmap](#-roadmap)
 11. [Autor](#-autor)
@@ -26,111 +39,118 @@
 
 ## 📖 Sobre o Projeto
 
-O **TravelManager** nasceu da necessidade de centralizar todas as informações de uma viagem em um único local, substituindo planilhas complexas e documentos dispersos. O objetivo é oferecer uma interface amigável (baseada no AdminLTE) para criar timelines de viagem, visualizar locais no mapa e, crucialmente, gerenciar o orçamento com conversão automática de moedas para Real (BRL).
+O **TravelManager** centraliza todas as informações de uma viagem, eliminando a necessidade de planilhas dispersas. Com uma interface baseada no AdminLTE, ele permite criar timelines detalhadas, visualizar gastos com conversão automática de moedas e, agora, **gerar documentos em PDF** para impressão. O diferencial atual é a integração profunda com IA para automatizar o planejamento.
 
 ---
 
 ## 🚀 Funcionalidades
 
-### ✈️ Gestão de Viagens
+### ✈️ Gestão de Viagens & Documentos
+* **CRUD Completo:** Gestão total de viagens e status.
+* **Exportação PDF:**
+    * **Roteiro Completo:** Gera um "Diário de Bordo" em PDF contendo cronograma dia a dia, resumo financeiro e dicas da IA.
+    * **Checklist de Bagagem:** Gera lista de itens para impressão.
+* **Identificação Visual:** Detecção automática de bandeiras baseada no destino.
+* **Favicon Dinâmico:** Identidade visual consistente na navegação.
 
-* **CRUD Completo:** Criação, leitura, atualização e exclusão de viagens.
-* **Status da Viagem:** Controle visual (Planejada, Confirmada, Concluída).
-* **Identificação Visual:** Detecção automática de países baseada nos endereços cadastrados, exibindo as respectivas bandeiras nos cards e detalhes da viagem.
+### 📅 Timeline Interativa
+* **Planejador Automático:** Criação de itens de roteiro manuais ou via IA.
+* **Mapas Integrados:** Visualização de timeline com pinos no Google Maps e geocodificação de endereços.
+* **Previsão do Tempo:** Cache inteligente de dados meteorológicos para cada item do roteiro.
 
-### 📅 Timeline e Itinerário
-
-* **Linha do Tempo Visual:** Organização cronológica de eventos (Voos, Hotéis, Restaurantes, Atividades).
-* **Categorização:** Ícones e cores distintas para cada tipo de atividade.
-* **Integração com Mapas:** Visualização de endereços e coordenadas via Google Maps API (Modal e Links).
-* **Previsão do Tempo:** Exibição automática da condição climática e temperatura para cada item do roteiro (integrado via WeatherAPI), com cache inteligente em banco de dados.
-* **Anexos e Documentos:** Upload de arquivos (PDFs de reservas, tickets, imagens) vinculados diretamente aos itens da timeline.
-* **Detalhes Extras:** Campo de notas inteligente que processa dados JSON legados e formata textos com quebras de linha.
+### ✅ Checklist Inteligente
+* **Gerenciador de Malas:** Criação de listas de verificação por categorias (Roupas, Documentos, Eletrônicos).
+* **Edição Flexível:** Adição de novas categorias (Box) e itens personalizados.
+* **Limpeza Rápida:** Ferramenta para remover itens já marcados/concluídos.
 
 ### 💰 Gestão Financeira
+* **Multi-moeda:** Suporte a USD, EUR, GBP, entre outras.
+* **Conversão Real-Time:** Cotação automática para BRL baseada em APIs externas.
+* **Dashboard:** Gráficos e tabelas detalhadas de gastos por categoria.
 
-* **Multi-moeda:** Registro de gastos em diversas moedas (USD, EUR, GBP, etc.).
-* **Conversão Automática:** Cálculo estimativo do valor em BRL baseado em taxas de câmbio configuráveis.
-* **Dashboard Financeiro:**
-    * KPIs de gastos totais, gastos do ano corrente e contagem de lançamentos.
-    * **Widget de Cotação:** Visualização de taxas de câmbio em tempo real para as moedas utilizadas na viagem.
-    * Gráficos interativos (Donut e Barras) por categoria e por viagem.
-    * Tabela detalhada (DataTables) com ordenação, pesquisa e exportação (PDF, Excel).
+---
 
-### ⚙️ Configurações e Integrações
+## 🤖 Inteligência Artificial (GenAI)
 
-* **Módulo de Cadastro de API:** Interface administrativa para gerenciamento dinâmico de chaves de API (ex: WeatherAPI, Google Maps).
-    * Armazenamento seguro em banco de dados.
-    * Permite a troca de chaves de API em tempo de execução sem necessidade de redeploy ou alteração de variáveis de ambiente.
+O sistema utiliza a API da OpenAI (GPT-4o-mini) para funcionalidades avançadas:
 
-### 🔐 Usuários e Segurança
+1.  **Planejador de Roteiros (Killer Feature):**
+    * O usuário informa seus interesses (ex: "Gosto de museus e gastronomia, odeio baladas").
+    * A IA gera uma timeline completa dia-a-dia com horários, locais e descrições, salvando diretamente no banco de dados.
 
-* **Autenticação:** Sistema de login seguro.
-* **Perfil de Usuário:** Edição de dados pessoais e alteração de senha com validação rigorosa de complexidade (Regex).
-* **Permissões:** Diferenciação entre usuários comuns e superusuários (Admin).
+2.  **Guia de Bolso (Trip Insights):**
+    * Gera automaticamente um card com informações cruciais sobre o destino:
+    * **Moeda & Gorjeta:** "No Japão não se dá gorjeta".
+    * **Eletricidade:** "Tomada Tipo G, 230V".
+    * **Frases Úteis:** "Bom dia", "Obrigado" na língua local.
+    * **Segurança:** Dicas de áreas a evitar.
+
+3.  **Checklist Generativo:**
+    * Cria uma lista de bagagem sugerida baseada no clima, duração e propósito da viagem.
+
+![Screenshot do Logo](app/core/static/img/infografico2.png)
 
 ---
 
 ## 🛠 Tecnologias Utilizadas
 
 ### Backend
-
-* **Python 3.11+**
-* **Django 5.x:** Framework web principal.
-* **PostgreSQL 15:** Banco de dados relacional (substituindo SQLite para maior robustez).
+* **Python 3.11+** & **Django 5.x**
+* **PostgreSQL 15:** Banco de dados relacional.
+* **OpenAI API:** Integração com GPT Models.
+* **xhtml2pdf:** Motor de geração de relatórios PDF.
 
 ### Frontend
-
-* **AdminLTE 3.2:** Template administrativo baseado em Bootstrap 4.
-* **Jinja2 / Django Templates:** Motor de renderização.
-* **Chart.js:** Para gráficos financeiros.
-* **DataTables:** Para tabelas avançadas e ordenáveis.
-* **Flag Icon CSS:** Para exibição dinâmica de bandeiras.
-* **FontAwesome:** Ícones vetoriais.
-
-### Infraestrutura
-
-* **Docker & Docker Compose:** Containerização da aplicação e banco de dados.
-* **Nginx:** Proxy reverso (geralmente configurado via Portainer/Host).
-* **Google Maps API:** Geocoding e Maps JavaScript API.
-* **WeatherAPI:** Dados meteorológicos.
-
-![Screenshot do Logo](app/core/static/img/infografico2.png)
+* **AdminLTE 3.2:** Interface administrativa responsiva.
+* **Google Maps JavaScript API:** Mapas e Places.
+* **Chart.js:** Visualização de dados financeiros.
 
 ---
 
-## 🏗 Arquitetura e Infraestrutura
+## 🏗 Arquitetura e Persistência
 
-O projeto utiliza uma arquitetura MVC (Model-View-Controller) padrão do Django, containerizada para fácil deploy.
+O projeto roda inteiramente em Docker. Um ponto crucial da arquitetura é a **persistência dos arquivos de migração**.
 
-* **Ambientes:** O projeto suporta ambientes de Desenvolvimento (`dev`) e Produção, controlados via arquivos `docker-compose` distintos.
-* **Persistência:** Volumes Docker nomeados são utilizados para persistir dados do PostgreSQL (`travel_db_data`) e arquivos de mídia (`media_data`).
+### Mapeamento de Volumes (Migrations)
+Para evitar a perda de histórico de banco de dados e garantir consistência entre ambientes, o diretório de migrações do Django é mapeado para volumes persistentes no host, separado do código do container.
+
+* **Desenvolvimento (`docker-compose-dev.yml`):**
+    * Caminho Host: `/var/data/migrations-dev`
+    * Caminho Container: `/usr/src/app/core/migrations`
+    * *Objetivo:* Permite rodar `makemigrations` dentro do container e persistir os arquivos `.py` gerados mesmo se o container for destruído.
+
+* **Produção (`docker-compose.yml`):**
+    * Caminho Host: `/var/data/migrations`
+    * Caminho Container: `/usr/src/app/core/migrations`
+    * *Objetivo:* Garante que o estado das migrações aplicadas em produção seja preservado.
 
 ---
 
 ## 📂 Estrutura do Projeto
 
 ```text
-travel_manager/
-├── app/                        # Código fonte da aplicação Django
-│   ├── config/                 # Configurações globais (settings.py, urls.py)
-│   ├── core/                   # App principal
-│   │   ├── migrations/         # Histórico de banco de dados
-│   │   ├── static/             # Arquivos CSS, JS, Imagens (Logo)
-│   │   ├── templates/          # Arquivos HTML (AdminLTE extendido)
-│   │   ├── templatetags/       # Filtros customizados (core_extras.py)
-│   │   ├── forms.py            # Formulários e validações
-│   │   ├── models.py           # Modelagem do banco de dados
-│   │   ├── views.py            # Lógica de negócio e Views
-│   │   └── utils.py            # Utilitários (ex: conversão de moeda e clima)
-│   ├── manage.py
-│   └── Dockerfile              # Definição da imagem Python
-├── docker-compose.yml          # Orquestração (Produção)
-├── docker-compose-dev.yml      # Orquestração (Desenvolvimento)
-├── Jenkinsfile                 # Pipeline CI/CD (Produção)
-├── Jenkinsfile-dev             # Pipeline CI/CD (Desenvolvimento)
-├── .env                        # Variáveis de ambiente (não versionado)
-└── README.md                   # Documentação
+app
+├── config                  # Configurações do Django (settings, urls)
+├── core
+│   ├── admin.py            # Registro de modelos no Admin
+│   ├── forms.py            # Formulários (Trip, Expense, UserProfile)
+│   ├── models.py           # Modelagem de dados (Trip, TripItem, Expense, APIConfiguration)
+│   ├── static              # Arquivos estáticos (CSS, JS, Imagens)
+│   ├── templates           # HTMLs (Baseados no AdminLTE)
+│   │   ├── base.html
+│   │   ├── config          # Templates de configuração (API, Perfil)
+│   │   ├── trips           # Templates principais (Detalhes, Checklist, PDF)
+│   │   │   ├── checklist_pdf.html
+│   │   │   ├── trip_detail.html
+│   │   │   ├── trip_pdf.html
+│   │   │   └── ...
+│   │   └── users
+│   ├── utils.py            # Lógica de IA e integrações externas
+│   └── views.py            # Controladores
+├── Dockerfile
+├── docker-compose-dev.yml  # Orquestração Dev
+├── docker-compose.yml      # Orquestração Prod
+└── requirements.txt
 
 ```
 
@@ -138,128 +158,58 @@ travel_manager/
 
 ## 📝 Instalação e Configuração
 
-### Pré-requisitos
+### Configuração de APIs
 
-* Docker e Docker Compose instalados.
-* Git instalado.
-* Chaves de API válidas (Google Maps, WeatherAPI).
+O sistema possui um módulo administrativo interno (`/config/apis/`) para gerenciar chaves de API sem precisar reiniciar o servidor ou editar arquivos `.env`.
 
-### 1. Clonar o Repositório
+As seguintes chaves devem ser cadastradas no sistema:
 
-```bash
-git clone [https://github.com/seu-usuario/travel_manager.git](https://github.com/seu-usuario/travel_manager.git)
-cd travel_manager
-
-```
-
-### 2. Configurar Variáveis de Ambiente
-
-Crie um arquivo `.env` na raiz do projeto.
-*Nota: As chaves de API agora podem ser configuradas opcionalmente via Banco de Dados através do módulo administrativo.*
-
-| Variável | Descrição | Exemplo |
-| --- | --- | --- |
-| `DEBUG` | Modo de depuração (1 para True, 0 para False) | `1` |
-| `SECRET_KEY` | Chave secreta do Django | `sua-chave-super-secreta` |
-| `DJANGO_ALLOWED_HOSTS` | Hosts permitidos | `localhost 127.0.0.1 *` |
-| `SQL_ENGINE` | Engine do Banco | `django.db.backends.postgresql` |
-| `SQL_DATABASE` | Nome do Banco | `travel_db` |
-| `SQL_USER` | Usuário do Banco | `travel_user` |
-| `SQL_PASSWORD` | Senha do Banco | `travel_pass` |
-| `SQL_HOST` | Host do Banco (Nome do serviço no Compose) | `travel_db_dev` |
-| `SQL_PORT` | Porta do Banco | `5432` |
+1. **GOOGLE_MAPS_API:** Para mapas e geocoding.
+2. **OPENAI_API:** Para funcionalidades de inteligência artificial.
+3. **WEATHER_API:** (Opcional) Para previsão do tempo.
 
 ---
 
 ## ▶️ Como Executar
 
-### Ambiente de Desenvolvimento (Local)
-
-Para rodar a aplicação localmente utilizando o arquivo de composição de desenvolvimento:
-
-1. **Construir e subir os containers:**
+### Ambiente de Desenvolvimento
 
 ```bash
 docker compose -f docker-compose-dev.yml up -d --build
 
 ```
 
-2. **Executar Migrações (Primeira vez):**
-
-```bash
-docker exec -it travel_manager_web_dev python manage.py migrate
-
-```
-
-3. **Criar Superusuário:**
-
-```bash
-docker exec -it travel_manager_web_dev python manage.py createsuperuser
-
-```
-
-4. **Acessar:**
-Abra o navegador em `http://localhost:8000`.
+Acesse: `http://localhost:8000`
 
 ### Ambiente de Produção
-
-Geralmente gerenciado via Portainer/Jenkins, mas manualmente pode ser executado com:
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
 
 ```
 
-A porta padrão de produção configurada é a `8080`.
+Acesse: `http://localhost:8080` (Ou via proxy reverso configurado).
 
 ---
 
-## 💻 Comandos Úteis
+## 🗺 Roadmap
 
-Acesso ao Shell do container:
+### ✅ Concluído
 
-```bash
-docker exec -it travel_manager_web_dev /bin/sh
+* [x] Integração com OpenAI (Roteiros e Dicas).
+* [x] Sistema de Checklist (Edição e IA).
+* [x] Exportação de Roteiro e Checklist em PDF.
+* [x] Módulo de gestão de chaves de API no banco.
+* [x] Correção de persistência de migrações via Docker Volumes.
+* [x] Mapa interativo na timeline.
 
-```
+### 🔜 Próximos Passos (Backlog)
 
-Recarregar o Django (Reiniciar container):
-
-```bash
-docker restart travel_manager_web_dev
-
-```
-
-Fazer dump dos dados (Backup):
-
-```bash
-docker exec travel_manager_web_dev python manage.py dumpdata > backup.json
-
-```
-
-Limpar banco de dados (Flush):
-
-```bash
-docker exec -it travel_manager_web_dev python manage.py flush
-
-```
-
----
-
-## 🔄 CI/CD e Deploy
-
-O projeto utiliza uma esteira automatizada de DevOps:
-
-1. **GitHub:** O código é enviado para o repositório (branches `main` ou `develop`).
-2. **Jenkins:** Detecta a alteração, valida a existência dos arquivos críticos (`docker-compose`, etc.).
-3. **Portainer (Webhook):** O Jenkins aciona um Webhook no Portainer.
-4. **Portainer (Stack):** O Portainer baixa a nova imagem/código do Git e atualiza a Stack automaticamente (re-pull), mantendo os volumes de dados persistentes.
-
----
-
-## 🗺 Roadma
-* [ ] Exportação do roteiro completo em PDF.
-* [ ] Compartilhamento de viagem (Link público "somente leitura").
+* [ ] **Integração com E-mail:** Envio automático do PDF do roteiro por e-mail.
+* [ ] **Login Social:** Autenticação via Google/Facebook.
+* [ ] **Upload de Fotos na Galeria:** Criar uma galeria de fotos da viagem além dos anexos documentais.
+* [ ] **Link de Compartilhamento Público:** Gerar uma URL única "somente leitura" para compartilhar o roteiro com amigos.
+* [ ] **Parsing de E-mails:** (Avançado) Ler confirmações de voo/hotel encaminhadas por e-mail e criar itens automaticamente.
 
 ---
 
@@ -269,9 +219,9 @@ O projeto utiliza uma esteira automatizada de DevOps:
 
 * Copyright © 2025. Todos os direitos reservados.
 
----
+```
 
-*Documentação gerada automaticamente com base na versão v0.0.42 do TravelManager.*
+*Documentação gerada automaticamente com base na versão v0.0.60 do TravelManager.*
 
 ```
 
