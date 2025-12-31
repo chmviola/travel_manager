@@ -40,6 +40,7 @@ urlpatterns = [
     path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
     path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
 
+    # Rotas de Perfil do Usuário
     path('profile/', views.profile_view, name='user_profile'),
     path('profile/password/', views.change_password, name='change_password'),
 
@@ -55,7 +56,10 @@ urlpatterns = [
     path('trips/<int:trip_id>/checklist/add/', views.checklist_add_item, name='checklist_add_item'),
     path('trips/<int:trip_id>/checklist/clear/', views.checklist_clear_completed, name='checklist_clear_completed'),
     path('trips/<int:trip_id>/checklist/pdf/', views.checklist_pdf, name='checklist_pdf'),
-    path('trips/<int:trip_id>/generate-itinerary/', views.trip_generate_itinerary, name='trip_generate_itinerary'),
     path('checklist/toggle/<int:item_id>/', views.checklist_toggle, name='checklist_toggle'),
     path('checklist/delete/<int:item_id>/', views.checklist_delete_item, name='checklist_delete_item'),
+
+    # Rotas de Funcionalidades com IA
+    path('trips/<int:trip_id>/generate-itinerary/', views.trip_generate_itinerary, name='trip_generate_itinerary'),
+    path('trips/<int:trip_id>/generate-insights/', views.trip_generate_insights, name='trip_generate_insights'),
 ]

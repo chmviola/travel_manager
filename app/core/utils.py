@@ -5,6 +5,7 @@ from datetime import timedelta, datetime
 from openai import OpenAI
 from .models import APIConfiguration, Trip
 
+#-- Função Adicional para Buscar Dicas de Viagem AI --#
 def get_travel_intel(destination):
     # 1. Busca chave no banco
     try:
@@ -34,6 +35,7 @@ def get_travel_intel(destination):
         print(f"Erro OpenAI: {e}")
         return None
 
+#-- Função Adicional para Buscar Cotação de Moeda --#
 def get_exchange_rate(from_currency):
     """
     Busca a cotação atual de uma moeda para Real (BRL).
@@ -71,6 +73,7 @@ def get_exchange_rate(from_currency):
         }
         return fallback_rates.get(from_currency, 1.0)
     
+#-- Função Adicional para Mapear Moeda por País/Cidade --#
 def get_currency_by_country(country_name):
     """
     Mapeia nomes de países E CIDADES (que vêm do Google Maps) para códigos de moeda.
@@ -111,6 +114,7 @@ def get_currency_by_country(country_name):
             
     return None
 
+#-- Função Adicional para Buscar Clima --#
 def fetch_weather_data(location, date_obj):
     # 1. Busca a chave no Banco de Dados
     try:
@@ -160,6 +164,7 @@ def fetch_weather_data(location, date_obj):
     
     return None, None, None
 
+#-- Função Adicional para Geração de Checklist AI --#
 def generate_checklist_ai(trip):
     """
     Gera uma lista de itens de viagem baseada no destino e duração usando OpenAI.
@@ -202,7 +207,8 @@ def generate_checklist_ai(trip):
     except Exception as e:
         print(f"Erro OpenAI Checklist: {e}")
         return None
-    
+
+#-- Função Adicional para Geração de Roteiro AI --#    
 def generate_itinerary_ai(trip, interests):
     """
     Gera itens de roteiro (atividades) baseados no destino e interesses.
@@ -249,4 +255,41 @@ def generate_itinerary_ai(trip, interests):
         return json.loads(content)
     except Exception as e:
         print(f"Erro OpenAI Roteiro: {e}")
+        return None
+
+#-- Função Adicional para Dicas de Viagem AI --#
+def generate_trip_insights_ai(destination):
+    """
+    Gera dicas culturais e práticas sobre o destino.
+    """
+    try:
+        config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
+        client = OpenAI(api_key=config.value)
+    except APIConfiguration.DoesNotExist:
+        return None
+
+    prompt = f"""
+    Estou viajando para: {destination}.
+    Gere um JSON com dicas práticas e curtas (máximo 1 frase longa cada).
+    Campos obrigatórios:
+    - "currency_tip": Sobre a moeda local e se deve dar gorjeta.
+    - "plug": Tipo de tomada (ex: Tipo G) e voltagem.
+    - "phrases": 3 frases essenciais na língua local (Olá, Obrigado, Quanto custa).
+    - "safety": Uma dica de segurança importante ou região a evitar.
+    - "curiosity": Uma curiosidade cultural rápida.
+
+    Responda em Português do Brasil.
+    Retorne APENAS o JSON.
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content
+        return json.loads(content)
+    except Exception as e:
+        print(f"Erro OpenAI Insights: {e}")
         return None

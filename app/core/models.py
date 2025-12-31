@@ -28,6 +28,12 @@ class Trip(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Campo para guardar as dicas da IA (Moeda, Tomada, etc)
+    ai_insights = models.JSONField(blank=True, null=True, default=dict)
+
+    def __str__(self):
+        return self.title
+
     class Meta:
         ordering = ['-start_date']
         verbose_name = "Viagem"
