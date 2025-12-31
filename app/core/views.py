@@ -20,7 +20,7 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 
-
+#--- VIEW PARA A PÁGINA INICIAL (DASHBOARD) ---
 @login_required
 def home(request):
     # 1. Busca as viagens
@@ -128,6 +128,7 @@ def trip_list(request):
     
     return render(request, 'trips/trip_list.html', {'trips': trips})
 
+#--- VIEW PARA CRIAR NOVA VIAGEM ---
 @login_required
 def trip_create(request):
     if request.method == 'POST':
@@ -145,6 +146,7 @@ def trip_create(request):
     
     return render(request, 'trips/trip_form.html', {'form': form})
 
+#--- VIEW PARA DETALHES DA VIAGEM ---
 @login_required
 def trip_detail(request, pk):
     # get_object_or_404 garante que retorna erro se o ID não existir
@@ -260,6 +262,48 @@ def trip_detail(request, pk):
 
     return render(request, 'trips/trip_detail.html', context)
 
+#--- VIEW PARA GERAR PDF DO ROTEIRO ---
+@login_required
+def trip_detail_pdf(request, pk):
+    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    
+    # Busca itens ordenados
+    items = trip.items.all().order_by('start_datetime')
+    
+    # Busca e calcula gastos (para mostrar o total no PDF)
+    expenses = trip.expenses.all()
+    total_brl = 0
+    for expense in expenses:
+        # Cálculo simplificado para o PDF (idealmente usaria o cache como na view principal)
+        rate = get_exchange_rate(expense.currency)
+        total_brl += float(expense.amount) * rate
+
+    context = {
+        'trip': trip,
+        'items': items,
+        'expenses': expenses,
+        'total_brl': round(total_brl, 2),
+        'user': request.user,
+        'now': datetime.now()
+    }
+
+    # Renderiza o template PDF
+    template_path = 'trips/trip_pdf.html'
+    template = get_template(template_path)
+    html = template.render(context)
+
+    response = HttpResponse(content_type='application/pdf')
+    # 'attachment' baixa o arquivo, 'inline' abre no navegador
+    response['Content-Disposition'] = f'inline; filename="roteiro_{trip.id}.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse('Erro ao gerar PDF')
+    
+    return response
+
+#--- VIEWS PARA CRIAR ITENS DE VIAGEM (TRIP ITEM) ---
 @login_required
 def trip_item_create(request, trip_id):
     # Busca a viagem e garante que pertence ao usuário logado
@@ -278,6 +322,7 @@ def trip_item_create(request, trip_id):
     
     return render(request, 'trips/trip_item_form.html', {'form': form, 'trip': trip})
 
+#--- VIEW PARA CRIAR GASTOS DE VIAGEM ---
 @login_required
 def trip_expense_create(request, trip_id):
     trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
@@ -293,6 +338,7 @@ def trip_expense_create(request, trip_id):
     
     return render(request, 'trips/expense_form.html', {'form': form, 'trip': trip})
 
+#--- VIEW PARA EDITAR VIAGEM ---
 @login_required
 def trip_update(request, pk):
     trip = get_object_or_404(Trip, pk=pk, user=request.user)
@@ -305,6 +351,7 @@ def trip_update(request, pk):
         form = TripForm(instance=trip)
     return render(request, 'trips/trip_form.html', {'form': form, 'edit_mode': True})
 
+#--- VIEW PARA DELETAR VIAGEM ---
 @login_required
 def trip_delete(request, pk):
     trip = get_object_or_404(Trip, pk=pk, user=request.user)

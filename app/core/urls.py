@@ -11,6 +11,7 @@ urlpatterns = [
     path('viagens/<int:pk>/', views.trip_detail, name='trip_detail'),
     path('viagens/<int:pk>/editar/', views.trip_update, name='trip_update'),
     path('viagens/<int:pk>/excluir/', views.trip_delete, name='trip_delete'),
+    path('trips/<int:pk>/pdf/', views.trip_detail_pdf, name='trip_detail_pdf'),
     
     # Rotas de Itens
     path('viagens/<int:trip_id>/adicionar-item/', views.trip_item_create, name='trip_item_create'),

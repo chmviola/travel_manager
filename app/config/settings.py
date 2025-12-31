@@ -15,7 +15,7 @@ from pathlib import Path
 from decouple import config
 
 # Versão do Aplicativo (Edite apenas aqui!)
-APP_VERSION = '0.0.58'
+APP_VERSION = '0.0.59'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
