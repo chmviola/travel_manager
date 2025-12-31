@@ -30,6 +30,10 @@
                 <i class="fas fa-plus"></i> Novo Item
             </a>
 
+            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" class="btn btn-default btn-sm" title="Imprimir Roteiro">
+                <i class="fas fa-file-pdf text-danger"></i> PDF
+            </a>
+
         <button type="button" class="btn btn-warning btn-sm shadow-sm" data-toggle="modal" data-target="#modalAutoItinerary">
             <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
         </button>

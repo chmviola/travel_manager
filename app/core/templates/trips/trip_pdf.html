@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{{ trip.title }} - Roteiro</title>
+    <style>
+        @page { size: A4; margin: 1.5cm; }
+        body { font-family: Helvetica, sans-serif; color: #333; font-size: 12px; }
+        
+        /* Cabeçalho */
+        .header { border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { color: #0056b3; margin: 0; font-size: 24px; }
+        .header .dates { color: #666; font-size: 14px; margin-top: 5px; }
+        
+        /* Seções */
+        h2 { background-color: #f4f4f4; padding: 8px; border-left: 5px solid #17a2b8; margin-top: 20px; font-size: 16px; }
+        
+        /* Tabelas */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th { text-align: left; border-bottom: 1px solid #999; padding: 5px; font-weight: bold; font-size: 10px; color: #555; }
+        td { border-bottom: 1px solid #eee; padding: 6px 5px; vertical-align: top; }
+        .time-col { width: 60px; font-weight: bold; color: #0056b3; }
+        .date-row { background-color: #e9ecef; font-weight: bold; }
+        
+        /* Dicas IA */
+        .insights-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; background-color: #fdfdfd; }
+        .insight-item { margin-bottom: 8px; }
+        .insight-label { font-weight: bold; color: #555; }
+        
+        /* Rodapé */
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 9px; color: #aaa; border-top: 1px solid #eee; padding-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ trip.title }}</h1>
+        <div class="dates">
+            {{ trip.start_date|date:"d/m/Y" }} até {{ trip.end_date|date:"d/m/Y" }}
+            <br>Viajante: {{ user.get_full_name|default:user.username }}
+        </div>
+    </div>
+
+    {% if trip.ai_insights %}
+    <h2>Guia de Bolso (IA)</h2>
+    <div class="insights-box">
+        <div class="insight-item"><span class="insight-label">Moeda:</span> {{ trip.ai_insights.currency_tip }}</div>
+        <div class="insight-item"><span class="insight-label">Tomada:</span> {{ trip.ai_insights.plug }}</div>
+        <div class="insight-item"><span class="insight-label">Frases:</span> {{ trip.ai_insights.phrases }}</div>
+        <div class="insight-item"><span class="insight-label">Segurança:</span> {{ trip.ai_insights.safety }}</div>
+    </div>
+    {% endif %}
+
+    <h2>Cronograma Detalhado</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Hora</th>
+                <th>Atividade</th>
+                <th>Local / Endereço</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% regroup items by start_datetime|date:"d/m/Y - l" as dates %}
+            
+            {% for date in dates %}
+                <tr>
+                    <td colspan="3" class="date-row">{{ date.grouper }}</td>
+                </tr>
+                
+                {% for item in date.list %}
+                <tr>
+                    <td class="time-col">{{ item.start_datetime|date:"H:i" }}</td>
+                    <td>
+                        <strong>{{ item.name }}</strong><br>
+                        <small style="color: #666;">{{ item.details.notes|default:"" }}</small>
+                    </td>
+                    <td>{{ item.location_address|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            {% empty %}
+                <tr><td colspan="3">Nenhuma atividade cadastrada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Estimativa de Custos</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th style="text-align: right;">Valor Original</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for expense in expenses %}
+            <tr>
+                <td>{{ expense.description }}</td>
+                <td>{{ expense.category }}</td>
+                <td style="text-align: right;">{{ expense.currency }} {{ expense.amount }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="2" style="text-align: right; font-weight: bold; padding-top: 10px;">Total Estimado (Convertido):</td>
+                <td style="text-align: right; font-weight: bold; padding-top: 10px;">R$ {{ total_brl }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Gerado pelo TravelManager em {% now "d/m/Y H:i" %}
+    </div>
+</body>
+</html>
