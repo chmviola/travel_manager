@@ -28,7 +28,7 @@ pipeline {
                     
                     // Substitua pela URL que você copiou no Passo 3
                     // O comando curl faz uma requisição POST que aciona o Portainer
-                    sh 'curl -X POST -d "" "https://portainer.chmviola.com.br/api/stacks/webhooks/cafc7805-7d50-401c-b74c-444c5da9735b"'
+                    sh 'curl -X POST -d "" "https://portainer.chmviola.com.br/api/stacks/webhooks/fe2c41c1-d687-42fb-8466-61e1d54c4e9d"'
                     
                     echo 'Sinal enviado! O Portainer vai baixar o código e recriar a stack.'
                 }
