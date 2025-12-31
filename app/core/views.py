@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.utils import timezone # Importante para saber o ano atual
 from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem
