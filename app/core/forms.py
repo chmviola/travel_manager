@@ -4,6 +4,7 @@ from django.contrib.auth.forms import PasswordChangeForm
 from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration
 import re  # <--- Importante para validação regex
 
+#--- FORMULÁRIOS PERSONALIZADOS COM BOOTSTRAP E VALIDAÇÕES ESPECÍFICAS ---
 class TripForm(forms.ModelForm):
     class Meta:
         model = Trip
@@ -17,6 +18,7 @@ class TripForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
 
+#--- Formulário para Itens da Viagem ---
 class TripItemForm(forms.ModelForm):
     # Sobrescrevemos o campo details para ser um texto simples na visão do usuário
     details = forms.CharField(
@@ -71,7 +73,8 @@ class TripItemForm(forms.ModelForm):
             # Salva como {"notes": "texto do usuário"}
             return {'notes': data} 
         return {}
-    
+
+#-- Formulário para Gastos da Viagem ---
 class ExpenseForm(forms.ModelForm):
     # Sobrescrevemos o campo amount para aceitar vírgula (localize=True)
     amount = forms.DecimalField(
@@ -107,6 +110,7 @@ class ExpenseForm(forms.ModelForm):
             self.fields['item'].queryset = TripItem.objects.filter(trip_id=trip_id)
             self.fields['item'].empty_label = "Gasto Geral (Nenhum item específico)"
 
+#-- Formulário para Anexos da Viagem ---
 class AttachmentForm(forms.ModelForm):
     class Meta:
         model = TripAttachment
@@ -116,6 +120,7 @@ class AttachmentForm(forms.ModelForm):
             'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Voucher do Hotel'}),
         }
 
+#--- FORMULÁRIOS DE USUÁRIO COM VALIDAÇÃO DE SENHA E BOOTSTRAP ---
 class UserCreateForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), label="Senha")
     groups = forms.ModelMultipleChoiceField(queryset=Group.objects.all(), widget=forms.SelectMultiple(attrs={'class': 'form-control'}), required=False, label="Grupos de Acesso")
@@ -140,6 +145,7 @@ class UserCreateForm(forms.ModelForm):
             self.save_m2m() # Salva os grupos
         return user
 
+#-- Formulário de Edição de Usuário com Validação de Senha ---
 class UserEditForm(forms.ModelForm):
     # Na edição, não mostramos o campo de senha para evitar erros de recriptografia
     groups = forms.ModelMultipleChoiceField(
@@ -218,6 +224,7 @@ class UserEditForm(forms.ModelForm):
         return user
     # -----------------------
 
+#-- Formulário para Edição do Perfil do Usuário ---
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = User
@@ -242,7 +249,7 @@ class UserProfileForm(forms.ModelForm):
             raise forms.ValidationError("Este e-mail já está em uso por outro usuário.")
         return email
 
-# --- NOVO FORM DE SENHA ESTILIZADO ---
+#-- Formulário para Troca de Senha com Bootstrap ---
 class CustomPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -250,6 +257,7 @@ class CustomPasswordChangeForm(PasswordChangeForm):
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
+#-- Formulário para Configuração de Chaves de API ---
 class APIConfigurationForm(forms.ModelForm):
     class Meta:
         model = APIConfiguration
@@ -260,3 +268,24 @@ class APIConfigurationForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
         }
+
+#-- Formulário para Configuração de Chaves de API (Versão Livre) ---
+class APIConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = APIConfiguration
+        fields = ['key', 'value', 'is_active']
+        widgets = {
+            'key': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: GOOGLE_MAPS_API (Maiúsculo, sem espaços)'}),
+            'value': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cole a chave aqui'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input ml-2'}),
+        }
+        labels = {
+            'key': 'Nome da Chave (ID Interno)',
+            'value': 'Valor da API Key',
+            'is_active': 'Chave Ativa?',
+        }
+
+    def clean_key(self):
+        # Força a chave a ser maiúscula e sem espaços para evitar erros no código
+        key = self.cleaned_data['key']
+        return key.upper().strip().replace(' ', '_')

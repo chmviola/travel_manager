@@ -10,12 +10,11 @@ from datetime import datetime, time, timedelta
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm
 from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
-from .forms import UserCreateForm, UserEditForm, APIConfigurationForm
 from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
@@ -880,6 +879,59 @@ def change_password(request):
                     messages.error(request, f"Erro na senha: {error}")
                     
     return redirect('user_profile')
+
+# --- VIEWS DE CONFIGURAÇÃO DE API ---
+@login_required
+def config_api_list(request):
+    """Lista todas as configurações de API."""
+    # Buscamos TUDO, ordenado por chave. Isso deve resolver o problema da chave não aparecer.
+    configs = APIConfiguration.objects.all().order_by('key')
+    context = {
+        'configs': configs
+    }
+    return render(request, 'config/api_list.html', context)
+
+@login_required
+def config_api_handle(request, pk=None):
+    """View única para CRIAR (pk=None) ou EDITAR (pk com valor) uma API."""
+    if pk:
+        # Modo Edição: busca a instância existente
+        config = get_object_or_404(APIConfiguration, pk=pk)
+        title = f"Editar API: {config.key}"
+    else:
+        # Modo Criação: nova instância
+        config = None
+        title = "Nova Configuração de API"
+
+    if request.method == 'POST':
+        form = APIConfigurationForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            action = "atualizada" if pk else "criada"
+            messages.success(request, f"Configuração de API {action} com sucesso.")
+            return redirect('config_api_list')
+    else:
+        form = APIConfigurationForm(instance=config)
+
+    context = {
+        'form': form,
+        'title': title,
+        'is_edit': pk is not None
+    }
+    # Vamos usar um template genérico para o formulário
+    return render(request, 'config/api_form.html', context)
+
+# (Opcional) View para Deletar
+@login_required
+def config_api_delete(request, pk):
+    config = get_object_or_404(APIConfiguration, pk=pk)
+    if request.method == 'POST':
+        key_name = config.key
+        config.delete()
+        messages.success(request, f"Chave {key_name} removida.")
+        return redirect('config_api_list')
+    # Se tentar acessar via GET, redireciona para a lista por segurança
+    return redirect('config_api_list')
 
 # --- VERIFICAÇÃO DE SEGURANÇA ---
 def is_admin(user):

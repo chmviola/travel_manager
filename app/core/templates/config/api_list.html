@@ -1,61 +1,71 @@
 {% extends 'base.html' %}
 
-{% block page_title %}Configurações de API{% endblock %}
+{% block page_title %}Configuração de APIs{% endblock %}
 
 {% block content %}
-<div class="row mb-3">
-    <div class="col-12 text-right">
-        <a href="{% url 'api_add' %}" class="btn btn-success">
-            <i class="fas fa-plus"></i> Nova Configuração
-        </a>
-    </div>
-</div>
-
-<div class="card card-outline card-primary">
-    <div class="card-body p-0">
-        <table class="table table-striped projects">
-            <thead>
-                <tr>
-                    <th>Serviço</th>
-                    <th>Chave (Preview)</th>
-                    <th>Status</th>
-                    <th>Última Atualização</th>
-                    <th class="text-right">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for config in configs %}
-                <tr>
-                    <td><strong>{{ config.get_key_display }}</strong></td>
-                    <td>
-                        <code class="text-muted">
-                            {{ config.value|slice:":10" }}...{{ config.value|slice:"-5:" }}
-                        </code>
-                    </td>
-                    <td>
-                        {% if config.is_active %}
-                            <span class="badge badge-success">Ativo</span>
-                        {% else %}
-                            <span class="badge badge-danger">Inativo</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ config.updated_at|date:"d/m/Y H:i" }}</td>
-                    <td class="text-right">
-                        <a class="btn btn-info btn-sm" href="{% url 'api_edit' config.id %}">
-                            <i class="fas fa-pencil-alt"></i> Editar
-                        </a>
-                        <a class="btn btn-danger btn-sm" href="{% url 'api_delete' config.id %}" onclick="return confirm('Tem certeza?');">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center">Nenhuma API cadastrada.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Chaves de Integração</h3>
+                <div class="card-tools">
+                    <a href="{% url 'config_api_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus mr-1"></i> Nova Chave API
+                    </a>
+                </div>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Chave (ID Interno)</th>
+                            <th>Valor (Key)</th>
+                            <th>Status</th>
+                            <th style="width: 150px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for config in configs %}
+                        <tr>
+                            <td><strong>{{ config.key }}</strong></td>
+                            <td>
+                                <code title="{{ config.value }}">
+                                    {{ config.value|slice:":6" }}...{{ config.value|slice:"-4:" }}
+                                </code>
+                            </td>
+                            <td>
+                                {% if config.is_active %}
+                                    <span class="badge badge-success">Ativa</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inativa</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'config_api_edit' config.pk %}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+                                
+                                <form action="{% url 'config_api_delete' config.pk %}" method="POST" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir a chave {{ config.key }}? Isso pode quebrar funcionalidades.');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nenhuma configuração de API encontrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="alert alert-info">
+            <h5><i class="icon fas fa-info"></i> Atenção</h5>
+            As chaves necessárias para o sistema funcionar são: <code>GOOGLE_MAPS_API</code>, <code>OPENAI_API</code> e opcionalmente <code>WEATHER_API</code>. Mantenha os nomes exatos.
+        </div>
     </div>
 </div>
 {% endblock %}

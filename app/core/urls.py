@@ -51,6 +51,12 @@ urlpatterns = [
     path('config/apis/edit/<int:pk>/', views.api_update, name='api_edit'),
     path('config/apis/delete/<int:pk>/', views.api_delete, name='api_delete'),
 
+    # Rotas de Configuração de API
+    path('config/apis/', views.config_api_list, name='config_api_list'),
+    path('config/apis/new/', views.config_api_handle, name='config_api_create'), # Rota para criar
+    path('config/apis/<int:pk>/edit/', views.config_api_handle, name='config_api_edit'), # Rota para editar
+    path('config/apis/<int:pk>/delete/', views.config_api_delete, name='config_api_delete'),
+
     # CHECKLIST
     path('trips/<int:trip_id>/checklist/', views.checklist_view, name='checklist_view'),
     path('trips/<int:trip_id>/checklist/generate/', views.checklist_generate, name='checklist_generate'),
