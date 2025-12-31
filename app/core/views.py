@@ -440,7 +440,7 @@ def trip_generate_itinerary(request, trip_id):
                     TripItem.objects.create(
                         trip=trip,
                         name=event['name'],
-                        location=event.get('location', ''),
+                        location_address=event.get('location', ''),
                         item_type=event['category'], # ACTIVITY, RESTAURANT
                         start_datetime=event_datetime,
                         details={'notes': event['description']} # Salvamos a descrição nas notas
