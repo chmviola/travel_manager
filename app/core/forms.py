@@ -1,6 +1,7 @@
 from django import forms
-from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration
 from django.contrib.auth.models import User, Group
+from django.contrib.auth.forms import PasswordChangeForm
+from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration
 import re  # <--- Importante para validação regex
 
 class TripForm(forms.ModelForm):
