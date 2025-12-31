@@ -7,7 +7,7 @@ from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
-from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai
+from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm
@@ -458,6 +458,23 @@ def trip_generate_itinerary(request, trip_id):
         else:
             messages.error(request, "Erro ao comunicar com a Inteligência Artificial.")
             
+    return redirect('trip_detail', pk=trip.id)
+
+@login_required
+def trip_generate_insights(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
+    # Chama a IA usando o título da viagem como destino
+    # (Pode melhorar usando trip.location se tiver esse campo específico)
+    insights = generate_trip_insights_ai(trip.title)
+    
+    if insights:
+        trip.ai_insights = insights
+        trip.save()
+        messages.success(request, "Dicas de viagem geradas com sucesso!")
+    else:
+        messages.error(request, "Não foi possível gerar as dicas no momento.")
+        
     return redirect('trip_detail', pk=trip.id)
 
 # --- VIEWS PARA FINANCIAL ---
