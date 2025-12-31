@@ -25,10 +25,14 @@
     
     <div class="col-md-6">
         
-        <div class="mb-3">
+        <div class="mb-3 d-flex justify-content-between">
             <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus"></i> Adicionar Voo/Hotel
+                <i class="fas fa-plus"></i> Novo Item
             </a>
+
+        <button type="button" class="btn btn-warning btn-sm shadow-sm" data-toggle="modal" data-target="#modalAutoItinerary">
+            <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
+        </button>
 
             <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm">
                 <i class="fas fa-tasks"></i> Checklist de Bagagem
@@ -183,9 +187,9 @@
             <div class="card-header">
                 <h3 class="card-title">Mapa do Roteiro</h3>
             </div>
-            <div class="card-body p-0">
-                <div id="map" style="height: 300px; width: 100%; background-color: #e9ecef; display: flex; align-items: center; justify-content: center;">
-                    <span class="text-muted">Mapa carregará aqui</span>
+            <div id="timelineMap" style="height: 400px; width: 100%; border-radius: 8px; margin-bottom: 20px;">
+                <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
+                    <i class="fas fa-map-marked-alt mr-2"></i> O mapa será carregado aqui...
                 </div>
             </div>
         </div>
@@ -280,12 +284,120 @@
     </div>
 </div> 
 
+<!-- Modal para Sugerir Roteiro IA -->
+<div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Planejador Automático</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>A Inteligência Artificial vai analisar seu destino (<strong>{{ trip.title }}</strong>) e a duração da viagem para criar sugestões de passeios dia a dia.</p>
+                    
+                    <div class="form-group">
+                        <label>O que você gosta de fazer?</label>
+                        <textarea name="interests" class="form-control" rows="3" placeholder="Ex: Gosto de museus de arte, cafeterias históricas e parques. Não gosto de baladas. Quero um ritmo tranquilo."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info text-sm">
+                        <i class="fas fa-info-circle"></i> Os itens serão adicionados à sua linha do tempo. Você poderá editá-los ou excluí-los depois.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Gerar Roteiro</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initMap&loading=async" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+
 <script>
-    function initMap() {
+    // --- MAPA GERAL DA TIMELINE ---
+    function initTimelineMap() {
+        const mapEl = document.getElementById('timelineMap');
+        if (!mapEl) return; // Se não tiver a div, sai
+
+        // 1. Cria o Mapa
+        const map = new google.maps.Map(mapEl, {
+            zoom: 2,
+            center: { lat: 20, lng: 0 }, // Centro do mundo
+            styles: [] // Estilos opcionais
+        });
+
+        const bounds = new google.maps.LatLngBounds();
+        const geocoder = new google.maps.Geocoder();
+        let markersCount = 0;
+
+        // Dados vindos do Django
+        const locations = [
+            {% for item in items %}
+            {
+                name: "{{ item.name|escapejs }}",
+                address: "{{ item.location_address|default:''|escapejs }}",
+                lat: "{{ item.location_lat|default:'' }}",  // Supondo que você tenha esses campos
+                lng: "{{ item.location_lng|default:'' }}",
+                type: "{{ item.item_type }}"
+            },
+            {% endfor %}
+        ];
+
+        // Função para adicionar marcador
+        const addMarker = (position, title) => {
+            new google.maps.Marker({
+                position: position,
+                map: map,
+                title: title,
+                animation: google.maps.Animation.DROP
+            });
+            bounds.extend(position);
+            map.fitBounds(bounds);
+            markersCount++;
+        };
+
+        // 2. Processa os itens
+        locations.forEach((loc, index) => {
+            // CASO A: Já tem coordenada salva (Rápido e Preciso)
+            if (loc.lat && loc.lng) {
+                const pos = { lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) };
+                addMarker(pos, loc.name);
+            } 
+            // CASO B: Só tem endereço (Veio da IA) - Tenta descobrir
+            else if (loc.address) {
+                // Usamos timeout para não exceder o limite de requisições do Google (Rate Limit)
+                setTimeout(() => {
+                    geocoder.geocode({ 'address': loc.address }, function(results, status) {
+                        if (status === 'OK') {
+                            addMarker(results[0].geometry.location, loc.name);
+                        } else {
+                            console.log('Geocode falhou para ' + loc.name + ': ' + status);
+                        }
+                    });
+                }, index * 400); // Espera 400ms entre cada item
+            }
+        });
+
+        // Se não tiver nenhum item, centraliza num lugar padrão (ex: Paris)
+        if (locations.length === 0) {
+            map.setCenter({ lat: 48.8566, lng: 2.3522 });
+            map.setZoom(12);
+        }
+    }
+
+    // Inicializa o mapa assim que a janela carregar
+    window.addEventListener('load', initTimelineMap);
+
+   function initMap() {
         // Ponto inicial padrão (caso não tenha itens)
         const defaultLocation = { lat: -23.5505, lng: -46.6333 }; // SP
         
