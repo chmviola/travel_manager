@@ -8,9 +8,9 @@ import json                             # <--- Essencial para os gráficos
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai
-from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem
+from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm
 from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -78,39 +78,179 @@ def home(request):
     return render(request, 'index.html', context)
 
 # --- VIEWS PARA VIAGEM (TRIP) ---
-@login_required
 def trip_list(request):
     """
-    Lista todas as viagens do usuário logado.
+    Lista todas as viagens (próprias e compartilhadas) do usuário logado.
     """
-    # O filtro user=request.user garante a segurança dos dados
-    trips = Trip.objects.filter(user=request.user).order_by('-start_date')
+    
+    # --- MUDANÇA AQUI ---
+    # Buscamos viagens onde o usuário é o DONO (user=request.user)
+    # OU (|) onde ele é um COLABORADOR (collaborators__user=request.user)
+    # O .distinct() é importante para evitar duplicatas caso haja algum conflito no join
+    trips = Trip.objects.filter(
+        Q(user=request.user) | Q(collaborators__user=request.user)
+    ).distinct().order_by('-start_date')
 
-    # --- Lógica para Identificar Bandeiras ---
-    # Dicionário de mapeamento (Nome no endereço -> Código ISO)
-    # Adicione mais países conforme sua necessidade
+    # --- Lógica para Identificar Bandeiras (MANTIDA IGUAL) ---
     country_map = {
+        # A
+        'afeganistão': 'af', 'afghanistan': 'af',
+        'áfrica do sul': 'za', 'south africa': 'za',
+        'albânia': 'al', 'albania': 'al',
         'alemanha': 'de', 'germany': 'de',
+        'andorra': 'ad',
+        'angola': 'ao',
+        'antígua e barbuda': 'ag', 'antigua and barbuda': 'ag',
+        'arábia saudita': 'sa', 'saudi arabia': 'sa',
+        'argélia': 'dz', 'algeria': 'dz',
         'argentina': 'ar',
+        'armênia': 'am', 'armenia': 'am',
         'austrália': 'au', 'australia': 'au',
+        'áustria': 'at', 'austria': 'at',
+        'azerbaijão': 'az', 'azerbaijan': 'az',
+
+        # B
+        'bahamas': 'bs',
+        'bangladesh': 'bd',
+        'barbados': 'bb',
+        'barein': 'bh', 'bahrain': 'bh',
+        'bélgica': 'be', 'belgium': 'be',
+        'belize': 'bz',
+        'benin': 'bj',
+        'bolívia': 'bo', 'bolivia': 'bo',
+        'bósnia e herzegovina': 'ba', 'bosnia and herzegovina': 'ba',
+        'botswana': 'bw',
         'brasil': 'br', 'brazil': 'br',
+        'brunei': 'bn',
+        'bulgária': 'bg', 'bulgaria': 'bg',
+
+        # C
+        'cabo verde': 'cv', 'cape verde': 'cv',
+        'camarões': 'cm', 'cameroon': 'cm',
         'canadá': 'ca', 'canada': 'ca',
+        'catar': 'qa', 'qatar': 'qa',
+        'cazaquistão': 'kz', 'kazakhstan': 'kz',
         'chile': 'cl',
         'china': 'cn',
+        'chipre': 'cy', 'cyprus': 'cy',
+        'colômbia': 'co', 'colombia': 'co',
+        'coreia do norte': 'kp', 'north korea': 'kp',
+        'coreia do sul': 'kr', 'south korea': 'kr',
+        'costa rica': 'cr',
+        'croácia': 'hr', 'croatia': 'hr',
+        'cuba': 'cu',
+
+        # D
+        'dinamarca': 'dk', 'denmark': 'dk',
+        'dominica': 'dm',
+
+        # E
+        'egito': 'eg', 'egypt': 'eg',
+        'el salvador': 'sv',
+        'emirados árabes unidos': 'ae', 'united arab emirates': 'ae',
+        'equador': 'ec',
+        'eritrea': 'er',
+        'eslováquia': 'sk', 'slovakia': 'sk',
+        'eslovênia': 'si', 'slovenia': 'si',
         'espanha': 'es', 'spain': 'es',
         'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
+        'estônia': 'ee', 'estonia': 'ee',
+        'etiópia': 'et', 'ethiopia': 'et',
+
+        # F
         'finlândia': 'fi', 'finland': 'fi',
         'frança': 'fr', 'france': 'fr',
+
+        # G
+        'gabão': 'ga', 'gabon': 'ga',
+        'gana': 'gh', 'ghana': 'gh',
+        'geórgia': 'ge', 'georgia': 'ge',
+        'grécia': 'gr', 'greece': 'gr',
+        'guatemala': 'gt',
+
+        # H
+        'haiti': 'ht',
+        'holanda': 'nl', 'netherlands': 'nl',
+        'honduras': 'hn',
+        'hungria': 'hu', 'hungary': 'hu',
+
+        # I
+        'índia': 'in', 'india': 'in',
+        'indonésia': 'id', 'indonesia': 'id',
+        'irã': 'ir', 'iran': 'ir',
+        'iraque': 'iq', 'iraq': 'iq',
+        'irlanda': 'ie', 'ireland': 'ie',
+        'islândia': 'is', 'iceland': 'is',
+        'israel': 'il',
         'itália': 'it', 'italy': 'it',
+
+        # J
+        'jamaica': 'jm',
         'japão': 'jp', 'japan': 'jp',
-        'portugal': 'pt',
+
+        # K
+        'kenya': 'ke',
+        'kuwait': 'kw',
+
+        # L
+        'letonia': 'lv', 'latvia': 'lv',
+        'líbano': 'lb', 'lebanon': 'lb',
+        'lituânia': 'lt', 'lithuania': 'lt',
+        'luxemburgo': 'lu', 'luxembourg': 'lu',
+
+        # M
+        'malásia': 'my', 'malaysia': 'my',
+        'marrocos': 'ma', 'morocco': 'ma',
         'méxico': 'mx', 'mexico': 'mx',
-        'reino unido': 'gb', 'uk': 'gb', 'london': 'gb',
+        'moçambique': 'mz', 'mozambique': 'mz',
+
+        # N
+        'namíbia': 'na', 'namibia': 'na',
+        'nepal': 'np',
+        'nigéria': 'ng', 'nigeria': 'ng',
+        'noruega': 'no', 'norway': 'no',
+        'nova zelândia': 'nz', 'new zealand': 'nz',
+
+        # P
+        'paquistão': 'pk', 'pakistan': 'pk',
+        'paraguai': 'py', 'paraguay': 'py',
+        'peru': 'pe',
+        'polônia': 'pl', 'poland': 'pl',
+        'portugal': 'pt',
+
+        # R
+        'reino unido': 'gb', 'uk': 'gb', 'united kingdom': 'gb',
+        'romênia': 'ro', 'romania': 'ro',
+        'rússia': 'ru', 'russia': 'ru',
+
+        # S
+        'senegal': 'sn',
+        'sérvia': 'rs', 'serbia': 'rs',
+        'singapura': 'sg', 'singapore': 'sg',
+        'síria': 'sy', 'syria': 'sy',
+        'suécia': 'se', 'sweden': 'se',
+        'suíça': 'ch', 'switzerland': 'ch',
+
+        # T
+        'tailândia': 'th', 'thailand': 'th',
+        'tunísia': 'tn', 'tunisia': 'tn',
+        'turquia': 'tr', 'turkey': 'tr',
+
+        # U
+        'ucrânia': 'ua', 'ukraine': 'ua',
         'uruguai': 'uy', 'uruguay': 'uy',
+
+        # V
+        'venezuela': 've',
+        'vietnã': 'vn', 'vietnam': 'vn',
+
+        # Z
+        'zâmbia': 'zm', 'zambia': 'zm',
+        'zimbábue': 'zw', 'zimbabwe': 'zw',
     }
 
     for trip in trips:
-        trip.flags = set() # Usamos um Set para evitar bandeiras repetidas
+        trip.flags = set() 
         
         # Pega todos os itens dessa viagem que tenham endereço
         items = trip.items.exclude(location_address__isnull=True).exclude(location_address__exact='')
@@ -118,12 +258,9 @@ def trip_list(request):
         for item in items:
             address_lower = item.location_address.lower()
             
-            # Verifica se algum país do dicionário está no endereço
             for country_name, country_code in country_map.items():
                 if country_name in address_lower:
                     trip.flags.add(country_code)
-                    # Não damos break aqui, caso haja múltiplos países num texto estranho, 
-                    # mas geralmente um endereço só tem um país.
     
     return render(request, 'trips/trip_list.html', {'trips': trips})
 
@@ -145,33 +282,210 @@ def trip_create(request):
     
     return render(request, 'trips/trip_form.html', {'form': form})
 
+#-- VIEW PARA COMPARTILHAR VIAGEM ---
+@login_required
+def trip_share(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user) # Só o dono compartilha
+    
+    if request.method == 'POST':
+        form = ShareTripForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            role = form.cleaned_data['role']
+            target_user = User.objects.get(email=email)
+            
+            if target_user == request.user:
+                messages.error(request, "Você não pode compartilhar consigo mesmo.")
+            else:
+                obj, created = TripCollaborator.objects.update_or_create(
+                    trip=trip, user=target_user,
+                    defaults={'role': role}
+                )
+                if created:
+                    messages.success(request, f"Viagem compartilhada com {target_user.get_full_name()}!")
+                else:
+                    messages.info(request, f"Permissão de {target_user.get_full_name()} atualizada.")
+            return redirect('trip_list') # Ou volta para o dashboard
+    
+    return redirect('trip_list')
+
+#--- VIEW PARA REMOVER COLABORADOR ---
+@login_required
+def trip_remove_share(request, trip_id, user_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    TripCollaborator.objects.filter(trip=trip, user_id=user_id).delete()
+    messages.success(request, "Acesso revogado.")
+    return redirect('trip_list') # O ideal seria redirecionar para um modal de gestão
+
 #--- VIEW PARA DETALHES DA VIAGEM ---
 @login_required
 def trip_detail(request, pk):
     # get_object_or_404 garante que retorna erro se o ID não existir
     # e o filtro user=request.user impede que um usuário veja viagem de outro
-    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    trip = get_object_or_404(
+        Trip, 
+        Q(pk=pk) & (Q(user=request.user) | Q(collaborators__user=request.user))
+    )
+
+    user_role = trip.get_user_role(request.user)
+    can_edit = (user_role == 'owner' or user_role == 'editor')
 
 # 1. Lógica das Bandeiras (Cópia da trip_list)
     country_map = {
-        'alemanha': 'de', 'germany': 'de',
-        'argentina': 'ar',
-        'austrália': 'au', 'australia': 'au',
-        'brasil': 'br', 'brazil': 'br',
-        'canadá': 'ca', 'canada': 'ca',
-        'chile': 'cl',
-        'china': 'cn',
-        'espanha': 'es', 'spain': 'es',
-        'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
-        'finlândia': 'fi', 'finland': 'fi',
-        'frança': 'fr', 'france': 'fr',
-        'itália': 'it', 'italy': 'it',
-        'japão': 'jp', 'japan': 'jp',
-        'portugal': 'pt',
-        'méxico': 'mx', 'mexico': 'mx',
-        'reino unido': 'gb', 'uk': 'gb', 'london': 'gb',
-        'uruguai': 'uy', 'uruguay': 'uy',
-        'suíça': 'ch', 'switzerland': 'ch'
+    # A
+    'afeganistão': 'af', 'afghanistan': 'af',
+    'áfrica do sul': 'za', 'south africa': 'za',
+    'albânia': 'al', 'albania': 'al',
+    'alemanha': 'de', 'germany': 'de',
+    'andorra': 'ad',
+    'angola': 'ao',
+    'antígua e barbuda': 'ag', 'antigua and barbuda': 'ag',
+    'arábia saudita': 'sa', 'saudi arabia': 'sa',
+    'argélia': 'dz', 'algeria': 'dz',
+    'argentina': 'ar',
+    'armênia': 'am', 'armenia': 'am',
+    'austrália': 'au', 'australia': 'au',
+    'áustria': 'at', 'austria': 'at',
+    'azerbaijão': 'az', 'azerbaijan': 'az',
+
+    # B
+    'bahamas': 'bs',
+    'bangladesh': 'bd',
+    'barbados': 'bb',
+    'barein': 'bh', 'bahrain': 'bh',
+    'bélgica': 'be', 'belgium': 'be',
+    'belize': 'bz',
+    'benin': 'bj',
+    'bolívia': 'bo', 'bolivia': 'bo',
+    'bósnia e herzegovina': 'ba', 'bosnia and herzegovina': 'ba',
+    'botswana': 'bw',
+    'brasil': 'br', 'brazil': 'br',
+    'brunei': 'bn',
+    'bulgária': 'bg', 'bulgaria': 'bg',
+
+    # C
+    'cabo verde': 'cv', 'cape verde': 'cv',
+    'camarões': 'cm', 'cameroon': 'cm',
+    'canadá': 'ca', 'canada': 'ca',
+    'catar': 'qa', 'qatar': 'qa',
+    'cazaquistão': 'kz', 'kazakhstan': 'kz',
+    'chile': 'cl',
+    'china': 'cn',
+    'chipre': 'cy', 'cyprus': 'cy',
+    'colômbia': 'co', 'colombia': 'co',
+    'coreia do norte': 'kp', 'north korea': 'kp',
+    'coreia do sul': 'kr', 'south korea': 'kr',
+    'costa rica': 'cr',
+    'croácia': 'hr', 'croatia': 'hr',
+    'cuba': 'cu',
+
+    # D
+    'dinamarca': 'dk', 'denmark': 'dk',
+    'dominica': 'dm',
+
+    # E
+    'egito': 'eg', 'egypt': 'eg',
+    'el salvador': 'sv',
+    'emirados árabes unidos': 'ae', 'united arab emirates': 'ae',
+    'equador': 'ec',
+    'eritrea': 'er',
+    'eslováquia': 'sk', 'slovakia': 'sk',
+    'eslovênia': 'si', 'slovenia': 'si',
+    'espanha': 'es', 'spain': 'es',
+    'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
+    'estônia': 'ee', 'estonia': 'ee',
+    'etiópia': 'et', 'ethiopia': 'et',
+
+    # F
+    'finlândia': 'fi', 'finland': 'fi',
+    'frança': 'fr', 'france': 'fr',
+
+    # G
+    'gabão': 'ga', 'gabon': 'ga',
+    'gana': 'gh', 'ghana': 'gh',
+    'geórgia': 'ge', 'georgia': 'ge',
+    'grécia': 'gr', 'greece': 'gr',
+    'guatemala': 'gt',
+
+    # H
+    'haiti': 'ht',
+    'holanda': 'nl', 'netherlands': 'nl',
+    'honduras': 'hn',
+    'hungria': 'hu', 'hungary': 'hu',
+
+    # I
+    'índia': 'in', 'india': 'in',
+    'indonésia': 'id', 'indonesia': 'id',
+    'irã': 'ir', 'iran': 'ir',
+    'iraque': 'iq', 'iraq': 'iq',
+    'irlanda': 'ie', 'ireland': 'ie',
+    'islândia': 'is', 'iceland': 'is',
+    'israel': 'il',
+    'itália': 'it', 'italy': 'it',
+
+    # J
+    'jamaica': 'jm',
+    'japão': 'jp', 'japan': 'jp',
+
+    # K
+    'kenya': 'ke',
+    'kuwait': 'kw',
+
+    # L
+    'letonia': 'lv', 'latvia': 'lv',
+    'líbano': 'lb', 'lebanon': 'lb',
+    'lituânia': 'lt', 'lithuania': 'lt',
+    'luxemburgo': 'lu', 'luxembourg': 'lu',
+
+    # M
+    'malásia': 'my', 'malaysia': 'my',
+    'marrocos': 'ma', 'morocco': 'ma',
+    'méxico': 'mx', 'mexico': 'mx',
+    'moçambique': 'mz', 'mozambique': 'mz',
+
+    # N
+    'namíbia': 'na', 'namibia': 'na',
+    'nepal': 'np',
+    'nigéria': 'ng', 'nigeria': 'ng',
+    'noruega': 'no', 'norway': 'no',
+    'nova zelândia': 'nz', 'new zealand': 'nz',
+
+    # P
+    'paquistão': 'pk', 'pakistan': 'pk',
+    'paraguai': 'py', 'paraguay': 'py',
+    'peru': 'pe',
+    'polônia': 'pl', 'poland': 'pl',
+    'portugal': 'pt',
+
+    # R
+    'reino unido': 'gb', 'uk': 'gb', 'united kingdom': 'gb',
+    'romênia': 'ro', 'romania': 'ro',
+    'rússia': 'ru', 'russia': 'ru',
+
+    # S
+    'senegal': 'sn',
+    'sérvia': 'rs', 'serbia': 'rs',
+    'singapura': 'sg', 'singapore': 'sg',
+    'síria': 'sy', 'syria': 'sy',
+    'suécia': 'se', 'sweden': 'se',
+    'suíça': 'ch', 'switzerland': 'ch',
+
+    # T
+    'tailândia': 'th', 'thailand': 'th',
+    'tunísia': 'tn', 'tunisia': 'tn',
+    'turquia': 'tr', 'turkey': 'tr',
+
+    # U
+    'ucrânia': 'ua', 'ukraine': 'ua',
+    'uruguai': 'uy', 'uruguay': 'uy',
+
+    # V
+    'venezuela': 've',
+    'vietnã': 'vn', 'vietnam': 'vn',
+
+    # Z
+    'zâmbia': 'zm', 'zambia': 'zm',
+    'zimbábue': 'zw', 'zimbabwe': 'zw',
     }
 
     trip.flags = set()
@@ -253,6 +567,8 @@ def trip_detail(request, pk):
     context = {
         'trip': trip,
         'items': items,
+        'can_edit': can_edit, # Passamos essa variável para esconder botões no template
+        'user_role': user_role,
         'expenses': expenses,
         'total_spent_brl': round(total_converted_brl, 2),
         'trip_rates': trip_rates,

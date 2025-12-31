@@ -26,15 +26,17 @@
     <div class="col-md-6">
         
         <div class="mb-3 d-flex align-items-center">
+            {% if can_edit %}
             <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm mr-2">
                 <i class="fas fa-plus"></i> Novo Item
             </a>
+            {% endif %}
 
             <button type="button" class="btn btn-warning btn-sm shadow-sm mr-2" data-toggle="modal" data-target="#modalAutoItinerary">
                 <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
             </button>
 
-            <a href="{% url 'checklist_view' trip.id %}" class="btn btn-default btn-sm mr-2">
+            <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm mr-2">
                 <i class="fas fa-tasks"></i> Checklist
             </a>
             

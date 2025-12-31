@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 
+# --- MODELO DE VIAGEM ---
 class Trip(models.Model):
     """
     Representa a Viagem como um todo.
@@ -31,6 +32,15 @@ class Trip(models.Model):
     # Campo para guardar as dicas da IA (Moeda, Tomada, etc)
     ai_insights = models.JSONField(blank=True, null=True, default=dict)
 
+    def get_user_role(self, user):
+        if user == self.user:
+            return 'owner'
+        try:
+            collaborator = self.collaborators.get(user=user)
+            return collaborator.role
+        except TripCollaborator.DoesNotExist:
+            return None
+
     def __str__(self):
         return self.title
 
@@ -42,7 +52,7 @@ class Trip(models.Model):
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"
 
-
+# --- MODELO DE ITENS DA VIAGEM ---
 class TripItem(models.Model):
     """
     Tabela Polimórfica (Modular).
@@ -119,7 +129,7 @@ class TripItem(models.Model):
 
         super().save(*args, **kwargs)
 
-
+# --- MODELO DE GASTOS ---
 class Expense(models.Model):
     """
     Controle Financeiro.
@@ -164,7 +174,7 @@ class Expense(models.Model):
     def __str__(self):
         return f"{self.description} - {self.currency} {self.amount}"
 
-   
+# --- MODELO DE ANEXOS DE ARQUIVOS ---
 class TripAttachment(models.Model):
     item = models.ForeignKey(TripItem, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to='trip_files/', verbose_name="Arquivo (PDF/Img)")
@@ -173,8 +183,26 @@ class TripAttachment(models.Model):
 
     def __str__(self):
         return f"Anexo de {self.item.name}"
-    
 
+# --- MODELO DE COLABORAÇÃO ---
+class TripCollaborator(models.Model):
+    ROLE_CHOICES = [
+        ('viewer', 'Somente Leitura'),
+        ('editor', 'Acesso Total (Editar/Excluir)'),
+    ]
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='collaborators')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shared_trips')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='viewer')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('trip', 'user') # Impede compartilhar 2x com a mesma pessoa
+
+    def __str__(self):
+        return f"{self.user.username} - {self.trip.title} ({self.role})"
+
+# --- MODELO DE CONFIGURAÇÕES DE API ---
 class APIConfiguration(models.Model):
     KEY_CHOICES = [
         ('WEATHER_API', 'WeatherAPI (Clima)'),
@@ -196,7 +224,7 @@ class APIConfiguration(models.Model):
         verbose_name = "Configuração de API"
         verbose_name_plural = "Configurações de API"
 
-
+# --- MODELO DE CHECKLIST ---
 class Checklist(models.Model):
     trip = models.OneToOneField(Trip, on_delete=models.CASCADE, related_name='checklist')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -204,7 +232,7 @@ class Checklist(models.Model):
     def __str__(self):
         return f"Checklist - {self.trip.title}"
 
-
+# --- MODELO ITENS DO CHECKLIST ---
 class ChecklistItem(models.Model):
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name='items')
     category = models.CharField(max_length=50, default="Geral") # Ex: Roupas, Higiene, Documentos
@@ -213,4 +241,3 @@ class ChecklistItem(models.Model):
 
     def __str__(self):
         return self.item
-    

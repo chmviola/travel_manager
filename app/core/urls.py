@@ -69,4 +69,8 @@ urlpatterns = [
     # Rotas de Funcionalidades com IA
     path('trips/<int:trip_id>/generate-itinerary/', views.trip_generate_itinerary, name='trip_generate_itinerary'),
     path('trips/<int:trip_id>/generate-insights/', views.trip_generate_insights, name='trip_generate_insights'),
+
+    # Rotas de Colaboração
+    path('trips/<int:trip_id>/share/', views.trip_share, name='trip_share'),
+    path('trips/<int:trip_id>/unshare/<int:user_id>/', views.trip_remove_share, name='trip_remove_share'),
 ]

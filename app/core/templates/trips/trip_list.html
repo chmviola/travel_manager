@@ -54,26 +54,80 @@
                 </p>
             </div>
 
-            <div class="card-footer">
-                <div class="row">
-                    <div class="col-4">
-                        <a href="{% url 'trip_detail' trip.id %}" class="btn btn-primary btn-block btn-sm">
-                            <i class="fas fa-map-marked-alt"></i> Detalhes
-                        </a>
+        <div class="card-footer">
+            <div class="text-right">
+                <a href="{% url 'trip_detail' trip.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-folder"></i> Detalhes
+                </a>
+
+                {% if trip.user == request.user %}
+                    <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#modalShare{{ trip.id }}">
+                        <i class="fas fa-share-alt"></i> Compartilhar
+                    </button>
+                    <a href="{% url 'trip_update' trip.id %}" class="btn btn-sm btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    <a href="{% url 'trip_delete' trip.id %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                
+                {% else %}
+                    <span class="badge badge-secondary" title="Compartilhado com você">
+                        <i class="fas fa-user-friends"></i> 
+                        {% if trip.get_user_role(request.user) == 'editor' %}Editor{% else %}Leitor{% endif %}
+                    </span>
+                    
+                    {% if trip.get_user_role(request.user) == 'editor' %}
+                        <a href="{% url 'trip_update' trip.id %}" class="btn btn-sm btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        {% if trip.user == request.user %}
+        <div class="modal fade" id="modalShare{{ trip.id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Compartilhar "{{ trip.title }}"</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
-                    <div class="col-4">
-                        <a href="{% url 'trip_update' trip.id %}" class="btn btn-default btn-block btn-sm">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                    </div>
-                    <div class="col-4">
-                        <a href="{% url 'trip_delete' trip.id %}" class="btn btn-danger btn-block btn-sm">
-                            <i class="fas fa-trash"></i> Apagar
-                        </a>
+                    <div class="modal-body">
+                        <form action="{% url 'trip_share' trip.id %}" method="POST" class="mb-4">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>E-mail do Usuário</label>
+                                <input type="email" name="email" class="form-control" placeholder="amigo@email.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Permissão</label>
+                                <select name="role" class="form-control">
+                                    <option value="viewer">Somente Leitura</option>
+                                    <option value="editor">Acesso Total</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block">Convidar</button>
+                        </form>
+
+                        <h6>Pessoas com acesso:</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for collab in trip.collaborators.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ collab.user.get_full_name|default:collab.user.username }}</strong>
+                                    <small class="text-muted d-block">{{ collab.get_role_display }}</small>
+                                </div>
+                                <a href="{% url 'trip_remove_share' trip.id collab.user.id %}" class="text-danger" onclick="return confirm('Remover acesso?')">
+                                    <i class="fas fa-times-circle"></i>
+                                </a>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-muted text-center small">Ninguém convidado ainda.</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
+    </div>
+    
     </div>
     {% empty %}
     <div class="col-12">

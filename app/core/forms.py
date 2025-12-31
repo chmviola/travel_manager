@@ -74,6 +74,21 @@ class TripItemForm(forms.ModelForm):
             return {'notes': data} 
         return {}
 
+#-- Formulário para Compartilhamento de Viagem ---
+class ShareTripForm(forms.Form):
+    email = forms.EmailField(label="E-mail do Usuário", widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'usuario@exemplo.com'}))
+    role = forms.ChoiceField(
+        label="Nível de Acesso", 
+        choices=TripCollaborator.ROLE_CHOICES, 
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if not User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Usuário não encontrado com este e-mail.")
+        return email
+
 #-- Formulário para Gastos da Viagem ---
 class ExpenseForm(forms.ModelForm):
     # Sobrescrevemos o campo amount para aceitar vírgula (localize=True)
