@@ -421,8 +421,8 @@
             {
                 name: "{{ item.name|escapejs }}",
                 address: "{{ item.location_address|default:''|escapejs }}",
-                lat: "{{ item.location_lat|default:'' }}",  // Supondo que você tenha esses campos
-                lng: "{{ item.location_lng|default:'' }}",
+                lat: "{{ item.location_lat|unlocalize|default:'' }}",  // Supondo que você tenha esses campos
+                lng: "{{ item.location_lngunlocalize|default:'' }}",
                 type: "{{ item.item_type }}"
             },
             {% endfor %}
