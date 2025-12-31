@@ -445,7 +445,7 @@ def trip_generate_itinerary(request, trip_id):
         else:
             messages.error(request, "Erro ao comunicar com a Inteligência Artificial.")
             
-    return redirect('trip_detail', trip_id=trip.id)
+    return redirect('trip_detail', pk=trip.id)
 
 # --- VIEWS PARA FINANCIAL ---
 @login_required
