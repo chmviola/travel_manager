@@ -53,6 +53,8 @@ urlpatterns = [
     path('trips/<int:trip_id>/checklist/', views.checklist_view, name='checklist_view'),
     path('trips/<int:trip_id>/checklist/generate/', views.checklist_generate, name='checklist_generate'),
     path('trips/<int:trip_id>/checklist/add/', views.checklist_add_item, name='checklist_add_item'),
+    path('trips/<int:trip_id>/checklist/clear/', views.checklist_clear_completed, name='checklist_clear_completed'),
+    path('trips/<int:trip_id>/checklist/pdf/', views.checklist_pdf, name='checklist_pdf'),
     path('checklist/toggle/<int:item_id>/', views.checklist_toggle, name='checklist_toggle'),
     path('checklist/delete/<int:item_id>/', views.checklist_delete_item, name='checklist_delete_item'),
 ]

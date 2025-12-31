@@ -11,11 +11,14 @@ from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_dat
 from .models import Trip, TripItem, Expense, TripAttachment, Checklist, ChecklistItem
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
 from .forms import UserCreateForm, UserEditForm, APIConfigurationForm
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
 
 
 @login_required
@@ -611,6 +614,62 @@ def checklist_delete_item(request, item_id):
     item.delete()
     messages.info(request, f"Item '{item_text}' removido.")
     return redirect('checklist_view', trip_id=trip_id)
+
+@login_required
+def checklist_clear_completed(request, trip_id):
+    """Apaga todos os itens marcados como feitos"""
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
+    # Filtra itens desta viagem que estão checados (True) e deleta
+    deleted_count, _ = ChecklistItem.objects.filter(
+        checklist__trip=trip, 
+        is_checked=True
+    ).delete()
+    
+    if deleted_count > 0:
+        messages.success(request, f"{deleted_count} itens concluídos foram removidos.")
+    else:
+        messages.info(request, "Nenhum item marcado para limpar.")
+        
+    return redirect('checklist_view', trip_id=trip.id)
+
+@login_required
+def checklist_pdf(request, trip_id):
+    """Gera o PDF do Checklist"""
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    checklist, _ = Checklist.objects.get_or_create(trip=trip)
+    
+    # Reutilizamos a lógica de agrupar por categoria
+    items_by_category = {}
+    items = checklist.items.all().order_by('category', 'item')
+    
+    for item in items:
+        if item.category not in items_by_category:
+            items_by_category[item.category] = []
+        items_by_category[item.category].append(item)
+
+    context = {
+        'trip': trip,
+        'items_by_category': items_by_category,
+        'user': request.user,
+    }
+
+    # Renderiza o template HTML específico para PDF
+    template_path = 'trips/checklist_pdf.html'
+    template = get_template(template_path)
+    html = template.render(context)
+
+    # Cria o PDF
+    response = HttpResponse(content_type='application/pdf')
+    # Se quiser que baixe direto, mude 'inline' para 'attachment'
+    response['Content-Disposition'] = f'inline; filename="checklist_{trip.id}.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    if pisa_status.err:
+        return HttpResponse('Erro ao gerar PDF <pre>' + html + '</pre>')
+    
+    return response
 
 # --- VIEWS DE CONFIGURAÇÃO DE API ---
 @login_required
