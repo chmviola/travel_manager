@@ -1,9 +1,9 @@
+import json
 import requests
 from django.conf import settings
-from datetime import timedelta
-import json
+from datetime import timedelta, datetime
 from openai import OpenAI
-from .models import APIConfiguration
+from .models import APIConfiguration, Trip
 
 def get_travel_intel(destination):
     # 1. Busca chave no banco
@@ -201,4 +201,51 @@ def generate_checklist_ai(trip):
         return json.loads(content)
     except Exception as e:
         print(f"Erro OpenAI Checklist: {e}")
+        return None
+    
+def generate_itinerary_ai(trip, interests):
+    """
+    Gera itens de roteiro (atividades) baseados no destino e interesses.
+    """
+    try:
+        config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
+        client = OpenAI(api_key=config.value)
+    except APIConfiguration.DoesNotExist:
+        return None
+
+    destination = trip.title # Ou trip.location se tiver mudado
+    days = (trip.end_date - trip.start_date).days + 1
+    if days < 1: days = 1
+    if days > 7: days = 7 # Limite para não gastar muitos tokens
+
+    prompt = f"""
+    Crie um roteiro turístico detalhado para {destination} de {days} dias.
+    O foco do viajante é: {interests}.
+    
+    Retorne APENAS um JSON válido com uma lista de eventos chamada "events".
+    Cada evento deve ter:
+    - "day": número do dia (1, 2, 3...)
+    - "time": horário sugerido (formato HH:MM, ex: "09:00", "14:30")
+    - "name": nome do local ou atividade
+    - "category": use APENAS um destes valores: "ACTIVITY" (para passeios/museus), "RESTAURANT" (para comida), "HOTEL" (se for check-in)
+    - "description": curta descrição (máx 100 caracteres)
+    
+    Exemplo de estrutura:
+    {{
+        "events": [
+            {{ "day": 1, "time": "09:00", "name": "Museu do Louvre", "category": "ACTIVITY", "description": "Arte clássica." }}
+        ]
+    }}
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content
+        return json.loads(content)
+    except Exception as e:
+        print(f"Erro OpenAI Roteiro: {e}")
         return None

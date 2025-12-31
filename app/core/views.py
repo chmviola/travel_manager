@@ -7,9 +7,8 @@ from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 from datetime import datetime, time
 # Seus Models e Utils (Geralmente já estavam aí)
-from .models import Trip, Expense, TripItem, APIConfiguration, Checklist, ChecklistItem
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai
-from .models import Trip, TripItem, Expense, TripAttachment, Checklist, ChecklistItem
+from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm
 from django.db.models import Sum, Q
@@ -402,6 +401,51 @@ def attachment_delete(request, pk):
     item_id = attachment.item.id
     attachment.delete()
     return redirect('trip_item_attachments', item_id=item_id)
+
+@login_required
+def trip_generate_itinerary(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
+    if request.method == 'POST':
+        interests = request.POST.get('interests', 'Pontos turísticos principais')
+        
+        # 1. Chama a IA
+        data = generate_itinerary_ai(trip, interests)
+        
+        if data and 'events' in data:
+            count = 0
+            for event in data['events']:
+                try:
+                    # 2. Calcula a data real baseada no dia do roteiro
+                    # Se Day 1, é a start_date. Se Day 2, start_date + 1 dia.
+                    day_offset = int(event['day']) - 1
+                    event_date = trip.start_date + timedelta(days=day_offset)
+                    
+                    # 3. Combina Data + Hora
+                    hour, minute = map(int, event['time'].split(':'))
+                    event_datetime = datetime.combine(event_date, time(hour, minute))
+                    
+                    # 4. Cria o item no banco
+                    TripItem.objects.create(
+                        trip=trip,
+                        name=event['name'],
+                        item_type=event['category'], # ACTIVITY, RESTAURANT
+                        start_datetime=event_datetime,
+                        details={'notes': event['description']} # Salvamos a descrição nas notas
+                    )
+                    count += 1
+                except Exception as e:
+                    print(f"Erro ao salvar item {event}: {e}")
+                    continue
+            
+            if count > 0:
+                messages.success(request, f"Sucesso! {count} atividades foram adicionadas ao seu roteiro.")
+            else:
+                messages.warning(request, "A IA respondeu, mas não conseguimos processar os itens.")
+        else:
+            messages.error(request, "Erro ao comunicar com a Inteligência Artificial.")
+            
+    return redirect('trip_detail', trip_id=trip.id)
 
 # --- VIEWS PARA FINANCIAL ---
 @login_required
