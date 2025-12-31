@@ -238,14 +238,16 @@ def trip_detail(request, pk):
     if items_changed:
         items = trip.items.all().order_by('start_datetime')
 
-    # --- ALTERAÇÃO AQUI: BUSCAR CHAVE DO MAPA NO BANCO ---
+    # BUSCAR CHAVE DO MAPA NO BANCO
+    google_maps_api_key = ''
     try:
-        # Busca a chave ativa chamada 'GOOGLE_MAPS_API'
         config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API', is_active=True)
         google_maps_api_key = config.value
+        print(f"SUCESSO: Chave encontrada: {google_maps_api_key[:5]}...") # Debug no Log
     except APIConfiguration.DoesNotExist:
-        # Se não achar, envia vazio (o mapa ficará cinza, mas não quebra a página)
-        google_maps_api_key = ''
+        print("ERRO: Chave GOOGLE_MAPS_API não encontrada no banco ou inativa.") # Debug no Log
+    except Exception as e:
+        print(f"ERRO CRÍTICO ao buscar chave: {e}")
 
     context = {
         'trip': trip,
@@ -253,8 +255,7 @@ def trip_detail(request, pk):
         'expenses': expenses,
         'total_spent_brl': round(total_converted_brl, 2),
         'trip_rates': trip_rates,
-        # ALERTA: Mudamos de settings... para a variável local que criamos acima
-        'google_maps_api_key': google_maps_api_key 
+        'google_maps_api_key': google_maps_api_key # Enviando para o template
     }
 
     return render(request, 'trips/trip_detail.html', context)
