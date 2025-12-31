@@ -25,13 +25,9 @@
     
     <div class="col-md-6">
         
-        <div class="mb-3 d-flex justify-content-between">
+        <div class="mb-3 d-flex justify-content-start">
             <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus"></i> Novo Item
-            </a>
-
-            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" class="btn btn-default btn-sm" title="Imprimir Roteiro">
-                <i class="fas fa-file-pdf text-danger"></i> PDF
             </a>
 
         <button type="button" class="btn btn-warning btn-sm shadow-sm" data-toggle="modal" data-target="#modalAutoItinerary">
@@ -41,6 +37,12 @@
             <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm">
                 <i class="fas fa-tasks"></i> Checklist de Bagagem
             </a>
+
+            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" class="btn btn-default btn-sm" title="Imprimir Roteiro">
+                <i class="fas fa-file-pdf text-danger"></i> PDF
+            </a>
+
+
         </div>
 
         <div class="timeline">
