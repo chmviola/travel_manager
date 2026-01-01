@@ -588,31 +588,34 @@ def trip_item_update(request, pk):
     if request.method == 'POST':
         form = TripItemForm(request.POST, instance=item)
         if form.is_valid():
-            updated_item = form.save(commit=False)
+            item = form.save(commit=False)
             
-            # --- LÓGICA DE LIMPEZA (POST) ---
-            # Pega o texto digitado pelo usuário
-            new_notes = form.cleaned_data.get('details', '')
+            # --- LÓGICA DE LIMPEZA DEFINITIVA ---
+            raw_text = form.cleaned_data.get('details', '')
             
-            # Se por acaso o usuário colou um JSON ou o sistema falhou antes,
-            # tentamos extrair só o texto.
+            # Se o texto digitado parecer um dicionário Python (ex: {'notes': ...})
+            # Isso acontece se o usuário copiou e colou, ou se o form carregou errado.
+            # Vamos descascar essa string até sobrar só o texto.
             import ast
-            try:
-                # Se for string parecida com dict "{'notes': ...}"
-                if isinstance(new_notes, str) and new_notes.strip().startswith('{'):
-                    potential_dict = ast.literal_eval(new_notes)
-                    if isinstance(potential_dict, dict):
-                        new_notes = potential_dict.get('notes', new_notes)
-            except:
-                pass # Se der erro, assume que é texto normal
-
-            # Salva no formato JSON correto
-            updated_item.details = {'notes': new_notes}
-            # --------------------------------
             
-            updated_item.save()
-            messages.success(request, "Item atualizado com sucesso.")
-            return redirect('trip_detail', pk=trip.id)
+            # Loop de segurança: Enquanto parecer um dicionário, tente extrair o miolo
+            # Isso resolve casos de dupla ou tripla recursividade
+            while isinstance(raw_text, str) and raw_text.strip().startswith("{'notes'"):
+                try:
+                    parsed = ast.literal_eval(raw_text)
+                    if isinstance(parsed, dict):
+                        raw_text = parsed.get('notes', raw_text)
+                    else:
+                        break
+                except:
+                    break
+
+            # Agora temos certeza que raw_text é o texto limpo
+            item.details = {'notes': raw_text}
+            # ------------------------------------
+
+            item.save()
+            # ... resto do código (messages, redirect)
             
     else:
         # --- LÓGICA DE EXIBIÇÃO (GET) ---
