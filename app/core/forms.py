@@ -311,6 +311,6 @@ class TripPhotoForm(forms.ModelForm):
         model = TripPhoto
         fields = ['image', 'caption']
         widgets = {
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple': True}), # <--- O SEGREDO
+            'image': forms.FileInput(attrs={'class': 'form-control', 'multiple': True}),
             'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
         }
