@@ -1,5 +1,6 @@
 import json
 import requests
+import re
 from django.conf import settings
 from datetime import timedelta, datetime
 from openai import OpenAI
@@ -219,10 +220,27 @@ def generate_itinerary_ai(trip, interests):
     except APIConfiguration.DoesNotExist:
         return None
 
-    destination = trip.title # Ou trip.location se tiver mudado
-    days = (trip.end_date - trip.start_date).days + 1
-    if days < 1: days = 1
-    if days > 7: days = 7 # Limite para não gastar muitos tokens
+    destination = trip.title 
+    
+    # 1. Calcula a duração REAL da viagem no banco
+    real_trip_duration = (trip.end_date - trip.start_date).days + 1
+    if real_trip_duration < 1: real_trip_duration = 1
+
+    # 2. Tenta encontrar um pedido explícito de dias no texto do usuário
+    # Procura por números seguidos de "dias" ou "days" (ex: "12 dias", "10 days")
+    match = re.search(r'(\d+)\s*(?:dias|days)', interests, re.IGNORECASE)
+
+    if match:
+        # SE o usuário pediu um número, usamos ele.
+        requested_days = int(match.group(1))
+        
+        # Segurança: Não gera mais dias do que a viagem realmente tem
+        # Ex: Se a viagem tem 20 dias e ele pede 15 -> Gera 15.
+        # Ex: Se a viagem tem 5 dias e ele pede 10 -> Gera 5 (limite real).
+        days = min(requested_days, real_trip_duration)
+    else:
+        # SE NÃO pediu, aplica a regra de economia (Max 7 dias)
+        days = min(real_trip_duration, 7)
 
     prompt = f"""
     Crie um roteiro turístico detalhado para {destination} de {days} dias.
