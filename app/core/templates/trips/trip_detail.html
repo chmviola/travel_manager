@@ -38,10 +38,12 @@
             </button>
             {% endif %}
 
+            {% if can_edit %}
             <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm mr-2">
                 <i class="fas fa-tasks"></i> Checklist
             </a>
-            
+            {% endif %}
+
             <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" class="btn btn-default btn-sm" title="Imprimir Roteiro">
                 <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
             </a>
@@ -289,8 +291,10 @@
                         </h3>
                         <div class="card-tools">
                             {% if can_edit %}
-                            <a href="{% url 'trip_generate_insights' trip.id %}" class="btn btn-tool text-purple" title="Atualizar Dicas">
-                                <i class="fas fa-sync-alt"></i> Atualizar Dicas
+                            <a href="{% url 'trip_generate_insights' trip.id %}" 
+                               class="btn btn-tool text-purple" 
+                               title="Atualizar Dicas"
+                               onclick="btnLoadingLink(this)"> <i class="fas fa-sync-alt"></i> Atualizar Dicas
                             </a>
                             {% endif %}
                             <button type="button" class="btn btn-tool" data-card-widget="collapse">
@@ -375,7 +379,7 @@
 <!-- Modal para Sugerir Roteiro IA -->
 <div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST">
+        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST" onsubmit="btnLoading(this.querySelector('button[type=submit]'), 'Criando Roteiro...')">
             {% csrf_token %}
             <div class="modal-content">
                 <div class="modal-header bg-warning">
@@ -564,6 +568,39 @@
         }
     }
 
+    /**
+     * Bloqueia botão, adiciona spinner e muda texto
+     * @param {HTMLElement} btn - O botão clicado
+     * @param {String} text - O novo texto (ex: "Aguarde...")
+     */
+    function btnLoading(btn, text) {
+        // Adiciona classe disabled (visual) e style (funcional)
+        btn.classList.add('disabled');
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+        
+        // Mantém a largura para não "pular" o layout
+        btn.style.minWidth = btn.offsetWidth + 'px';
+
+        // Troca o conteúdo
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> ${text}`;
+        
+        // Se for um modal, não fecha ele automaticamente para o usuário ver o loading
+    }
+
+    /**
+     * Versão específica para botões pequenos de ícone (Tool buttons)
+     */
+    function btnLoadingLink(btn) {
+        btn.classList.add('disabled');
+        btn.style.pointerEvents = 'none';
+        // Substitui o ícone por spinner
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-spinner fa-spin';
+        }
+    }
+
 // Variável global para o mapa do modal
 let modalMap;
 let modalMarker;
@@ -617,5 +654,6 @@ $('#modalItemMap').on('shown.bs.modal', function (event) {
         });
     }
 });
+
 </script>
 {% endblock %}
