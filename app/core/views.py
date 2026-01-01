@@ -531,11 +531,14 @@ def trip_delete(request, pk):
 # --- VIEWS PARA ITENS (TRIP ITEM) ---
 @login_required
 def trip_item_update(request, pk):
+    # 1. Busca o item e a viagem
     item = get_object_or_404(TripItem, pk=pk)
-    # Verifica permissão (dono ou colaborador editor)
     trip = item.trip
+    
+    # 2. Verifica permissão (Dono ou Editor)
+    # Nota: get_user_role deve estar funcionando no model Trip
     if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
-         messages.error(request, "Sem permissão para editar.")
+         messages.error(request, "Sem permissão para editar este item.")
          return redirect('trip_detail', pk=trip.id)
 
     if request.method == 'POST':
@@ -543,40 +546,49 @@ def trip_item_update(request, pk):
         if form.is_valid():
             updated_item = form.save(commit=False)
             
-            # --- CORREÇÃO DE RECURSIVIDADE ---
-            # Pega o texto que veio do formulário
+            # --- LÓGICA DE LIMPEZA (POST) ---
+            # Pega o texto digitado pelo usuário
             new_notes = form.cleaned_data.get('details', '')
             
-            # ATENÇÃO: Se o form.cleaned_data já vier com a sujeira "{'notes': ...}"
-            # precisamos limpá-la antes de salvar.
+            # Se por acaso o usuário colou um JSON ou o sistema falhou antes,
+            # tentamos extrair só o texto.
             import ast
             try:
-                # Tenta ver se o texto é um dicionário disfarçado de string
-                potential_dict = ast.literal_eval(new_notes)
-                if isinstance(potential_dict, dict) and 'notes' in potential_dict:
-                    new_notes = potential_dict['notes'] # Extrai só o miolo
+                # Se for string parecida com dict "{'notes': ...}"
+                if isinstance(new_notes, str) and new_notes.strip().startswith('{'):
+                    potential_dict = ast.literal_eval(new_notes)
+                    if isinstance(potential_dict, dict):
+                        new_notes = potential_dict.get('notes', new_notes)
             except:
-                pass # Se der erro, é porque é texto normal, segue a vida
+                pass # Se der erro, assume que é texto normal
 
-            # Salva o JSON limpo
+            # Salva no formato JSON correto
             updated_item.details = {'notes': new_notes}
-            # ---------------------------------
+            # --------------------------------
             
             updated_item.save()
-            messages.success(request, "Item atualizado.")
-            return redirect('trip_detail', pk=item.trip.id)
+            messages.success(request, "Item atualizado com sucesso.")
+            return redirect('trip_detail', pk=trip.id)
+            
     else:
-        # --- CORREÇÃO NA EXIBIÇÃO (GET) ---
-        # Antes de enviar para o form, precisamos extrair só o texto da nota
-        # para que o usuário não veja "{'notes': '...'}" na caixa de texto.
-        initial_data = {}
-        if item.details and isinstance(item.details, dict):
-            initial_data['details'] = item.details.get('notes', '')
+        # --- LÓGICA DE EXIBIÇÃO (GET) ---
+        # Aqui está o truque: Modificamos o objeto 'item' APENAS NA MEMÓRIA
+        # para que o formulário receba o texto limpo, não o JSON.
         
-        # Passamos o initial para o form preencher o campo corretamente
-        form = TripItemForm(instance=item, initial=initial_data)
+        # Fazemos uma cópia ou alteramos o atributo temporariamente
+        if item.details and isinstance(item.details, dict):
+            # Substituímos o dict pela string apenas para exibir no form
+            item.details = item.details.get('notes', '')
+        
+        # Agora passamos o instance modificado. O form vai ler 'item.details' 
+        # que agora é uma string simples ("Almoço no lugar X").
+        form = TripItemForm(instance=item)
 
-    return render(request, 'trips/trip_item_form.html', {'form': form, 'trip': item.trip, 'title': 'Editar Item'})
+    return render(request, 'trips/trip_item_form.html', {
+        'form': form, 
+        'trip': trip, 
+        'title': 'Editar Item'
+    })
 
 @login_required
 def trip_item_delete(request, pk):
