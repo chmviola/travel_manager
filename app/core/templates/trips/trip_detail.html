@@ -226,10 +226,15 @@
             </div>
     
     <div class="card-body table-responsive p-0" style="height: 300px;">
-        <h2 class="text-bold text-success">R$ {{ total_spent_brl|floatformat:2 }}</h2>
-        <p class="text-muted small">Câmbio atualizado automaticamente via AwesomeAPI.</p>
-        <hr>
-        
+        <div class="px-3 pt-3">
+            <h2 class="text-bold text-success">
+                R$ {{ total_spent_brl|floatformat:2 }}
+            </h2>
+            <p class="text-muted small">
+                Câmbio atualizado automaticamente via AwesomeAPI.
+            </p>
+            <hr>
+        </div>        
             <table class="table table-striped table-valign-middle">
             <thead>
                 <tr>
