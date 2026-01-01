@@ -316,6 +316,13 @@ class TripPhotoForm(forms.ModelForm):
         widgets = {
             # 2. Use o widget personalizado aqui (sem passar 'multiple' no attrs)
             'image': MultipleFileInput(attrs={'class': 'form-control'}),
-            
             'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Define o campo como não obrigatório no FORMULÁRIO.
+        # Motivo: Como enviamos uma lista de arquivos, a validação padrão do Django
+        # pode falhar ou achar que está vazio. Validaremos manualmente na View.
+        self.fields['image'].required = False
+

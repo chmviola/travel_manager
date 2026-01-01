@@ -1254,33 +1254,46 @@ def config_api_delete(request, pk):
 #--- VIEWS PARA GALERIA DE FOTOS DA VIAGEM ---
 @login_required
 def trip_gallery(request, trip_id):
-    # Permissões: Dono ou Colaborador
     trip = get_object_or_404(Trip, Q(pk=trip_id) & (Q(user=request.user) | Q(collaborators__user=request.user)))
     
-    # Checa permissão de edição
     user_role = trip.get_user_role(request.user)
     can_edit = (user_role == 'owner' or user_role == 'editor')
 
     if request.method == 'POST':
         if not can_edit:
-            messages.error(request, "Você não tem permissão para adicionar fotos.")
+            messages.error(request, "Sem permissão.")
             return redirect('trip_gallery', trip_id=trip.id)
 
         form = TripPhotoForm(request.POST, request.FILES)
-        files = request.FILES.getlist('image') # Pega a lista de arquivos
+        
+        # Pega a lista crua de arquivos enviados pelo widget multiple
+        files = request.FILES.getlist('image') 
         
         if form.is_valid():
-            count = 0
-            for f in files:
-                # Criamos uma instância para cada arquivo
-                TripPhoto.objects.create(
-                    trip=trip,
-                    image=f,
-                    caption=form.cleaned_data['caption']
-                )
-                count += 1
-            messages.success(request, f"{count} fotos adicionadas à galeria!")
-            return redirect('trip_gallery', trip_id=trip.id)
+            # Validação Manual: Se a lista estiver vazia, reclamamos
+            if not files:
+                messages.error(request, "Nenhuma foto foi selecionada.")
+            else:
+                count = 0
+                for f in files:
+                    try:
+                        TripPhoto.objects.create(
+                            trip=trip,
+                            image=f,
+                            caption=form.cleaned_data['caption']
+                        )
+                        count += 1
+                    except Exception as e:
+                        print(f"Erro ao salvar foto: {e}")
+                
+                if count > 0:
+                    messages.success(request, f"{count} fotos adicionadas com sucesso!")
+                return redirect('trip_gallery', trip_id=trip.id)
+        else:
+            # ISSO VAI TE MOSTRAR O ERRO NA TELA SE FALHAR
+            print(form.errors) 
+            messages.error(request, f"Erro no formulário: {form.errors}")
+
     else:
         form = TripPhotoForm()
 
