@@ -321,8 +321,7 @@ class TripPhotoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Define o campo como não obrigatório no FORMULÁRIO.
-        # Motivo: Como enviamos uma lista de arquivos, a validação padrão do Django
-        # pode falhar ou achar que está vazio. Validaremos manualmente na View.
+        # Dizemos ao Django: "Se o campo image vier vazio na validação padrão, tudo bem"
+        # (Porque nós vamos pegar os arquivos manualmente via request.FILES.getlist)
         self.fields['image'].required = False
 
