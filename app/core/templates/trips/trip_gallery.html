@@ -20,7 +20,7 @@
                         {% csrf_token %}
                         <div class="form-group mb-2 mr-2">
                             <div class="custom-file" style="width: 300px;">
-                                {{ form.image }}
+                                <input type="file" name="image" multiple class="custom-file-input" id="id_image" required>
                                 <label class="custom-file-label" for="id_image">Escolher arquivos...</label>
                             </div>
                         </div>
