@@ -502,33 +502,24 @@ def trip_item_create(request, trip_id):
         form = TripItemForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
+            item.trip = trip
             
-            # --- LÓGICA DE LIMPEZA DEFINITIVA ---
-            raw_text = form.cleaned_data.get('details', '')
+            # --- CORREÇÃO AQUI ---
+            # O campo 'details' do form vem como string (o texto da nota).
+            # Nós o transformamos em JSON manualmentes.
+            raw_notes = form.cleaned_data.get('details', '')
             
-            # Se o texto digitado parecer um dicionário Python (ex: {'notes': ...})
-            # Isso acontece se o usuário copiou e colou, ou se o form carregou errado.
-            # Vamos descascar essa string até sobrar só o texto.
-            import ast
-            
-            # Loop de segurança: Enquanto parecer um dicionário, tente extrair o miolo
-            # Isso resolve casos de dupla ou tripla recursividade
-            while isinstance(raw_text, str) and raw_text.strip().startswith("{'notes'"):
-                try:
-                    parsed = ast.literal_eval(raw_text)
-                    if isinstance(parsed, dict):
-                        raw_text = parsed.get('notes', raw_text)
-                    else:
-                        break
-                except:
-                    break
-
-            # Agora temos certeza que raw_text é o texto limpo
-            item.details = {'notes': raw_text}
-            # ------------------------------------
+            # Se o usuário colou um JSON sem querer, tentamos limpar, senão usa o texto puro
+            if isinstance(raw_notes, dict):
+                item.details = raw_notes
+            else:
+                # Garante que salvamos apenas o texto dentro da chave 'notes'
+                item.details = {'notes': raw_notes}
+            # ---------------------
 
             item.save()
-            # ... resto do código (messages, redirect)
+            messages.success(request, "Item adicionado com sucesso!")
+            return redirect('trip_detail', pk=trip.id)
     else:
         form = TripItemForm()
 
