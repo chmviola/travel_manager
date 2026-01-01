@@ -1260,6 +1260,11 @@ def trip_gallery(request, trip_id):
     can_edit = (user_role == 'owner' or user_role == 'editor')
 
     if request.method == 'POST':
+        # --- DEBUG ---
+        print(f"FILES recebidos: {request.FILES}")
+        print(f"POST recebido: {request.POST}")
+        # -------------
+        
         if not can_edit:
             messages.error(request, "Sem permissão.")
             return redirect('trip_gallery', trip_id=trip.id)
