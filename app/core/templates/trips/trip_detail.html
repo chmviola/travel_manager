@@ -25,26 +25,27 @@
     
     <div class="col-md-6">
         
-        <div class="mb-3 d-flex align-items-center">
+        <div class="mb-3 d-flex align-items-center flex-wrap">
             {% if can_edit %}
-            <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm mr-2">
+            <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm mr-2 mb-2">
                 <i class="fas fa-plus"></i> Novo Item
             </a>
             {% endif %}
 
             {% if can_edit %}
-            <button type="button" class="btn btn-warning btn-sm shadow-sm mr-2" data-toggle="modal" data-target="#modalAutoItinerary">
+            <button type="button" class="btn btn-warning btn-sm shadow-sm mr-2 mb-2" data-toggle="modal" data-target="#modalAutoItinerary">
                 <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
             </button>
             {% endif %}
 
             {% if can_edit %}
-            <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm mr-2">
+            <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm mr-2 mb-2">
                 <i class="fas fa-tasks"></i> Checklist
             </a>
             {% endif %}
 
-            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" class="btn btn-default btn-sm" title="Imprimir Roteiro">
+            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" 
+               class="btn btn-default btn-sm mb-2" title="Imprimir Roteiro">
                 <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
             </a>
         </div>
@@ -218,12 +219,12 @@
                 </div>
             </div>
     
-    <div class="card-body">
+    <div class="card-body table-responsive p-0" style="height: 300px;">
         <h2 class="text-bold text-success">R$ {{ total_spent_brl|floatformat:2 }}</h2>
         <p class="text-muted small">Câmbio atualizado automaticamente via AwesomeAPI.</p>
         <hr>
         
-            <table class="table table-sm table-striped">
+            <table class="table table-striped table-valign-middle">
             <thead>
                 <tr>
                     <th>Data</th> <th>Gasto</th>
@@ -412,6 +413,30 @@
 {% endblock %}
 
 {% block extra_js %}
+
+<style>
+    /* Padrão para Desktop */
+    .timeline-map-container {
+        height: 400px;
+    }
+
+    /* Padrão para Celulares (telas menores que 768px) */
+    @media (max-width: 768px) {
+        .timeline-map-container {
+            height: 250px; /* Menor para caber o dedo e fazer scroll */
+        }
+        
+        /* Ajuste fino na Timeline para ganhar espaço */
+        .timeline-header {
+            font-size: 1.1rem;
+        }
+        .time-label span {
+            font-size: 0.9rem;
+            padding: 3px 8px;
+        }
+    }
+</style>
+
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
 
 <script>
