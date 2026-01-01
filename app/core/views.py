@@ -322,8 +322,7 @@ def trip_remove_share(request, trip_id, user_id):
 #--- VIEW PARA DETALHES DA VIAGEM ---
 @login_required
 def trip_detail(request, pk):
-    # get_object_or_404 garante que retorna erro se o ID não existir
-    # e o filtro user=request.user impede que um usuário veja viagem de outro
+    # 1. Busca a Viagem e Permissões
     trip = get_object_or_404(
         Trip, 
         Q(pk=pk) & (Q(user=request.user) | Q(collaborators__user=request.user))
@@ -332,253 +331,88 @@ def trip_detail(request, pk):
     user_role = trip.get_user_role(request.user)
     can_edit = (user_role == 'owner' or user_role == 'editor')
 
-    for item in items:
-        # Criamos um atributo temporário 'flag_code' no objeto item
-        item.flag_code = get_country_code_from_address(item.location_address)
-
-# 1. Lógica das Bandeiras (Cópia da trip_list)
-    country_map = {
-    # A
-    'afeganistão': 'af', 'afghanistan': 'af',
-    'áfrica do sul': 'za', 'south africa': 'za',
-    'albânia': 'al', 'albania': 'al',
-    'alemanha': 'de', 'germany': 'de',
-    'andorra': 'ad',
-    'angola': 'ao',
-    'antígua e barbuda': 'ag', 'antigua and barbuda': 'ag',
-    'arábia saudita': 'sa', 'saudi arabia': 'sa',
-    'argélia': 'dz', 'algeria': 'dz',
-    'argentina': 'ar',
-    'armênia': 'am', 'armenia': 'am',
-    'austrália': 'au', 'australia': 'au',
-    'áustria': 'at', 'austria': 'at',
-    'azerbaijão': 'az', 'azerbaijan': 'az',
-
-    # B
-    'bahamas': 'bs',
-    'bangladesh': 'bd',
-    'barbados': 'bb',
-    'barein': 'bh', 'bahrain': 'bh',
-    'bélgica': 'be', 'belgium': 'be',
-    'belize': 'bz',
-    'benin': 'bj',
-    'bolívia': 'bo', 'bolivia': 'bo',
-    'bósnia e herzegovina': 'ba', 'bosnia and herzegovina': 'ba',
-    'botswana': 'bw',
-    'brasil': 'br', 'brazil': 'br',
-    'brunei': 'bn',
-    'bulgária': 'bg', 'bulgaria': 'bg',
-
-    # C
-    'cabo verde': 'cv', 'cape verde': 'cv',
-    'camarões': 'cm', 'cameroon': 'cm',
-    'canadá': 'ca', 'canada': 'ca',
-    'catar': 'qa', 'qatar': 'qa',
-    'cazaquistão': 'kz', 'kazakhstan': 'kz',
-    'chile': 'cl',
-    'china': 'cn',
-    'chipre': 'cy', 'cyprus': 'cy',
-    'colômbia': 'co', 'colombia': 'co',
-    'coreia do norte': 'kp', 'north korea': 'kp',
-    'coreia do sul': 'kr', 'south korea': 'kr',
-    'costa rica': 'cr',
-    'croácia': 'hr', 'croatia': 'hr',
-    'cuba': 'cu',
-
-    # D
-    'dinamarca': 'dk', 'denmark': 'dk',
-    'dominica': 'dm',
-
-    # E
-    'egito': 'eg', 'egypt': 'eg',
-    'el salvador': 'sv',
-    'emirados árabes unidos': 'ae', 'united arab emirates': 'ae',
-    'equador': 'ec',
-    'eritrea': 'er',
-    'eslováquia': 'sk', 'slovakia': 'sk',
-    'eslovênia': 'si', 'slovenia': 'si',
-    'espanha': 'es', 'spain': 'es',
-    'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
-    'estônia': 'ee', 'estonia': 'ee',
-    'etiópia': 'et', 'ethiopia': 'et',
-
-    # F
-    'finlândia': 'fi', 'finland': 'fi',
-    'frança': 'fr', 'france': 'fr',
-
-    # G
-    'gabão': 'ga', 'gabon': 'ga',
-    'gana': 'gh', 'ghana': 'gh',
-    'geórgia': 'ge', 'georgia': 'ge',
-    'grécia': 'gr', 'greece': 'gr',
-    'guatemala': 'gt',
-
-    # H
-    'haiti': 'ht',
-    'holanda': 'nl', 'netherlands': 'nl',
-    'honduras': 'hn',
-    'hungria': 'hu', 'hungary': 'hu',
-
-    # I
-    'índia': 'in', 'india': 'in',
-    'indonésia': 'id', 'indonesia': 'id',
-    'irã': 'ir', 'iran': 'ir',
-    'iraque': 'iq', 'iraq': 'iq',
-    'irlanda': 'ie', 'ireland': 'ie',
-    'islândia': 'is', 'iceland': 'is',
-    'israel': 'il',
-    'itália': 'it', 'italy': 'it',
-
-    # J
-    'jamaica': 'jm',
-    'japão': 'jp', 'japan': 'jp',
-
-    # K
-    'kenya': 'ke',
-    'kuwait': 'kw',
-
-    # L
-    'letonia': 'lv', 'latvia': 'lv',
-    'líbano': 'lb', 'lebanon': 'lb',
-    'lituânia': 'lt', 'lithuania': 'lt',
-    'luxemburgo': 'lu', 'luxembourg': 'lu',
-
-    # M
-    'malásia': 'my', 'malaysia': 'my',
-    'marrocos': 'ma', 'morocco': 'ma',
-    'méxico': 'mx', 'mexico': 'mx',
-    'moçambique': 'mz', 'mozambique': 'mz',
-
-    # N
-    'namíbia': 'na', 'namibia': 'na',
-    'nepal': 'np',
-    'nigéria': 'ng', 'nigeria': 'ng',
-    'noruega': 'no', 'norway': 'no',
-    'nova zelândia': 'nz', 'new zealand': 'nz',
-
-    # P
-    'paquistão': 'pk', 'pakistan': 'pk',
-    'paraguai': 'py', 'paraguay': 'py',
-    'peru': 'pe',
-    'polônia': 'pl', 'poland': 'pl',
-    'portugal': 'pt',
-
-    # R
-    'reino unido': 'gb', 'uk': 'gb', 'united kingdom': 'gb',
-    'romênia': 'ro', 'romania': 'ro',
-    'rússia': 'ru', 'russia': 'ru',
-
-    # S
-    'senegal': 'sn',
-    'sérvia': 'rs', 'serbia': 'rs',
-    'singapura': 'sg', 'singapore': 'sg',
-    'síria': 'sy', 'syria': 'sy',
-    'suécia': 'se', 'sweden': 'se',
-    'suíça': 'ch', 'switzerland': 'ch',
-
-    # T
-    'tailândia': 'th', 'thailand': 'th',
-    'tunísia': 'tn', 'tunisia': 'tn',
-    'turquia': 'tr', 'turkey': 'tr',
-
-    # U
-    'ucrânia': 'ua', 'ukraine': 'ua',
-    'uruguai': 'uy', 'uruguay': 'uy',
-
-    # V
-    'venezuela': 've',
-    'vietnã': 'vn', 'vietnam': 'vn',
-
-    # Z
-    'zâmbia': 'zm', 'zambia': 'zm',
-    'zimbábue': 'zw', 'zimbabwe': 'zw',
-    }
-
-    trip.flags = set()
-    items_with_address = trip.items.exclude(location_address__isnull=True).exclude(location_address__exact='')
-    
-    for item in items_with_address:
-        address_lower = item.location_address.lower()
-        for country_name, country_code in country_map.items():
-            if country_name in address_lower:
-                trip.flags.add(country_code)
-
-    # Buscamos os itens ordenados por data para a timeline
+    # 2. Busca os Itens (ORDEM CORRIGIDA: Isso tem que vir antes dos loops)
     items = trip.items.all().order_by('start_datetime')
-    expenses = trip.expenses.all()
-    # Lógica de Conversão
-    total_converted_brl = 0
-    # Cache simples para não bater na API várias vezes para a mesma moeda na mesma página
-    rates_cache = {}
 
-    # Iteramos sobre os gastos para calcular individualmente
-    for expense in expenses:
-        currency = expense.currency
-        
-        # Busca cotação (com cache simples para não repetir chamadas)
-        if expense.currency not in rates_cache:
-            rates_cache[expense.currency] = get_exchange_rate(expense.currency)
-        expense.converted_value = round(float(expense.amount) * rates_cache[expense.currency], 2)
-        total_converted_brl += expense.converted_value
-    
-    # --- NOVA LÓGICA: COTAÇÕES POR PAÍS DOS ITENS ---
-    detected_currencies = set() # Usamos set para não repetir moedas (ex: 2 hoteis na frança = 1 Euro)
-    
+    # 3. Processamento de Itens (Flags e Clima)
+    trip.flags = set() # Inicializa o conjunto de bandeiras da viagem (cabeçalho)
+    items_changed = False # Flag para saber se precisamos salvar algo
+
     for item in items:
-        if item.location_address:
-            # Tenta descobrir a moeda baseada no endereço do item
-            currency_code = get_currency_by_country(item.location_address)
-            if currency_code and currency_code != 'BRL': # Ignora Real
-                detected_currencies.add(currency_code)
+        # A. Detectar Bandeira (Usa a função do utils.py)
+        code = get_country_code_from_address(item.location_address)
+        item.flag_code = code # Para o ícone na timeline
+        if code:
+            trip.flags.add(code) # Para as bandeiras no topo da página
 
-    # Agora buscamos a cotação de HOJE para essas moedas encontradas
-    trip_rates = []
-    for currency in detected_currencies:
-        # Reutiliza do cache se já tivermos buscado para os gastos
-        rate = rates_cache.get(currency) or get_exchange_rate(currency)
-        trip_rates.append({
-            'code': currency,
-            'rate': rate
-        })
-
-    # Verifica itens que tem endereço e data, mas não tem clima salvo
-    items_changed = False
-    for item in items:
+        # B. Detectar Clima (Se tiver endereço, data e ainda não tiver clima)
         if item.location_address and item.start_datetime and not item.weather_temp:
             # Tenta buscar na API
             temp, cond, icon = fetch_weather_data(item.location_address, item.start_datetime)
-            
             if temp:
                 item.weather_temp = temp
                 item.weather_condition = cond
                 item.weather_icon = icon
-                item.save() # Salva no banco para não buscar de novo
+                item.save()
                 items_changed = True
     
-    # Se houve mudança, recarrega a query para garantir dados frescos
+    # Se atualizamos o clima de algum item, recarregamos a lista para garantir dados frescos
     if items_changed:
         items = trip.items.all().order_by('start_datetime')
 
-    # BUSCAR CHAVE DO MAPA NO BANCO
+    # 4. Processamento Financeiro
+    expenses = trip.expenses.all()
+    total_converted_brl = 0
+    rates_cache = {} # Cache local para não chamar a função get_exchange_rate repetidamente
+
+    # Calcula totais e converte gastos
+    for expense in expenses:
+        if expense.currency == 'BRL':
+            expense.converted_value = expense.amount
+            total_converted_brl += expense.amount
+        else:
+            # Se não tá no cache, busca
+            if expense.currency not in rates_cache:
+                rates_cache[expense.currency] = get_exchange_rate(expense.currency)
+            
+            rate = rates_cache[expense.currency]
+            expense.converted_value = round(float(expense.amount) * rate, 2)
+            total_converted_brl += expense.converted_value
+
+    # 5. Cotações para Exibição (Baseado nos países visitados)
+    detected_currencies = set()
+    for item in items:
+        if item.location_address:
+            # Tenta descobrir a moeda do país
+            currency_code = get_currency_by_country(item.location_address)
+            if currency_code and currency_code != 'BRL':
+                detected_currencies.add(currency_code)
+    
+    # Monta a lista de cotações para o rodapé do card financeiro
+    trip_rates = []
+    for currency in detected_currencies:
+        rate = rates_cache.get(currency) or get_exchange_rate(currency)
+        trip_rates.append({'code': currency, 'rate': rate})
+
+    # 6. Chave do Google Maps
     google_maps_api_key = ''
     try:
-        config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API', is_active=True)
-        google_maps_api_key = config.value
-        print(f"SUCESSO: Chave encontrada: {google_maps_api_key[:5]}...") # Debug no Log
-    except APIConfiguration.DoesNotExist:
-        print("ERRO: Chave GOOGLE_MAPS_API não encontrada no banco ou inativa.") # Debug no Log
+        config = APIConfiguration.objects.filter(key='GOOGLE_MAPS_API', is_active=True).first()
+        if config:
+            google_maps_api_key = config.value
     except Exception as e:
-        print(f"ERRO CRÍTICO ao buscar chave: {e}")
+        print(f"Erro ao buscar API Key: {e}")
 
+    # 7. Contexto Final
     context = {
         'trip': trip,
         'items': items,
-        'can_edit': can_edit, # Passamos essa variável para esconder botões no template
-        'user_role': user_role,
         'expenses': expenses,
+        'can_edit': can_edit,
+        'user_role': user_role,
         'total_spent_brl': round(total_converted_brl, 2),
         'trip_rates': trip_rates,
-        'google_maps_api_key': google_maps_api_key # Enviando para o template
+        'google_maps_api_key': google_maps_api_key
     }
 
     return render(request, 'trips/trip_detail.html', context)
