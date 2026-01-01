@@ -334,6 +334,41 @@ def trip_detail(request, pk):
     # 2. Busca os Itens (ORDEM CORRIGIDA: Isso tem que vir antes dos loops)
     items = trip.items.all().order_by('start_datetime')
 
+    # --- LIMPEZA DE DADOS PARA EXIBIÇÃO ---
+    import ast
+    for item in items:
+        # Lógica de Bandeira (Mantenha a sua existente)
+        item.flag_code = get_country_code_from_address(item.location_address)
+        
+        # Lógica de Limpeza das Notas (NOVO)
+        if item.details:
+            raw = item.details
+            
+            # Se for string, tenta converter pra dict
+            if isinstance(raw, str):
+                try:
+                    raw = ast.literal_eval(raw)
+                except:
+                    pass # É string pura
+            
+            # Se agora é dict, tenta pegar 'notes'
+            if isinstance(raw, dict):
+                notes = raw.get('notes', '')
+                
+                # VERIFICAÇÃO RECURSIVA (O problema do {'notes': "{'notes': ...}"})
+                # Se o conteúdo da nota PARECE outro dicionário, limpamos de novo
+                if isinstance(notes, str) and notes.strip().startswith("{'notes'"):
+                    try:
+                        inner = ast.literal_eval(notes)
+                        if isinstance(inner, dict):
+                            notes = inner.get('notes', notes)
+                    except:
+                        pass
+                
+                # Salva no objeto TEMPORÁRIO (memória) para o template ler certo
+                # O template lê item.details.notes. Vamos garantir que item.details seja um dict limpo
+                item.details = {'notes': notes}
+
     # 3. Processamento de Itens (Flags e Clima)
     trip.flags = set() # Inicializa o conjunto de bandeiras da viagem (cabeçalho)
     items_changed = False # Flag para saber se precisamos salvar algo
@@ -467,24 +502,33 @@ def trip_item_create(request, trip_id):
         form = TripItemForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
-            item.trip = trip
             
-            # --- CORREÇÃO AQUI ---
-            # O campo 'details' do form vem como string (o texto da nota).
-            # Nós o transformamos em JSON manualmentes.
-            raw_notes = form.cleaned_data.get('details', '')
+            # --- LÓGICA DE LIMPEZA DEFINITIVA ---
+            raw_text = form.cleaned_data.get('details', '')
             
-            # Se o usuário colou um JSON sem querer, tentamos limpar, senão usa o texto puro
-            if isinstance(raw_notes, dict):
-                item.details = raw_notes
-            else:
-                # Garante que salvamos apenas o texto dentro da chave 'notes'
-                item.details = {'notes': raw_notes}
-            # ---------------------
+            # Se o texto digitado parecer um dicionário Python (ex: {'notes': ...})
+            # Isso acontece se o usuário copiou e colou, ou se o form carregou errado.
+            # Vamos descascar essa string até sobrar só o texto.
+            import ast
+            
+            # Loop de segurança: Enquanto parecer um dicionário, tente extrair o miolo
+            # Isso resolve casos de dupla ou tripla recursividade
+            while isinstance(raw_text, str) and raw_text.strip().startswith("{'notes'"):
+                try:
+                    parsed = ast.literal_eval(raw_text)
+                    if isinstance(parsed, dict):
+                        raw_text = parsed.get('notes', raw_text)
+                    else:
+                        break
+                except:
+                    break
+
+            # Agora temos certeza que raw_text é o texto limpo
+            item.details = {'notes': raw_text}
+            # ------------------------------------
 
             item.save()
-            messages.success(request, "Item adicionado com sucesso!")
-            return redirect('trip_detail', pk=trip.id)
+            # ... resto do código (messages, redirect)
     else:
         form = TripItemForm()
 

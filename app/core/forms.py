@@ -50,10 +50,35 @@ class TripItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Se estiver editando (instance existe) e tiver detalhes
+        
+        # --- CORREÇÃO DE SEGURANÇA ---
+        details_data = ''
+        
+        # Verifica se existe uma instância (edição) e se ela tem detalhes
         if self.instance and self.instance.pk and self.instance.details:
-            # Pega apenas o valor de 'notes' para mostrar no campo
-            self.initial['details'] = self.instance.details.get('notes', '')
+            d = self.instance.details
+            
+            # CASO 1: É um dicionário normal (JSON correto)
+            if isinstance(d, dict):
+                details_data = d.get('notes', '')
+            
+            # CASO 2: É uma string (Erro antigo ou dado sujo)
+            elif isinstance(d, str):
+                import ast
+                try:
+                    # Tenta converter string "{'notes': ...}" em dicionário
+                    parsed = ast.literal_eval(d)
+                    if isinstance(parsed, dict):
+                        details_data = parsed.get('notes', '')
+                    else:
+                        details_data = d # Se não for dict, usa a string pura
+                except:
+                    # Se der erro ao converter, assume que é apenas texto simples
+                    details_data = d
+        
+        # Define o valor inicial do campo
+        self.initial['details'] = details_data
+        # -----------------------------
 
     def save(self, commit=True):
         instance = super().save(commit=False)
