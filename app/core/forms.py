@@ -311,6 +311,7 @@ class TripPhotoForm(forms.ModelForm):
         model = TripPhoto
         fields = ['image', 'caption']
         widgets = {
+            # CORREÇÃO AQUI: Mudamos para forms.FileInput
             'image': forms.FileInput(attrs={'class': 'form-control', 'multiple': True}),
             'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
         }
