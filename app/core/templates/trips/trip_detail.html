@@ -32,9 +32,11 @@
             </a>
             {% endif %}
 
+            {% if can_edit %}
             <button type="button" class="btn btn-warning btn-sm shadow-sm mr-2" data-toggle="modal" data-target="#modalAutoItinerary">
                 <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
             </button>
+            {% endif %}
 
             <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm mr-2">
                 <i class="fas fa-tasks"></i> Checklist
@@ -122,7 +124,8 @@
                                         <i class="fas fa-map-marker-alt"></i> Ver Mapa
                                     </button>
                                 {% endif %}
-
+                                
+                                {% if can_edit %}
                                 <a href="{% url 'trip_item_attachments' item.id %}" 
                                     class="mr-2 {% if item.attachments.exists %}text-info{% else %}text-muted{% endif %}"
                                     title="Anexos (PDFs/Imagens)">
@@ -139,6 +142,7 @@
                                     <a href="{% url 'trip_item_update' item.id %}" class="text-primary mr-2"><i class="fas fa-edit"></i></a>
                                
                                     <a href="{% url 'trip_item_delete' item.id %}" class="text-danger"><i class="fas fa-trash"></i></a>
+                                {% endif %}
                                 </span>
                             </div>
                         </div>
@@ -204,9 +208,11 @@
             <div class="card-header">
                 <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
                 <div class="card-tools">
+                    {% if can_edit %}
                     <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
                         <i class="fas fa-plus"></i> Add Gasto
                     </a>
+                    {% endif %}
                 </div>
             </div>
     
@@ -249,6 +255,7 @@
 
                     <td class="text-center align-middle">
                         <div class="btn-group btn-group-sm">
+                            {% if can_edit %}
                             <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar Gasto">
                                 <i class="fas fa-pen text-primary"></i>
                             </a>
@@ -256,6 +263,7 @@
                             <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
                                 <i class="fas fa-trash text-danger"></i>
                             </a>
+                            {% endif %}
                         </div>
                     </td>
 
@@ -280,9 +288,11 @@
                             <i class="fas fa-lightbulb text-warning mr-1"></i> Guia de Bolso (IA)
                         </h3>
                         <div class="card-tools">
+                            {% if can_edit %}
                             <a href="{% url 'trip_generate_insights' trip.id %}" class="btn btn-tool text-purple" title="Atualizar Dicas">
                                 <i class="fas fa-sync-alt"></i> Atualizar Dicas
                             </a>
+                            {% endif %}
                             <button type="button" class="btn btn-tool" data-card-widget="collapse">
                                 <i class="fas fa-minus"></i>
                             </button>
@@ -330,9 +340,11 @@
                         {% else %}
                         <div class="text-center p-5">
                             <p class="text-muted">Nenhuma dica gerada para este destino ainda.</p>
+                            {% if can_edit %}
                             <a href="{% url 'trip_generate_insights' trip.id %}" class="btn btn-app bg-purple">
                                 <i class="fas fa-magic"></i> Gerar Guia Agora
                             </a>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
