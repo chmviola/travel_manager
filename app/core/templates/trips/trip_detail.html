@@ -96,20 +96,20 @@
                                         </span>
                                         
                                         {% if item.flag_code %}
-                                            <span class="flag-icon flag-icon-{{ item.flag_code }} shadow-sm d-flex align-items-center" 
-                                                  title="Local: {{ item.flag_code|upper }}"></span>
-                                            {% endif %}
+                                        <span class="flag-icon flag-icon-{{ item.flag_code }} shadow-sm mr-2" 
+                                              style="font-size: 1.1em;"
+                                            title="Local: {{ item.flag_code|upper }}"></span>
+                                        {% endif %}
 
                                         {% if item.weather_temp %}
-                                            <span class="badge badge-light border text-muted shadow-sm d-flex align-items-center"
+                                            <span class="badge badge-light border text-muted shadow-sm d-flex align-items-center"  
                                                   style="font-weight: normal; white-space: nowrap; cursor: help;"
                                                   data-toggle="tooltip"
                                                   data-placement="top"
                                                   title="{{ item.weather_condition|title }}">
 
                                                 <img src="{{ item.weather_icon }}" alt="" style="width: 20px; height: 20px; margin-right: 4px;">
-
-                                                {{ item.weather_temp }}°C
+                                            {{ item.weather_temp }}°C
                                             </span>
                                         {% endif %}
                                     </div>
