@@ -16,7 +16,7 @@
 
 <div class="row">
     {% for trip in trips %}
-    <div class="col-md-4">
+    <div class="col-12 col-sm-6 col-lg-4 d-flex align-items-stretch">
         <div class="card card-outline 
             {% if trip.status == 'CONFIRMED' %}card-success{% elif trip.status == 'COMPLETED' %}card-secondary{% else %}card-warning{% endif %}">
             
@@ -55,7 +55,7 @@
             </div>
 
         <div class="card-footer">
-            <div class="text-right">
+            <div class="d-flex flex-wrap justify-content-end align-items-center">
                 <a href="{% url 'trip_detail' trip.id %}" class="btn btn-sm btn-primary">
                     <i class="fas fa-folder"></i> Detalhes
                 </a>
