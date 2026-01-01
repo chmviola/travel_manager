@@ -159,6 +159,32 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Configuração Global do Toast
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    // Ponte Django Messages -> SweetAlert2
+    {% if messages %}
+        {% for message in messages %}
+            Toast.fire({
+                icon: '{{ message.tags }}', // success, error, warning, info
+                title: '{{ message }}'
+            });
+        {% endfor %}
+    {% endif %}
+</script>
 
 {% block extra_js %}{% endblock %}
 </body>
