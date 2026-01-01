@@ -8,9 +8,9 @@ import json                             # <--- Essencial para os gráficos
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai
-from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator
+from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm
 from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -1250,6 +1250,64 @@ def config_api_delete(request, pk):
         return redirect('config_api_list')
     # Se tentar acessar via GET, redireciona para a lista por segurança
     return redirect('config_api_list')
+
+#--- VIEWS PARA GALERIA DE FOTOS DA VIAGEM ---
+@login_required
+def trip_gallery(request, trip_id):
+    # Permissões: Dono ou Colaborador
+    trip = get_object_or_404(Trip, Q(pk=trip_id) & (Q(user=request.user) | Q(collaborators__user=request.user)))
+    
+    # Checa permissão de edição
+    user_role = trip.get_user_role(request.user)
+    can_edit = (user_role == 'owner' or user_role == 'editor')
+
+    if request.method == 'POST':
+        if not can_edit:
+            messages.error(request, "Você não tem permissão para adicionar fotos.")
+            return redirect('trip_gallery', trip_id=trip.id)
+
+        form = TripPhotoForm(request.POST, request.FILES)
+        files = request.FILES.getlist('image') # Pega a lista de arquivos
+        
+        if form.is_valid():
+            count = 0
+            for f in files:
+                # Criamos uma instância para cada arquivo
+                TripPhoto.objects.create(
+                    trip=trip,
+                    image=f,
+                    caption=form.cleaned_data['caption']
+                )
+                count += 1
+            messages.success(request, f"{count} fotos adicionadas à galeria!")
+            return redirect('trip_gallery', trip_id=trip.id)
+    else:
+        form = TripPhotoForm()
+
+    photos = trip.photos.all().order_by('-uploaded_at')
+
+    context = {
+        'trip': trip,
+        'photos': photos,
+        'form': form,
+        'can_edit': can_edit
+    }
+    return render(request, 'trips/trip_gallery.html', context)
+
+@login_required
+def trip_photo_delete(request, photo_id):
+    photo = get_object_or_404(TripPhoto, pk=photo_id)
+    trip = photo.trip
+    
+    # Segurança: Só permite deletar se tiver acesso à trip
+    if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
+        messages.error(request, "Sem permissão.")
+        return redirect('trip_gallery', trip_id=trip.id)
+
+    photo.delete()
+    messages.success(request, "Foto removida.")
+    return redirect('trip_gallery', trip_id=trip.id)
+
 
 # --- VERIFICAÇÃO DE SEGURANÇA ---
 def is_admin(user):

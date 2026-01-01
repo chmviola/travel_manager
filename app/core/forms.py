@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator
+from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto
 import re  # <--- Importante para validação regex
 
 #--- FORMULÁRIOS PERSONALIZADOS COM BOOTSTRAP E VALIDAÇÕES ESPECÍFICAS ---
@@ -304,3 +304,13 @@ class APIConfigurationForm(forms.ModelForm):
         # Força a chave a ser maiúscula e sem espaços para evitar erros no código
         key = self.cleaned_data['key']
         return key.upper().strip().replace(' ', '_')
+    
+#-- Formulário para Upload de Fotos da Viagem ---
+class TripPhotoForm(forms.ModelForm):
+    class Meta:
+        model = TripPhoto
+        fields = ['image', 'caption']
+        widgets = {
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control', 'multiple': True}), # <--- O SEGREDO
+            'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
+        }

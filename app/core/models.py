@@ -1,4 +1,5 @@
 import requests # Para chamar a API do Google pelo Python
+import os
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
@@ -241,3 +242,20 @@ class ChecklistItem(models.Model):
 
     def __str__(self):
         return self.item
+
+#--- MODELO DE FOTOS DA VIAGEM ---
+class TripPhoto(models.Model):
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='photos')
+    image = models.ImageField(upload_to='trip_photos/')
+    caption = models.CharField(max_length=200, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Foto de {self.trip.title}"
+
+    # Opcional: Deleta o arquivo físico ao deletar o objeto do banco
+    def delete(self, *args, **kwargs):
+        if self.image:
+            if os.path.isfile(self.image.path):
+                os.remove(self.image.path)
+        super().delete(*args, **kwargs)

@@ -44,6 +44,12 @@
             </a>
             {% endif %}
 
+            {% if can_edit %}
+            <a href="{% url 'trip_gallery' trip.id %}" class="btn btn-default btn-sm mb-2">
+                <i class="fas fa-images text-success mr-1"></i> Galeria
+            </a>
+            {% endif %}
+
             <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" 
                class="btn btn-default btn-sm mb-2" title="Imprimir Roteiro">
                 <i class="fas fa-file-pdf text-danger mr-1"></i> PDF

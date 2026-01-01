@@ -73,4 +73,8 @@ urlpatterns = [
     # Rotas de Colaboração
     path('trips/<int:trip_id>/share/', views.trip_share, name='trip_share'),
     path('trips/<int:trip_id>/unshare/<int:user_id>/', views.trip_remove_share, name='trip_remove_share'),
+    
+    # Rotas de Galeria de Fotos da Viagem
+    path('trips/<int:trip_id>/gallery/', views.trip_gallery, name='trip_gallery'),
+    path('trips/photo/<int:photo_id>/delete/', views.trip_photo_delete, name='trip_photo_delete'),
 ]
