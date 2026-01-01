@@ -461,21 +461,34 @@ def trip_detail_pdf(request, pk):
 #--- VIEWS PARA CRIAR ITENS DE VIAGEM (TRIP ITEM) ---
 @login_required
 def trip_item_create(request, trip_id):
-    # Busca a viagem e garante que pertence ao usuário logado
     trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
     
     if request.method == 'POST':
         form = TripItemForm(request.POST)
         if form.is_valid():
             item = form.save(commit=False)
-            item.trip = trip # Vincula o item à viagem atual
+            item.trip = trip
+            
+            # --- CORREÇÃO AQUI ---
+            # O campo 'details' do form vem como string (o texto da nota).
+            # Nós o transformamos em JSON manualmentes.
+            raw_notes = form.cleaned_data.get('details', '')
+            
+            # Se o usuário colou um JSON sem querer, tentamos limpar, senão usa o texto puro
+            if isinstance(raw_notes, dict):
+                item.details = raw_notes
+            else:
+                # Garante que salvamos apenas o texto dentro da chave 'notes'
+                item.details = {'notes': raw_notes}
+            # ---------------------
+
             item.save()
-            # Redireciona de volta para a tela de detalhes da viagem
+            messages.success(request, "Item adicionado com sucesso!")
             return redirect('trip_detail', pk=trip.id)
     else:
         form = TripItemForm()
-    
-    return render(request, 'trips/trip_item_form.html', {'form': form, 'trip': trip})
+
+    return render(request, 'trips/trip_item_form.html', {'form': form, 'trip': trip, 'title': 'Novo Item'})
 
 #--- VIEW PARA CRIAR GASTOS DE VIAGEM ---
 @login_required
@@ -495,16 +508,53 @@ def trip_expense_create(request, trip_id):
 
 #--- VIEW PARA EDITAR VIAGEM ---
 @login_required
-def trip_update(request, pk):
-    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+def trip_item_update(request, pk):
+    item = get_object_or_404(TripItem, pk=pk)
+    # Verifica permissão (dono ou colaborador editor)
+    trip = item.trip
+    if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
+         messages.error(request, "Sem permissão para editar.")
+         return redirect('trip_detail', pk=trip.id)
+
     if request.method == 'POST':
-        form = TripForm(request.POST, instance=trip)
+        form = TripItemForm(request.POST, instance=item)
         if form.is_valid():
-            form.save()
-            return redirect('trip_detail', pk=trip.id)
+            updated_item = form.save(commit=False)
+            
+            # --- CORREÇÃO DE RECURSIVIDADE ---
+            # Pega o texto que veio do formulário
+            new_notes = form.cleaned_data.get('details', '')
+            
+            # ATENÇÃO: Se o form.cleaned_data já vier com a sujeira "{'notes': ...}"
+            # precisamos limpá-la antes de salvar.
+            import ast
+            try:
+                # Tenta ver se o texto é um dicionário disfarçado de string
+                potential_dict = ast.literal_eval(new_notes)
+                if isinstance(potential_dict, dict) and 'notes' in potential_dict:
+                    new_notes = potential_dict['notes'] # Extrai só o miolo
+            except:
+                pass # Se der erro, é porque é texto normal, segue a vida
+
+            # Salva o JSON limpo
+            updated_item.details = {'notes': new_notes}
+            # ---------------------------------
+            
+            updated_item.save()
+            messages.success(request, "Item atualizado.")
+            return redirect('trip_detail', pk=item.trip.id)
     else:
-        form = TripForm(instance=trip)
-    return render(request, 'trips/trip_form.html', {'form': form, 'edit_mode': True})
+        # --- CORREÇÃO NA EXIBIÇÃO (GET) ---
+        # Antes de enviar para o form, precisamos extrair só o texto da nota
+        # para que o usuário não veja "{'notes': '...'}" na caixa de texto.
+        initial_data = {}
+        if item.details and isinstance(item.details, dict):
+            initial_data['details'] = item.details.get('notes', '')
+        
+        # Passamos o initial para o form preencher o campo corretamente
+        form = TripItemForm(instance=item, initial=initial_data)
+
+    return render(request, 'trips/trip_item_form.html', {'form': form, 'trip': item.trip, 'title': 'Editar Item'})
 
 #--- VIEW PARA DELETAR VIAGEM ---
 @login_required
