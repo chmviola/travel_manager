@@ -306,12 +306,16 @@ class APIConfigurationForm(forms.ModelForm):
         return key.upper().strip().replace(' ', '_')
     
 #-- Formulário para Upload de Fotos da Viagem ---
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
 class TripPhotoForm(forms.ModelForm):
     class Meta:
         model = TripPhoto
         fields = ['image', 'caption']
         widgets = {
-            # CORREÇÃO AQUI: Mudamos para forms.FileInput
-            'image': forms.FileInput(attrs={'class': 'form-control', 'multiple': True}),
+            # 2. Use o widget personalizado aqui (sem passar 'multiple' no attrs)
+            'image': MultipleFileInput(attrs={'class': 'form-control'}),
+            
             'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
         }
