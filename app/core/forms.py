@@ -306,22 +306,23 @@ class APIConfigurationForm(forms.ModelForm):
         return key.upper().strip().replace(' ', '_')
     
 #-- Formulário para Upload de Fotos da Viagem ---
+# Mantenha o widget personalizado
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
 class TripPhotoForm(forms.ModelForm):
+    # SOBRESCREVEMOS o campo image aqui. 
+    # Usamos FileField (mais genérico) em vez de ImageField para evitar validação de imagem única.
+    image = forms.FileField(
+        widget=MultipleFileInput(attrs={'class': 'form-control'}),
+        required=False, # Não valida obrigatoriedade aqui, deixamos para a View
+        label="Fotos"
+    )
+
     class Meta:
         model = TripPhoto
-        fields = ['image', 'caption']
+        fields = ['caption'] # REMOVA 'image' DAQUI para evitar conflito
         widgets = {
-            # 2. Use o widget personalizado aqui (sem passar 'multiple' no attrs)
-            'image': MultipleFileInput(attrs={'class': 'form-control'}),
             'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Dizemos ao Django: "Se o campo image vier vazio na validação padrão, tudo bem"
-        # (Porque nós vamos pegar os arquivos manualmente via request.FILES.getlist)
-        self.fields['image'].required = False
 

@@ -1264,7 +1264,7 @@ def trip_gallery(request, trip_id):
         print(f"FILES recebidos: {request.FILES}")
         print(f"POST recebido: {request.POST}")
         # -------------
-        
+
         if not can_edit:
             messages.error(request, "Sem permissão.")
             return redirect('trip_gallery', trip_id=trip.id)
@@ -1272,32 +1272,29 @@ def trip_gallery(request, trip_id):
         form = TripPhotoForm(request.POST, request.FILES)
         
         # Pega a lista crua de arquivos enviados pelo widget multiple
-        files = request.FILES.getlist('image') 
+        files = request.FILES.getlist('image')
         
+        # Validamos se o formulário (legenda) está ok E se temos arquivos
         if form.is_valid():
-            # Validação Manual: Se a lista estiver vazia, reclamamos
             if not files:
-                messages.error(request, "Nenhuma foto foi selecionada.")
+                messages.error(request, "Nenhuma foto selecionada.")
             else:
                 count = 0
                 for f in files:
                     try:
                         TripPhoto.objects.create(
                             trip=trip,
-                            image=f,
+                            image=f, # O arquivo individual vai aqui
                             caption=form.cleaned_data['caption']
                         )
                         count += 1
                     except Exception as e:
-                        print(f"Erro ao salvar foto: {e}")
+                        print(f"Erro ao salvar: {e}")
                 
-                if count > 0:
-                    messages.success(request, f"{count} fotos adicionadas com sucesso!")
+                messages.success(request, f"{count} fotos adicionadas!")
                 return redirect('trip_gallery', trip_id=trip.id)
         else:
-            # ISSO VAI TE MOSTRAR O ERRO NA TELA SE FALHAR
-            print(form.errors) 
-            messages.error(request, f"Erro no formulário: {form.errors}")
+            print(form.errors)
 
     else:
         form = TripPhotoForm()
