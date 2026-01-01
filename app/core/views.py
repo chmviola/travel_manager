@@ -7,7 +7,7 @@ from collections import defaultdict     # <--- Essencial para os gráficos
 import json                             # <--- Essencial para os gráficos
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
-from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai
+from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm
@@ -331,6 +331,10 @@ def trip_detail(request, pk):
 
     user_role = trip.get_user_role(request.user)
     can_edit = (user_role == 'owner' or user_role == 'editor')
+
+    for item in items:
+        # Criamos um atributo temporário 'flag_code' no objeto item
+        item.flag_code = get_country_code_from_address(item.location_address)
 
 # 1. Lógica das Bandeiras (Cópia da trip_list)
     country_map = {
@@ -1239,7 +1243,7 @@ def config_api_handle(request, pk=None):
     # Vamos usar um template genérico para o formulário
     return render(request, 'config/api_form.html', context)
 
-# (Opcional) View para Deletar
+#--- View para Deletar ---
 @login_required
 def config_api_delete(request, pk):
     config = get_object_or_404(APIConfiguration, pk=pk)

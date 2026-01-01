@@ -311,3 +311,176 @@ def generate_trip_insights_ai(destination):
     except Exception as e:
         print(f"Erro OpenAI Insights: {e}")
         return None
+
+#-- Função Adicional para Extrair Código do País --#  
+def get_country_code_from_address(address):
+    """
+    Recebe um endereço (string) e retorna o código ISO do país (ex: 'br', 'us').
+    Retorna None se não encontrar.
+    """
+    if not address:
+        return None
+        
+    address_lower = address.lower()
+    
+    country_map = {
+    # A
+    'afeganistão': 'af', 'afghanistan': 'af',
+    'áfrica do sul': 'za', 'south africa': 'za',
+    'albânia': 'al', 'albania': 'al',
+    'alemanha': 'de', 'germany': 'de',
+    'andorra': 'ad',
+    'angola': 'ao',
+    'antígua e barbuda': 'ag', 'antigua and barbuda': 'ag',
+    'arábia saudita': 'sa', 'saudi arabia': 'sa',
+    'argélia': 'dz', 'algeria': 'dz',
+    'argentina': 'ar',
+    'armênia': 'am', 'armenia': 'am',
+    'austrália': 'au', 'australia': 'au',
+    'áustria': 'at', 'austria': 'at',
+    'azerbaijão': 'az', 'azerbaijan': 'az',
+
+    # B
+    'bahamas': 'bs',
+    'bangladesh': 'bd',
+    'barbados': 'bb',
+    'barein': 'bh', 'bahrain': 'bh',
+    'bélgica': 'be', 'belgium': 'be',
+    'belize': 'bz',
+    'benin': 'bj',
+    'bolívia': 'bo', 'bolivia': 'bo',
+    'bósnia e herzegovina': 'ba', 'bosnia and herzegovina': 'ba',
+    'botswana': 'bw',
+    'brasil': 'br', 'brazil': 'br',
+    'brunei': 'bn',
+    'bulgária': 'bg', 'bulgaria': 'bg',
+
+    # C
+    'cabo verde': 'cv', 'cape verde': 'cv',
+    'camarões': 'cm', 'cameroon': 'cm',
+    'canadá': 'ca', 'canada': 'ca',
+    'catar': 'qa', 'qatar': 'qa',
+    'cazaquistão': 'kz', 'kazakhstan': 'kz',
+    'chile': 'cl',
+    'china': 'cn',
+    'chipre': 'cy', 'cyprus': 'cy',
+    'colômbia': 'co', 'colombia': 'co',
+    'coreia do norte': 'kp', 'north korea': 'kp',
+    'coreia do sul': 'kr', 'south korea': 'kr',
+    'costa rica': 'cr',
+    'croácia': 'hr', 'croatia': 'hr',
+    'cuba': 'cu',
+
+    # D
+    'dinamarca': 'dk', 'denmark': 'dk',
+    'dominica': 'dm',
+
+    # E
+    'egito': 'eg', 'egypt': 'eg',
+    'el salvador': 'sv',
+    'emirados árabes unidos': 'ae', 'united arab emirates': 'ae',
+    'equador': 'ec',
+    'eritrea': 'er',
+    'eslováquia': 'sk', 'slovakia': 'sk',
+    'eslovênia': 'si', 'slovenia': 'si',
+    'espanha': 'es', 'spain': 'es',
+    'estados unidos': 'us', 'usa': 'us', 'united states': 'us',
+    'estônia': 'ee', 'estonia': 'ee',
+    'etiópia': 'et', 'ethiopia': 'et',
+
+    # F
+    'finlândia': 'fi', 'finland': 'fi',
+    'frança': 'fr', 'france': 'fr',
+
+    # G
+    'gabão': 'ga', 'gabon': 'ga',
+    'gana': 'gh', 'ghana': 'gh',
+    'geórgia': 'ge', 'georgia': 'ge',
+    'grécia': 'gr', 'greece': 'gr',
+    'guatemala': 'gt',
+
+    # H
+    'haiti': 'ht',
+    'holanda': 'nl', 'netherlands': 'nl',
+    'honduras': 'hn',
+    'hungria': 'hu', 'hungary': 'hu',
+
+    # I
+    'índia': 'in', 'india': 'in',
+    'indonésia': 'id', 'indonesia': 'id',
+    'irã': 'ir', 'iran': 'ir',
+    'iraque': 'iq', 'iraq': 'iq',
+    'irlanda': 'ie', 'ireland': 'ie',
+    'islândia': 'is', 'iceland': 'is',
+    'israel': 'il',
+    'itália': 'it', 'italy': 'it',
+
+    # J
+    'jamaica': 'jm',
+    'japão': 'jp', 'japan': 'jp',
+
+    # K
+    'kenya': 'ke',
+    'kuwait': 'kw',
+
+    # L
+    'letonia': 'lv', 'latvia': 'lv',
+    'líbano': 'lb', 'lebanon': 'lb',
+    'lituânia': 'lt', 'lithuania': 'lt',
+    'luxemburgo': 'lu', 'luxembourg': 'lu',
+
+    # M
+    'malásia': 'my', 'malaysia': 'my',
+    'marrocos': 'ma', 'morocco': 'ma',
+    'méxico': 'mx', 'mexico': 'mx',
+    'moçambique': 'mz', 'mozambique': 'mz',
+
+    # N
+    'namíbia': 'na', 'namibia': 'na',
+    'nepal': 'np',
+    'nigéria': 'ng', 'nigeria': 'ng',
+    'noruega': 'no', 'norway': 'no',
+    'nova zelândia': 'nz', 'new zealand': 'nz',
+
+    # P
+    'paquistão': 'pk', 'pakistan': 'pk',
+    'paraguai': 'py', 'paraguay': 'py',
+    'peru': 'pe',
+    'polônia': 'pl', 'poland': 'pl',
+    'portugal': 'pt',
+
+    # R
+    'reino unido': 'gb', 'uk': 'gb', 'united kingdom': 'gb',
+    'romênia': 'ro', 'romania': 'ro',
+    'rússia': 'ru', 'russia': 'ru',
+
+    # S
+    'senegal': 'sn',
+    'sérvia': 'rs', 'serbia': 'rs',
+    'singapura': 'sg', 'singapore': 'sg',
+    'síria': 'sy', 'syria': 'sy',
+    'suécia': 'se', 'sweden': 'se',
+    'suíça': 'ch', 'switzerland': 'ch',
+
+    # T
+    'tailândia': 'th', 'thailand': 'th',
+    'tunísia': 'tn', 'tunisia': 'tn',
+    'turquia': 'tr', 'turkey': 'tr',
+
+    # U
+    'ucrânia': 'ua', 'ukraine': 'ua',
+    'uruguai': 'uy', 'uruguay': 'uy',
+
+    # V
+    'venezuela': 've',
+    'vietnã': 'vn', 'vietnam': 'vn',
+
+    # Z
+    'zâmbia': 'zm', 'zambia': 'zm',
+    'zimbábue': 'zw', 'zimbabwe': 'zw',    }
+
+    for country_name, country_code in country_map.items():
+        if country_name in address_lower:
+            return country_code
+            
+    return None

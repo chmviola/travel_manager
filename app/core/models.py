@@ -62,8 +62,11 @@ class TripItem(models.Model):
     """
     TYPE_CHOICES = [
         ('FLIGHT', 'Voo'),
+        ('BUS', 'Ônibus'),
+        ('TRAIN', 'Trem'),
         ('HOTEL', 'Hospedagem'),
         ('ACTIVITY', 'Atração/Passeio'),
+        ('MUSEUM', 'Atração/Museu'),
         ('RENTAL', 'Aluguel de Carro'),
         ('RESTAURANT', 'Restaurante'),
         ('NOTE', 'Anotação'),
