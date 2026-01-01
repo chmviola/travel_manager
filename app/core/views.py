@@ -508,6 +508,28 @@ def trip_expense_create(request, trip_id):
 
 #--- VIEW PARA EDITAR VIAGEM ---
 @login_required
+def trip_update(request, pk):
+    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = TripForm(request.POST, instance=trip)
+        if form.is_valid():
+            form.save()
+            return redirect('trip_detail', pk=trip.id)
+    else:
+        form = TripForm(instance=trip)
+    return render(request, 'trips/trip_form.html', {'form': form, 'edit_mode': True})
+
+#--- VIEW PARA DELETAR VIAGEM ---
+@login_required
+def trip_delete(request, pk):
+    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    if request.method == 'POST':
+        trip.delete()
+        return redirect('trip_list')
+    return render(request, 'trips/trip_confirm_delete.html', {'trip': trip})
+
+# --- VIEWS PARA ITENS (TRIP ITEM) ---
+@login_required
 def trip_item_update(request, pk):
     item = get_object_or_404(TripItem, pk=pk)
     # Verifica permissão (dono ou colaborador editor)
@@ -555,36 +577,6 @@ def trip_item_update(request, pk):
         form = TripItemForm(instance=item, initial=initial_data)
 
     return render(request, 'trips/trip_item_form.html', {'form': form, 'trip': item.trip, 'title': 'Editar Item'})
-
-#--- VIEW PARA DELETAR VIAGEM ---
-@login_required
-def trip_delete(request, pk):
-    trip = get_object_or_404(Trip, pk=pk, user=request.user)
-    if request.method == 'POST':
-        trip.delete()
-        return redirect('trip_list')
-    return render(request, 'trips/trip_confirm_delete.html', {'trip': trip})
-
-# --- VIEWS PARA ITENS (TRIP ITEM) ---
-@login_required
-def trip_item_update(request, pk):
-    # Buscamos o item
-    item = get_object_or_404(TripItem, pk=pk, trip__user=request.user)
-
-    if request.method == 'POST':
-        form = TripItemForm(request.POST, instance=item)
-        if form.is_valid():
-            form.save()
-            return redirect('trip_detail', pk=item.trip.id)
-    else:
-        form = TripItemForm(instance=item)
-    
-    # IMPORTANTE: Passar 'trip': item.trip para o template
-    return render(request, 'trips/trip_item_form.html', {
-        'form': form,
-        'edit_mode': True,
-        'trip': item.trip
-        })
 
 @login_required
 def trip_item_delete(request, pk):
