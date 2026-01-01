@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone # Importante para saber o ano atual
 from collections import defaultdict     # <--- Essencial para os gráficos
-import json                             # <--- Essencial para os gráficos
+import json ast                           # <--- Essencial para os gráficos
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
@@ -566,57 +566,70 @@ def trip_delete(request, pk):
 # --- VIEWS PARA ITENS (TRIP ITEM) ---
 @login_required
 def trip_item_update(request, pk):
-    # 1. Busca o item e a viagem
     item = get_object_or_404(TripItem, pk=pk)
     trip = item.trip
     
-    # 2. Verifica permissão (Dono ou Editor)
-    # Nota: get_user_role deve estar funcionando no model Trip
+    # Verifica permissão
     if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
          messages.error(request, "Sem permissão para editar este item.")
          return redirect('trip_detail', pk=trip.id)
+
+    # --- FUNÇÃO AUXILIAR INTERNA PARA LIMPAR O JSON ---
+    def extract_notes_text(data):
+        """Extrai apenas o texto, removendo camadas de JSON/Dict"""
+        if data is None:
+            return ""
+        
+        # Se for dicionário, pega a chave 'notes'
+        if isinstance(data, dict):
+            return extract_notes_text(data.get('notes', ''))
+            
+        # Se for string, verifica se é um dicionário disfarçado
+        if isinstance(data, str):
+            data = data.strip()
+            if data.startswith("{") and "notes" in data:
+                try:
+                    # Tenta converter string em dict
+                    parsed = ast.literal_eval(data)
+                    # Chama recursivamente para limpar o resultado
+                    return extract_notes_text(parsed)
+                except:
+                    pass
+        return data # Retorna o texto puro
+    # --------------------------------------------------
 
     if request.method == 'POST':
         form = TripItemForm(request.POST, instance=item)
         if form.is_valid():
             updated_item = form.save(commit=False)
             
-            # --- LÓGICA DE LIMPEZA (POST) ---
-            # Pega o texto digitado pelo usuário
-            new_notes = form.cleaned_data.get('details', '')
+            # 1. Pega o que o usuário digitou
+            user_input = form.cleaned_data.get('details', '')
             
-            # Se por acaso o usuário colou um JSON ou o sistema falhou antes,
-            # tentamos extrair só o texto.
-            import ast
-            try:
-                # Se for string parecida com dict "{'notes': ...}"
-                if isinstance(new_notes, str) and new_notes.strip().startswith('{'):
-                    potential_dict = ast.literal_eval(new_notes)
-                    if isinstance(potential_dict, dict):
-                        new_notes = potential_dict.get('notes', new_notes)
-            except:
-                pass # Se der erro, assume que é texto normal
-
-            # Salva no formato JSON correto
-            updated_item.details = {'notes': new_notes}
-            # --------------------------------
+            # 2. Garante que pegamos só o texto limpo (caso haja sujeira)
+            clean_text = extract_notes_text(user_input)
+            
+            # 3. Salva no formato JSON correto
+            updated_item.details = {'notes': clean_text}
             
             updated_item.save()
             messages.success(request, "Item atualizado com sucesso.")
             return redirect('trip_detail', pk=trip.id)
             
     else:
-        # --- LÓGICA DE EXIBIÇÃO (GET) ---
-        # Aqui está o truque: Modificamos o objeto 'item' APENAS NA MEMÓRIA
-        # para que o formulário receba o texto limpo, não o JSON.
+        # --- PREPARAÇÃO PARA EXIBIÇÃO (GET) ---
         
-        # Fazemos uma cópia ou alteramos o atributo temporariamente
-        if item.details and isinstance(item.details, dict):
-            # Substituímos o dict pela string apenas para exibir no form
-            item.details = item.details.get('notes', '')
+        # Aqui fazemos a "mágica": Alteramos o objeto na memória
+        # para que o formulário receba apenas o texto "Almoço", 
+        # e não o JSON "{'notes': 'Almoço'}"
         
-        # Agora passamos o instance modificado. O form vai ler 'item.details' 
-        # que agora é uma string simples ("Almoço no lugar X").
+        # Guardamos o valor original caso precisemos (boa prática)
+        original_details = item.details
+        
+        # Substituímos pelo texto limpo
+        item.details = extract_notes_text(original_details)
+        
+        # Criamos o form com o objeto modificado na memória
         form = TripItemForm(instance=item)
 
     return render(request, 'trips/trip_item_form.html', {
