@@ -285,7 +285,10 @@ def generate_itinerary_ai(trip, interests):
 def generate_trip_insights_ai(trip_id):
     from .models import Trip
     trip = Trip.objects.get(pk=trip_id)
-    destination = trip.destination
+    
+    # --- CORREÇÃO AQUI ---
+    # Usamos o title pois o model Trip não tem campo destination
+    destination = trip.title 
     
     print(f"--- INICIANDO GERAÇÃO IA PARA: {destination} ---")
 
@@ -307,7 +310,7 @@ def generate_trip_insights_ai(trip_id):
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini", # Se der erro de modelo, troque para "gpt-3.5-turbo"
+            model="gpt-4o-mini", 
             messages=[
                 {"role": "system", "content": "You are a JSON generator. Output raw JSON only."},
                 {"role": "user", "content": prompt}
@@ -317,16 +320,13 @@ def generate_trip_insights_ai(trip_id):
         )
 
         content = response.choices[0].message.content
-        print(f"RESPOSTA BRUTA DA IA:\n{content}") # Veja isso no terminal se der erro
-
-        # --- LIMPEZA DE SEGURANÇA ---
-        # Às vezes a IA manda ```json no começo. Vamos remover.
+        
+        # Limpeza de segurança
         content = content.replace("```json", "").replace("```", "").strip()
 
         data = json.loads(content)
         
-        # --- PADRONIZAÇÃO DE CHAVES ---
-        # Garante que o dicionário final tenha as chaves certas, mesmo que a IA erre
+        # Padronização de chaves
         final_data = {
             'currency_tip': data.get('currency_tip') or data.get('currency', 'Não informado'),
             'electricity': data.get('electricity') or data.get('plug', 'Não informado'),
@@ -338,11 +338,9 @@ def generate_trip_insights_ai(trip_id):
 
         trip.ai_insights = final_data
         trip.save()
-        print("--- SUCESSO AO SALVAR NO BANCO ---")
         return True
 
     except Exception as e:
-        # ISSO VAI MOSTRAR O ERRO REAL NO SEU TERMINAL DOCKER
         print(f"\n\nERRO CRÍTICO NA IA: {e}\n\n")
         return False
 
