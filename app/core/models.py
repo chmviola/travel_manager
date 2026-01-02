@@ -64,11 +64,15 @@ class TripItem(models.Model):
         ('FLIGHT', 'Voo'),
         ('BUS', 'Ônibus'),
         ('TRAIN', 'Trem'),
+        ('CRUISE', 'Cruzeiro'),
         ('HOTEL', 'Hospedagem'),
         ('ACTIVITY', 'Atração/Passeio'),
+        ('WINARY', 'Atração/Vinícola'),
         ('MUSEUM', 'Atração/Museu'),
         ('RENTAL', 'Aluguel de Carro'),
         ('RESTAURANT', 'Restaurante'),
+        ('TRANSPORT', 'Transporte Local'),
+        ('BUYING', 'Compras'),
         ('NOTE', 'Anotação'),
     ]
 
