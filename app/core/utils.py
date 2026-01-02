@@ -18,11 +18,17 @@ def get_travel_intel(destination):
     client = OpenAI(api_key=api_key)
 
     prompt = f"""
-    Você é um guia de viagem especialista. Para o destino '{destination}', forneça um resumo JSON com:
-    - currency_tip: Dica sobre moeda e se deve dar gorjeta.
-    - plug_type: Tipo de tomada usada.
-    - safety_tip: Uma dica rápida de segurança.
-    - basic_phrases: Uma string com 3 frases essenciais na lingua local (Olá, Obrigado, Quanto custa).
+    Você é um guia de viagens especialista. Crie um resumo prático sobre {destination}.
+    Responda EXATAMENTE neste formato JSON, sem crases ou markdown:
+    {{
+        "currency": "Moeda oficial, cotação aproximada para USD e costumes de gorjeta.",
+        "electricity": "Voltagem (110v/220v) e tipo de tomada (A, B, C, etc).",
+        "phrases": "5 frases essenciais na língua local com tradução (Ex: Olá, Obrigado, Quanto custa).",
+        "safety": "Nível de segurança, golpes comuns para turistas e zonas a evitar.",
+        "food": "Cite 3 pratos ou bebidas típicas imperdíveis deste destino e o que são.",
+        "curiosity": "Uma curiosidade cultural única ou fato histórico interessante e pouco conhecido sobre o local."
+    }}
+    Seja direto e objetivo. Responda em Português do Brasil.
     """
 
     try:
@@ -276,41 +282,77 @@ def generate_itinerary_ai(trip, interests):
         return None
 
 #-- Função Adicional para Dicas de Viagem AI --#
-def generate_trip_insights_ai(destination):
-    """
-    Gera dicas culturais e práticas sobre o destino.
-    """
+def generate_trip_insights_ai(trip_id):
+    # Importamos os modelos aqui dentro para evitar "Circular Import"
+    from .models import Trip, APIConfiguration
+    
+    trip = Trip.objects.get(pk=trip_id)
+    destination = trip.title 
+    
+    print(f"--- INICIANDO GERAÇÃO IA PARA: {destination} ---")
+
+    # 1. BUSCAR A CHAVE NO BANCO DE DADOS (Correção do Erro)
     try:
-        config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
-        client = OpenAI(api_key=config.value)
+        config = APIConfiguration.objects.get(key='OPENAI_API')
+        openai_key = config.value
     except APIConfiguration.DoesNotExist:
-        return None
+        print("ERRO: A chave 'OPENAI_API' não foi encontrada no banco de dados.")
+        print("Vá em Configurações > Chaves de API e cadastre a chave.")
+        return False
 
     prompt = f"""
-    Estou viajando para: {destination}.
-    Gere um JSON com dicas práticas e curtas (máximo 1 frase longa cada).
-    Campos obrigatórios:
-    - "currency_tip": Sobre a moeda local e se deve dar gorjeta.
-    - "plug": Tipo de tomada (ex: Tipo G) e voltagem.
-    - "phrases": 3 frases essenciais na língua local (Olá, Obrigado, Quanto custa).
-    - "safety": Uma dica de segurança importante ou região a evitar.
-    - "curiosity": Uma curiosidade cultural rápida.
-
-    Responda em Português do Brasil.
-    Retorne APENAS o JSON.
+    Aja como um guia de viagens local experiente. Crie um guia curto sobre {destination}.
+    Responda APENAS um JSON válido seguindo estritamente este formato:
+    {{
+        "currency_tip": "Texto sobre moeda e gorjeta",
+        "electricity": "Texto sobre voltagem e tomadas",
+        "phrases": "5 frases úteis com tradução",
+        "safety": "Dicas de segurança",
+        "food": "3 pratos típicos imperdíveis",
+        "curiosity": "Uma curiosidade interessante"
+    }}
+    Não use markdown. Não use crases. Responda em Português.
     """
 
     try:
+        # 2. USAR A CHAVE DO BANCO
+        client = OpenAI(api_key=openai_key)
+        
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+            model="gpt-4o-mini", # Se der erro de modelo, troque para "gpt-3.5-turbo"
+            messages=[
+                {"role": "system", "content": "You are a JSON generator. Output raw JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+            response_format={"type": "json_object"} 
         )
+
         content = response.choices[0].message.content
-        return json.loads(content)
+        
+        # Limpeza de segurança (remove markdown se houver)
+        content = content.replace("```json", "").replace("```", "").strip()
+
+        data = json.loads(content)
+        
+        # Padronização de chaves
+        final_data = {
+            'currency_tip': data.get('currency_tip') or data.get('currency', 'Não informado'),
+            'electricity': data.get('electricity') or data.get('plug', 'Não informado'),
+            'phrases': data.get('phrases', 'Não informado'),
+            'safety': data.get('safety', 'Não informado'),
+            'food': data.get('food', 'Não informado'),
+            'curiosity': data.get('curiosity', 'Não informado')
+        }
+
+        trip.ai_insights = final_data
+        trip.save()
+        print("--- SUCESSO: DICAS GERADAS E SALVAS ---")
+        return True
+
     except Exception as e:
-        print(f"Erro OpenAI Insights: {e}")
-        return None
+        print(f"\n\nERRO CRÍTICO NA IA: {e}\n\n")
+        return False
 
 #-- Função Adicional para Extrair Código do País --#  
 def get_country_code_from_address(address):
