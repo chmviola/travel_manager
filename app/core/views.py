@@ -1,4 +1,5 @@
 from multiprocessing import context
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -403,16 +404,24 @@ def trip_detail(request, pk):
 
     # Calcula totais e converte gastos
     for expense in expenses:
+        # Se for BRL, já é Decimal do banco, só somamos
         if expense.currency == 'BRL':
-            expense.converted_value = expense.amount
+            expense.converted_value = expense.amount 
             total_converted_brl += expense.amount
         else:
-            # Se não tá no cache, busca
+            # Se for moeda estrangeira, calculamos e CONVERTEMOS para Decimal
             if expense.currency not in rates_cache:
                 rates_cache[expense.currency] = get_exchange_rate(expense.currency)
             
             rate = rates_cache[expense.currency]
-            expense.converted_value = round(float(expense.amount) * rate, 2)
+            
+            # Calculamos em float (multiplicação)
+            val_float = float(expense.amount) * rate
+            
+            # Arredondamos e convertemos de volta para Decimal antes de somar
+            # O str() ali no meio garante que a conversão seja limpa (sem dízimas estranhas)
+            expense.converted_value = Decimal(str(round(val_float, 2)))
+            
             total_converted_brl += expense.converted_value
 
     # 5. Cotações para Exibição (Baseado nos países visitados)
