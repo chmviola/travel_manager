@@ -283,14 +283,22 @@ def generate_itinerary_ai(trip, interests):
 
 #-- Função Adicional para Dicas de Viagem AI --#
 def generate_trip_insights_ai(trip_id):
-    from .models import Trip
-    trip = Trip.objects.get(pk=trip_id)
+    # Importamos os modelos aqui dentro para evitar "Circular Import"
+    from .models import Trip, APIConfiguration
     
-    # --- CORREÇÃO AQUI ---
-    # Usamos o title pois o model Trip não tem campo destination
+    trip = Trip.objects.get(pk=trip_id)
     destination = trip.title 
     
     print(f"--- INICIANDO GERAÇÃO IA PARA: {destination} ---")
+
+    # 1. BUSCAR A CHAVE NO BANCO DE DADOS (Correção do Erro)
+    try:
+        config = APIConfiguration.objects.get(key='OPENAI_API')
+        openai_key = config.value
+    except APIConfiguration.DoesNotExist:
+        print("ERRO: A chave 'OPENAI_API' não foi encontrada no banco de dados.")
+        print("Vá em Configurações > Chaves de API e cadastre a chave.")
+        return False
 
     prompt = f"""
     Aja como um guia de viagens local experiente. Crie um guia curto sobre {destination}.
@@ -307,10 +315,11 @@ def generate_trip_insights_ai(trip_id):
     """
 
     try:
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        # 2. USAR A CHAVE DO BANCO
+        client = OpenAI(api_key=openai_key)
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini", 
+            model="gpt-4o-mini", # Se der erro de modelo, troque para "gpt-3.5-turbo"
             messages=[
                 {"role": "system", "content": "You are a JSON generator. Output raw JSON only."},
                 {"role": "user", "content": prompt}
@@ -321,7 +330,7 @@ def generate_trip_insights_ai(trip_id):
 
         content = response.choices[0].message.content
         
-        # Limpeza de segurança
+        # Limpeza de segurança (remove markdown se houver)
         content = content.replace("```json", "").replace("```", "").strip()
 
         data = json.loads(content)
@@ -338,6 +347,7 @@ def generate_trip_insights_ai(trip_id):
 
         trip.ai_insights = final_data
         trip.save()
+        print("--- SUCESSO: DICAS GERADAS E SALVAS ---")
         return True
 
     except Exception as e:
