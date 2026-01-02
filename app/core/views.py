@@ -731,6 +731,7 @@ def attachment_delete(request, pk):
     attachment.delete()
     return redirect('trip_item_attachments', item_id=item_id)
 
+#--- VIEW PARA GERAR ITINERÁRIO USANDO IA ---
 @login_required
 def trip_generate_itinerary(request, trip_id):
     trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
@@ -777,20 +778,19 @@ def trip_generate_itinerary(request, trip_id):
             
     return redirect('trip_detail', pk=trip.id)
 
+#--- VIEW PARA GERAR DICAS DE VIAGEM USANDO IA ---
 @login_required
-def trip_generate_insights(request, pk):
-    trip = get_object_or_404(Trip, pk=pk)
+def trip_generate_insights(request, trip_id): # 
+    # Busca a viagem usando o trip_id recebido da URL
+    trip = get_object_or_404(Trip, pk=trip_id)
     
     # Verifica permissão
     if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
         messages.error(request, "Você não tem permissão para atualizar as dicas.")
-        return redirect('trip_detail', pk=pk)
+        # Redireciona usando pk=trip_id (pois a url de detalhe provavelmente espera pk)
+        return redirect('trip_detail', pk=trip_id)
 
-    # --- A CORREÇÃO ESTÁ AQUI ---
-    # Chamamos a função passando o ID.
-    # NÃO fazemos "trip.ai_insights = ..." pois a função já salva no banco internamente.
-    # NÃO fazemos "trip.save()" aqui, senão sobrescrevemos o trabalho da função.
-    
+    # Chama a função de IA passando o ID numérico
     success = generate_trip_insights_ai(trip.id)
 
     if success:
@@ -798,7 +798,7 @@ def trip_generate_insights(request, pk):
     else:
         messages.error(request, "Erro ao conectar com a IA. Verifique sua chave de API.")
 
-    return redirect('trip_detail', pk=pk)
+    return redirect('trip_detail', pk=trip_id)
 
 # --- VIEWS PARA FINANCIAL ---
 @login_required
