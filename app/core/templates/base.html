@@ -125,6 +125,13 @@
           </li>
 
           <li class="nav-item">
+            <a href="{% url 'email_settings' %}" class="nav-link {% if '/config/email/' in request.path %}active{% endif %}">
+              <i class="nav-icon fas fa-envelope"></i>
+              <p>Servidor de E-mail</p>
+            </a>
+          </li>
+
+          <li class="nav-item">
             <a href="{% url 'api_list' %}" class="nav-link">
               <i class="nav-icon fas fa-key"></i>
               <p>Cadastro API</p>
