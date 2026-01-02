@@ -293,30 +293,55 @@ def generate_trip_insights_ai(destination):
         return None
 
     prompt = f"""
-    Estou viajando para: {destination}.
-    Gere um JSON com dicas práticas e curtas (máximo 1 frase longa cada).
-    Campos obrigatórios:
-    - "currency_tip": Sobre a moeda local e se deve dar gorjeta.
-    - "plug": Tipo de tomada (ex: Tipo G) e voltagem.
-    - "phrases": 3 frases essenciais na língua local (Olá, Obrigado, Quanto custa).
-    - "safety": Uma dica de segurança importante ou região a evitar.
-    - "curiosity": Uma curiosidade cultural rápida.
-
-    Responda em Português do Brasil.
-    Retorne APENAS o JSON.
+    Você é um guia de viagens especialista. Crie um guia de bolso prático sobre {destination}.
+    Responda EXATAMENTE neste formato JSON válido, sem markdown, sem crases:
+    {{
+        "currency_tip": "Moeda oficial, cotação aprox (BRL/USD) e cultura de gorjeta.",
+        "electricity": "Voltagem (110v/220v) e tipo de tomada (A, B, C...).",
+        "phrases": "5 frases vitais na língua local com tradução.",
+        "safety": "Nível de segurança, golpes comuns e áreas a evitar.",
+        "food": "Cite 3 pratos ou bebidas típicas imperdíveis e o que são.",
+        "curiosity": "Uma curiosidade cultural única ou fato histórico interessante."
+    }}
+    Seja direto. Responda em Português do Brasil.
     """
 
     try:
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+            model="gpt-4o-mini", # Ou gpt-3.5-turbo
+            messages=[
+                {"role": "system", "content": "You are a helpful travel assistant. Output valid JSON only."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            response_format={"type": "json_object"} # Garante o JSON
         )
+
         content = response.choices[0].message.content
-        return json.loads(content)
+        import json
+        data = json.loads(content)
+        
+        # --- TRATAMENTO DE CHAVES (AQUI ESTAVA O PROBLEMA) ---
+        # Normalizamos as chaves para garantir que o Template as encontre
+        
+        # 1. Garante que 'electricity' exista. Se a IA mandou 'plug', corrigimos.
+        if 'plug' in data and 'electricity' not in data:
+            data['electricity'] = data['plug']
+            
+        # 2. Garante que 'currency_tip' exista. Se veio só 'currency', ajustamos.
+        if 'currency' in data and 'currency_tip' not in data:
+            data['currency_tip'] = data['currency']
+
+        # Salva no banco
+        trip.ai_insights = data
+        trip.save()
+        
+        return True
+
     except Exception as e:
-        print(f"Erro OpenAI Insights: {e}")
-        return None
+        print(f"Erro na IA: {e}")
+        return False
 
 #-- Função Adicional para Extrair Código do País --#  
 def get_country_code_from_address(address):
