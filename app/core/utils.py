@@ -283,7 +283,6 @@ def generate_itinerary_ai(trip, interests):
 
 #-- Função Adicional para Dicas de Viagem AI --#
 def generate_trip_insights_ai(trip_id):
-    # Importamos os modelos aqui dentro para evitar "Circular Import"
     from .models import Trip, APIConfiguration
     
     trip = Trip.objects.get(pk=trip_id)
@@ -291,35 +290,33 @@ def generate_trip_insights_ai(trip_id):
     
     print(f"--- INICIANDO GERAÇÃO IA PARA: {destination} ---")
 
-    # 1. BUSCAR A CHAVE NO BANCO DE DADOS (Correção do Erro)
+    # 1. Busca a chave
     try:
         config = APIConfiguration.objects.get(key='OPENAI_API')
         openai_key = config.value
     except APIConfiguration.DoesNotExist:
-        print("ERRO: A chave 'OPENAI_API' não foi encontrada no banco de dados.")
-        print("Vá em Configurações > Chaves de API e cadastre a chave.")
+        print("ERRO: Chave OPENAI_API não encontrada.")
         return False
 
     prompt = f"""
-    Aja como um guia de viagens local experiente. Crie um guia curto sobre {destination}.
-    Responda APENAS um JSON válido seguindo estritamente este formato:
+    Aja como um guia local. Crie um guia sobre {destination}.
+    Responda APENAS JSON válido:
     {{
         "currency_tip": "Texto sobre moeda e gorjeta",
         "electricity": "Texto sobre voltagem e tomadas",
-        "phrases": "5 frases úteis com tradução",
+        "phrases": "Lista de 5 frases úteis (ex: Olá, Obrigado) com tradução",
         "safety": "Dicas de segurança",
-        "food": "3 pratos típicos imperdíveis",
+        "food": "Lista de 3 pratos típicos imperdíveis com breve descrição",
         "curiosity": "Uma curiosidade interessante"
     }}
-    Não use markdown. Não use crases. Responda em Português.
+    Responda em Português. Sem markdown.
     """
 
     try:
-        # 2. USAR A CHAVE DO BANCO
         client = OpenAI(api_key=openai_key)
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini", # Se der erro de modelo, troque para "gpt-3.5-turbo"
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a JSON generator. Output raw JSON only."},
                 {"role": "user", "content": prompt}
@@ -329,29 +326,46 @@ def generate_trip_insights_ai(trip_id):
         )
 
         content = response.choices[0].message.content
-        
-        # Limpeza de segurança (remove markdown se houver)
         content = content.replace("```json", "").replace("```", "").strip()
-
         data = json.loads(content)
         
-        # Padronização de chaves
+        # --- FUNÇÃO DE LIMPEZA DE FORMATAÇÃO (NOVO) ---
+        def format_ai_response(value):
+            """Transforma listas ou dicionários em texto formatado com quebra de linha"""
+            if isinstance(value, list):
+                lines = []
+                for item in value:
+                    # Se o item for um dicionário (Ex: {'frase': 'Olá', 'trad': 'Hello'})
+                    if isinstance(item, dict):
+                        # Pega os valores do dicionário e junta com ": "
+                        parts = list(item.values())
+                        if len(parts) >= 2:
+                            lines.append(f"• {parts[0]}: {parts[1]}")
+                        elif len(parts) == 1:
+                            lines.append(f"• {parts[0]}")
+                    # Se for apenas texto na lista
+                    elif isinstance(item, str):
+                        lines.append(f"• {item}")
+                return "\n".join(lines)
+            return value
+        # ----------------------------------------------
+
+        # Monta o objeto final passando pela limpeza
         final_data = {
-            'currency_tip': data.get('currency_tip') or data.get('currency', 'Não informado'),
-            'electricity': data.get('electricity') or data.get('plug', 'Não informado'),
-            'phrases': data.get('phrases', 'Não informado'),
-            'safety': data.get('safety', 'Não informado'),
-            'food': data.get('food', 'Não informado'),
-            'curiosity': data.get('curiosity', 'Não informado')
+            'currency_tip': format_ai_response(data.get('currency_tip') or data.get('currency')),
+            'electricity': format_ai_response(data.get('electricity') or data.get('plug')),
+            'phrases': format_ai_response(data.get('phrases')), # AQUI ELE VAI ARRUMAR
+            'safety': format_ai_response(data.get('safety')),
+            'food': format_ai_response(data.get('food')),       # AQUI TAMBÉM
+            'curiosity': format_ai_response(data.get('curiosity'))
         }
 
         trip.ai_insights = final_data
         trip.save()
-        print("--- SUCESSO: DICAS GERADAS E SALVAS ---")
         return True
 
     except Exception as e:
-        print(f"\n\nERRO CRÍTICO NA IA: {e}\n\n")
+        print(f"ERRO CRÍTICO NA IA: {e}")
         return False
 
 #-- Função Adicional para Extrair Código do País --#  
