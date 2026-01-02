@@ -333,32 +333,55 @@ def trip_detail(request, pk):
     user_role = trip.get_user_role(request.user)
     can_edit = (user_role == 'owner' or user_role == 'editor')
 
-    # 2. Busca os Itens (ORDEM CORRIGIDA: Isso tem que vir antes dos loops)
-    items = trip.items.all().order_by('start_datetime')
+    # 1. Busca TODOS os itens apenas para extrair as datas disponíveis
+    all_items = trip.items.all().order_by('start_datetime')
+    available_dates = trip.items.dates('start_datetime', 'day')
 
-    # --- LIMPEZA DE DADOS PARA EXIBIÇÃO ---
+    # 2. Determina qual data exibir (Filtro)
+    selected_date_str = request.GET.get('date')
+    selected_date = None
+
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    # Se não tem data selecionada, pega a primeira disponível
+    if not selected_date and available_dates:
+        selected_date = available_dates[0]
+
+    # 3. Filtra os itens para a timeline e mapa (AQUI ESTAVA O ERRO, AGORA ESTÁ CERTO)
+    if selected_date:
+        items = all_items.filter(start_datetime__date=selected_date)
+    else:
+        items = all_items
+
+    # --- REMOVIDA A LINHA QUE SOBRESCREVIA 'items' COM TUDO DE NOVO ---
+
+    # 4. Processamento de Itens (Flags e Clima) - Aplica nos itens FILTRADOS
+    trip.flags = set() 
+    items_changed = False
+
+    # --- LIMPEZA DE DADOS PARA EXIBIÇÃO (Sua lógica original mantida) ---
     import ast
     for item in items:
-        # Lógica de Bandeira (Mantenha a sua existente)
+        # Lógica de Bandeira
         item.flag_code = get_country_code_from_address(item.location_address)
-        
-        # Lógica de Limpeza das Notas (NOVO)
+        if item.flag_code:
+            trip.flags.add(item.flag_code)
+
+        # Lógica de Limpeza das Notas
         if item.details:
             raw = item.details
-            
-            # Se for string, tenta converter pra dict
             if isinstance(raw, str):
                 try:
                     raw = ast.literal_eval(raw)
                 except:
-                    pass # É string pura
+                    pass
             
-            # Se agora é dict, tenta pegar 'notes'
             if isinstance(raw, dict):
                 notes = raw.get('notes', '')
-                
-                # VERIFICAÇÃO RECURSIVA (O problema do {'notes': "{'notes': ...}"})
-                # Se o conteúdo da nota PARECE outro dicionário, limpamos de novo
                 if isinstance(notes, str) and notes.strip().startswith("{'notes'"):
                     try:
                         inner = ast.literal_eval(notes)
@@ -366,25 +389,10 @@ def trip_detail(request, pk):
                             notes = inner.get('notes', notes)
                     except:
                         pass
-                
-                # Salva no objeto TEMPORÁRIO (memória) para o template ler certo
-                # O template lê item.details.notes. Vamos garantir que item.details seja um dict limpo
                 item.details = {'notes': notes}
-
-    # 3. Processamento de Itens (Flags e Clima)
-    trip.flags = set() # Inicializa o conjunto de bandeiras da viagem (cabeçalho)
-    items_changed = False # Flag para saber se precisamos salvar algo
-
-    for item in items:
-        # A. Detectar Bandeira (Usa a função do utils.py)
-        code = get_country_code_from_address(item.location_address)
-        item.flag_code = code # Para o ícone na timeline
-        if code:
-            trip.flags.add(code) # Para as bandeiras no topo da página
-
+        
         # B. Detectar Clima (Se tiver endereço, data e ainda não tiver clima)
         if item.location_address and item.start_datetime and not item.weather_temp:
-            # Tenta buscar na API
             temp, cond, icon = fetch_weather_data(item.location_address, item.start_datetime)
             if temp:
                 item.weather_temp = temp
@@ -393,53 +401,46 @@ def trip_detail(request, pk):
                 item.save()
                 items_changed = True
     
-    # Se atualizamos o clima de algum item, recarregamos a lista para garantir dados frescos
+    # Se atualizamos o clima, recarregamos MANTENDO O FILTRO DA DATA
     if items_changed:
-        items = trip.items.all().order_by('start_datetime')
+        if selected_date:
+            items = trip.items.filter(start_datetime__date=selected_date).order_by('start_datetime')
+        else:
+            items = trip.items.all().order_by('start_datetime')
 
-    # 4. Processamento Financeiro
+    # 5. Processamento Financeiro (Mantém global da viagem ou filtra? Geralmente financeiro é global)
+    # Aqui mantemos expenses global (trip.expenses) para o resumo financeiro mostrar o total da viagem
     expenses = trip.expenses.all()
     total_converted_brl = 0
-    rates_cache = {} # Cache local para não chamar a função get_exchange_rate repetidamente
+    rates_cache = {}
 
-    # Calcula totais e converte gastos
     for expense in expenses:
-        # Se for BRL, já é Decimal do banco, só somamos
         if expense.currency == 'BRL':
             expense.converted_value = expense.amount 
             total_converted_brl += expense.amount
         else:
-            # Se for moeda estrangeira, calculamos e CONVERTEMOS para Decimal
             if expense.currency not in rates_cache:
                 rates_cache[expense.currency] = get_exchange_rate(expense.currency)
             
             rate = rates_cache[expense.currency]
-            
-            # Calculamos em float (multiplicação)
             val_float = float(expense.amount) * rate
-            
-            # Arredondamos e convertemos de volta para Decimal antes de somar
-            # O str() ali no meio garante que a conversão seja limpa (sem dízimas estranhas)
             expense.converted_value = Decimal(str(round(val_float, 2)))
-            
             total_converted_brl += expense.converted_value
 
-    # 5. Cotações para Exibição (Baseado nos países visitados)
+    # 6. Cotações para Exibição (Baseado nos itens filtrados do dia)
     detected_currencies = set()
     for item in items:
         if item.location_address:
-            # Tenta descobrir a moeda do país
             currency_code = get_currency_by_country(item.location_address)
             if currency_code and currency_code != 'BRL':
                 detected_currencies.add(currency_code)
     
-    # Monta a lista de cotações para o rodapé do card financeiro
     trip_rates = []
     for currency in detected_currencies:
         rate = rates_cache.get(currency) or get_exchange_rate(currency)
         trip_rates.append({'code': currency, 'rate': rate})
 
-    # 6. Chave do Google Maps
+    # 7. Chave do Google Maps
     google_maps_api_key = ''
     try:
         config = APIConfiguration.objects.filter(key='GOOGLE_MAPS_API', is_active=True).first()
@@ -448,10 +449,11 @@ def trip_detail(request, pk):
     except Exception as e:
         print(f"Erro ao buscar API Key: {e}")
 
-    # 7. Contexto Final
     context = {
         'trip': trip,
         'items': items,
+        'available_dates': available_dates,
+        'selected_date': selected_date,
         'expenses': expenses,
         'can_edit': can_edit,
         'user_role': user_role,
