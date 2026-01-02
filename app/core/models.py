@@ -67,12 +67,14 @@ class TripItem(models.Model):
         ('CRUISE', 'Cruzeiro'),
         ('HOTEL', 'Hospedagem'),
         ('ACTIVITY', 'Atração/Passeio'),
+        ('TOUR', 'Tour Guiado'),
         ('WINARY', 'Atração/Vinícola'),
         ('MUSEUM', 'Atração/Museu'),
         ('RENTAL', 'Aluguel de Carro'),
         ('RESTAURANT', 'Restaurante'),
         ('TRANSPORT', 'Transporte Local'),
         ('BUYING', 'Compras'),
+        ('INSURANCE', 'Seguro Viagem'),
         ('NOTE', 'Anotação'),
     ]
 
