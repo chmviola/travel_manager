@@ -18,11 +18,17 @@ def get_travel_intel(destination):
     client = OpenAI(api_key=api_key)
 
     prompt = f"""
-    Você é um guia de viagem especialista. Para o destino '{destination}', forneça um resumo JSON com:
-    - currency_tip: Dica sobre moeda e se deve dar gorjeta.
-    - plug_type: Tipo de tomada usada.
-    - safety_tip: Uma dica rápida de segurança.
-    - basic_phrases: Uma string com 3 frases essenciais na lingua local (Olá, Obrigado, Quanto custa).
+    Você é um guia de viagens especialista. Crie um resumo prático sobre {destination}.
+    Responda EXATAMENTE neste formato JSON, sem crases ou markdown:
+    {{
+        "currency": "Moeda oficial, cotação aproximada para USD e costumes de gorjeta.",
+        "electricity": "Voltagem (110v/220v) e tipo de tomada (A, B, C, etc).",
+        "phrases": "5 frases essenciais na língua local com tradução (Ex: Olá, Obrigado, Quanto custa).",
+        "safety": "Nível de segurança, golpes comuns para turistas e zonas a evitar.",
+        "food": "Cite 3 pratos ou bebidas típicas imperdíveis deste destino e o que são.",
+        "curiosity": "Uma curiosidade cultural única ou fato histórico interessante e pouco conhecido sobre o local."
+    }}
+    Seja direto e objetivo. Responda em Português do Brasil.
     """
 
     try:

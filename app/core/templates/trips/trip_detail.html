@@ -343,7 +343,7 @@
         </div>
         </div>
 
-        <!-- Modal para Sugerir Dicas de Viagem IA -->
+        <!-- Sugerir Dicas de Viagem IA -->
         <div class="row">
             <div class="col-md-12">
                 <div class="card card-purple card-outline">
@@ -367,8 +367,9 @@
                     
                     <div class="card-body p-0">
                         {% if trip.ai_insights %}
+                        
                         <div class="row">
-                            <div class="col-md-3 col-sm-6 border-right">
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
                                 <div class="description-block">
                                     <h5 class="description-header text-success"><i class="fas fa-coins fa-2x mb-2"></i></h5>
                                     <span class="description-text">MOEDA & GORJETA</span>
@@ -376,33 +377,45 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-3 col-sm-6 border-right">
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
                                 <div class="description-block">
                                     <h5 class="description-header text-info"><i class="fas fa-plug fa-2x mb-2"></i></h5>
                                     <span class="description-text">ELETRICIDADE</span>
-                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.plug }}</p>
-                                </div>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.electricity }}</p> 
+                                    </div>
                             </div>
                             
-                            <div class="col-md-3 col-sm-6 border-right">
+                            <div class="col-md-4 col-sm-12 border-bottom">
                                 <div class="description-block">
                                     <h5 class="description-header text-warning"><i class="fas fa-language fa-2x mb-2"></i></h5>
                                     <span class="description-text">FRASES ÚTEIS</span>
                                     <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.phrases }}</p>
                                 </div>
                             </div>
-                            
-                            <div class="col-md-3 col-sm-6">
-                                <div class="description-block">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 border-right">
+                                <div class="description-block mt-3">
                                     <h5 class="description-header text-danger"><i class="fas fa-user-shield fa-2x mb-2"></i></h5>
                                     <span class="description-text">SEGURANÇA</span>
                                     <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.safety }}</p>
                                 </div>
                             </div>
+
+                            <div class="col-md-6 col-sm-6">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-orange"><i class="fas fa-utensils fa-2x mb-2"></i></h5>
+                                    <span class="description-text">GASTRONOMIA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.food|default:"Atualize as dicas para ver a gastronomia."|linebreaksbr }}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bg-light p-3 text-center text-muted font-italic">
+
+                        <div class="bg-light p-3 text-center text-muted font-italic border-top">
                             <i class="fas fa-info-circle mr-1"></i> {{ trip.ai_insights.curiosity }}
                         </div>
+
                         {% else %}
                         <div class="text-center p-5">
                             <p class="text-muted">Nenhuma dica gerada para este destino ainda.</p>
@@ -417,7 +430,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
