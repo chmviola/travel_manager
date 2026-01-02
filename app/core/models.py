@@ -268,3 +268,28 @@ class TripPhoto(models.Model):
             if os.path.isfile(self.image.path):
                 os.remove(self.image.path)
         super().delete(*args, **kwargs)
+
+# --- MODELO DE CONFIGURAÇÕES DE E-MAIL ---
+class EmailConfiguration(models.Model):
+    backend = models.CharField(max_length=100, default='django.core.mail.backends.smtp.EmailBackend', verbose_name="Backend")
+    host = models.CharField(max_length=255, verbose_name="Servidor SMTP (Host)")
+    port = models.IntegerField(default=587, verbose_name="Porta")
+    username = models.CharField(max_length=255, verbose_name="Usuário/E-mail", blank=True, null=True)
+    password = models.CharField(max_length=255, verbose_name="Senha", blank=True, null=True)
+    use_tls = models.BooleanField(default=True, verbose_name="Usar TLS")
+    use_ssl = models.BooleanField(default=False, verbose_name="Usar SSL")
+    default_from_email = models.EmailField(verbose_name="E-mail de Envio (Remetente)")
+
+    class Meta:
+        verbose_name = "Configuração de E-mail"
+        verbose_name_plural = "Configuração de E-mail"
+
+    def __str__(self):
+        return f"SMTP: {self.host}:{self.port}"
+
+    # Método para garantir que só exista 1 configuração no banco (Singleton)
+    def save(self, *args, **kwargs):
+        if not self.pk and EmailConfiguration.objects.exists():
+            # Se já existe, atualiza o primeiro em vez de criar novo
+            self.pk = EmailConfiguration.objects.first().pk
+        super().save(*args, **kwargs)
