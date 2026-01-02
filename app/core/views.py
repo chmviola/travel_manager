@@ -333,8 +333,41 @@ def trip_detail(request, pk):
     user_role = trip.get_user_role(request.user)
     can_edit = (user_role == 'owner' or user_role == 'editor')
 
-    # 2. Busca os Itens (ORDEM CORRIGIDA: Isso tem que vir antes dos loops)
+    # 1. Busca TODOS os itens para extrair as datas disponíveis
+    all_items = trip.items.all().order_by('start_datetime')
+
+    # Extrai as datas únicas (dia/mês/ano) onde existem itens
+    # O método .dates() do Django retorna objetos datetime.date únicos e ordenados
+    available_dates = trip.items.dates('start_datetime', 'day')
+
+    # 2. Determina qual data exibir (Filtro)
+    selected_date_str = request.GET.get('date')
+    selected_date = None
+
+    if selected_date_str:
+        try:
+            # Tenta converter a string da URL (YYYY-MM-DD) para objeto data
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    # Se não tem data selecionada (ou inválida), pega a primeira data disponível
+    if not selected_date and available_dates:
+        selected_date = available_dates[0]
+
+    # 3. Filtra os itens para a timeline e mapa (Só os do dia selecionado)
+    if selected_date:
+        items = all_items.filter(start_datetime__date=selected_date)
+    else:
+        # Se não tiver datas (viagem vazia), retorna vazio ou tudo
+        items = all_items
+
+    # 4. Busca os Itens (ORDEM CORRIGIDA: Isso tem que vir antes dos loops)
     items = trip.items.all().order_by('start_datetime')
+
+    # 4. Processamento de Itens (Flags e Clima) - Aplica nos itens FILTRADOS
+    trip.flags = set() 
+    items_changed = False
 
     # --- LIMPEZA DE DADOS PARA EXIBIÇÃO ---
     import ast
@@ -452,6 +485,8 @@ def trip_detail(request, pk):
     context = {
         'trip': trip,
         'items': items,
+        'available_dates': available_dates, # NOVA VARIÁVEL PARA OS BOTÕES
+        'selected_date': selected_date,     # PARA SABER QUAL BOTÃO ATIVAR
         'expenses': expenses,
         'can_edit': can_edit,
         'user_role': user_role,

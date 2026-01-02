@@ -25,6 +25,7 @@
     
     <div class="col-md-6">
         
+        <!-- AÇÕES DO ROTEIRO -->
         <div class="mb-3 d-flex align-items-center flex-wrap">
             {% if can_edit %}
             <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm mr-2 mb-2">
@@ -56,6 +57,33 @@
             </a>
         </div>
 
+        <!-- FILTRO DE DATAS -->
+        {% if available_dates %}
+        <div class="mb-3 d-flex flex-wrap align-items-center">
+            <span class="text-muted mr-2 text-sm"><i class="far fa-calendar-alt"></i> Dias:</span>
+            
+            {% for date_opt in available_dates %}
+                <a href="?date={{ date_opt|date:'Y-m-d' }}" 
+                   class="btn btn-sm mb-1 mr-1 shadow-sm 
+                   {% if date_opt == selected_date %}
+                       bg-gradient-primary border-primary font-weight-bold
+                   {% else %}
+                       btn-default text-muted
+                   {% endif %}"
+                   style="min-width: 80px;">
+                   
+                   {{ date_opt|date:"d/M" }}
+                   
+                   <small class="d-block" style="font-size: 0.7em; margin-top: -3px;">
+                       {{ date_opt|date:"D" }}
+                   </small>
+                </a>
+            {% endfor %}
+            
+            </div>
+        {% endif %}
+
+        <!-- TIMELINE DOS ITENS -->
         <div class="timeline">
             
             {% if items %}
