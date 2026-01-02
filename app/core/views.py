@@ -1,5 +1,6 @@
 from multiprocessing import context
 from decimal import Decimal
+from django.core.mail import send_mail, get_connection
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -10,9 +11,9 @@ import ast
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
-from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto
+from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm, EmailConfigurationForm
 from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -1264,7 +1265,6 @@ def trip_photo_delete(request, photo_id):
     messages.success(request, "Foto removida.")
     return redirect('trip_gallery', trip_id=trip.id)
 
-
 # --- VERIFICAÇÃO DE SEGURANÇA ---
 def is_admin(user):
     # Retorna True se for Superuser (root) OU se pertencer ao grupo 'admin'
@@ -1311,3 +1311,54 @@ def user_delete(request, pk):
     
     user_obj.delete()
     return redirect('user_list')
+
+# --- VIEW DE CONFIGURAÇÃO DE E-MAIL (SOMENTE ADMIN) ---
+@login_required
+@user_passes_test(is_admin)
+def email_settings_view(request):
+    # Tenta pegar a configuração existente ou cria uma vazia
+    config = EmailConfiguration.objects.first()
+    
+    if request.method == 'POST':
+        # Verifica se é uma ação de salvar ou de testar
+        action = request.POST.get('action')
+        
+        form = EmailConfigurationForm(request.POST, instance=config)
+        
+        if form.is_valid():
+            config_instance = form.save()
+            
+            if action == 'test':
+                # --- LÓGICA DE TESTE DE ENVIO ---
+                try:
+                    # Cria a conexão manualmente usando os dados salvos
+                    connection = get_connection(
+                        host=config_instance.host,
+                        port=config_instance.port,
+                        username=config_instance.username,
+                        password=config_instance.password,
+                        use_tls=config_instance.use_tls,
+                        use_ssl=config_instance.use_ssl
+                    )
+                    
+                    # Tenta enviar um e-mail simples
+                    send_mail(
+                        subject='Teste de Configuração - TravelManager',
+                        message='Se você recebeu este e-mail, a configuração SMTP está funcionando corretamente!',
+                        from_email=config_instance.default_from_email,
+                        recipient_list=[request.user.email],
+                        connection=connection,
+                        fail_silently=False,
+                    )
+                    messages.success(request, f"Configurações salvas e e-mail de teste enviado para {request.user.email}!")
+                except Exception as e:
+                    messages.error(request, f"Configuração salva, mas o teste falhou: {str(e)}")
+            else:
+                messages.success(request, "Configurações de e-mail salvas com sucesso.")
+            
+            return redirect('email_settings')
+    else:
+        form = EmailConfigurationForm(instance=config)
+
+    return render(request, 'config/email_settings.html', {'form': form, 'title': 'Configuração de E-mail'})
+

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto
+from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto, EmailConfiguration
 import re  # <--- Importante para validação regex
 
 #--- FORMULÁRIOS PERSONALIZADOS COM BOOTSTRAP E VALIDAÇÕES ESPECÍFICAS ---
@@ -351,3 +351,27 @@ class TripPhotoForm(forms.ModelForm):
             'caption': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Legenda (opcional)'})
         }
 
+#-- Formulário para Configuração de E-mail ---
+class EmailConfigurationForm(forms.ModelForm):
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Deixe em branco para não alterar'}),
+        required=False,
+        label="Senha"
+    )
+
+    class Meta:
+        model = EmailConfiguration
+        fields = ['host', 'port', 'username', 'password', 'use_tls', 'use_ssl', 'default_from_email']
+        widgets = {
+            'host': forms.TextInput(attrs={'class': 'form-control'}),
+            'port': forms.NumberInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'default_from_email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+    # Tratamento para não apagar a senha se o usuário deixar em branco na edição
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if not password and self.instance.pk:
+            return self.instance.password
+        return password

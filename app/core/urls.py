@@ -56,6 +56,9 @@ urlpatterns = [
     path('config/apis/new/', views.config_api_handle, name='config_api_create'), # Rota para criar
     path('config/apis/<int:pk>/edit/', views.config_api_handle, name='config_api_edit'), # Rota para editar
     path('config/apis/<int:pk>/delete/', views.config_api_delete, name='config_api_delete'),
+    
+    # Rota de Configuração de E-mail
+    path('config/email/', views.email_settings_view, name='email_settings'),
 
     # CHECKLIST
     path('trips/<int:trip_id>/checklist/', views.checklist_view, name='checklist_view'),
