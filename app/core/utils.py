@@ -282,65 +282,68 @@ def generate_itinerary_ai(trip, interests):
         return None
 
 #-- Função Adicional para Dicas de Viagem AI --#
-def generate_trip_insights_ai(destination):
-    """
-    Gera dicas culturais e práticas sobre o destino.
-    """
-    try:
-        config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
-        client = OpenAI(api_key=config.value)
-    except APIConfiguration.DoesNotExist:
-        return None
+def generate_trip_insights_ai(trip_id):
+    from .models import Trip
+    trip = Trip.objects.get(pk=trip_id)
+    destination = trip.destination
+    
+    print(f"--- INICIANDO GERAÇÃO IA PARA: {destination} ---")
 
     prompt = f"""
-    Você é um guia de viagens especialista. Crie um guia de bolso prático sobre {destination}.
-    Responda EXATAMENTE neste formato JSON válido, sem markdown, sem crases:
+    Aja como um guia de viagens local experiente. Crie um guia curto sobre {destination}.
+    Responda APENAS um JSON válido seguindo estritamente este formato:
     {{
-        "currency_tip": "Moeda oficial, cotação aprox (BRL/USD) e cultura de gorjeta.",
-        "electricity": "Voltagem (110v/220v) e tipo de tomada (A, B, C...).",
-        "phrases": "5 frases vitais na língua local com tradução.",
-        "safety": "Nível de segurança, golpes comuns e áreas a evitar.",
-        "food": "Cite 3 pratos ou bebidas típicas imperdíveis e o que são.",
-        "curiosity": "Uma curiosidade cultural única ou fato histórico interessante."
+        "currency_tip": "Texto sobre moeda e gorjeta",
+        "electricity": "Texto sobre voltagem e tomadas",
+        "phrases": "5 frases úteis com tradução",
+        "safety": "Dicas de segurança",
+        "food": "3 pratos típicos imperdíveis",
+        "curiosity": "Uma curiosidade interessante"
     }}
-    Seja direto. Responda em Português do Brasil.
+    Não use markdown. Não use crases. Responda em Português.
     """
 
     try:
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        
         response = client.chat.completions.create(
-            model="gpt-4o-mini", # Ou gpt-3.5-turbo
+            model="gpt-4o-mini", # Se der erro de modelo, troque para "gpt-3.5-turbo"
             messages=[
-                {"role": "system", "content": "You are a helpful travel assistant. Output valid JSON only."},
+                {"role": "system", "content": "You are a JSON generator. Output raw JSON only."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
-            response_format={"type": "json_object"} # Garante o JSON
+            temperature=0.5,
+            response_format={"type": "json_object"} 
         )
 
         content = response.choices[0].message.content
-        import json
+        print(f"RESPOSTA BRUTA DA IA:\n{content}") # Veja isso no terminal se der erro
+
+        # --- LIMPEZA DE SEGURANÇA ---
+        # Às vezes a IA manda ```json no começo. Vamos remover.
+        content = content.replace("```json", "").replace("```", "").strip()
+
         data = json.loads(content)
         
-        # --- TRATAMENTO DE CHAVES (AQUI ESTAVA O PROBLEMA) ---
-        # Normalizamos as chaves para garantir que o Template as encontre
-        
-        # 1. Garante que 'electricity' exista. Se a IA mandou 'plug', corrigimos.
-        if 'plug' in data and 'electricity' not in data:
-            data['electricity'] = data['plug']
-            
-        # 2. Garante que 'currency_tip' exista. Se veio só 'currency', ajustamos.
-        if 'currency' in data and 'currency_tip' not in data:
-            data['currency_tip'] = data['currency']
+        # --- PADRONIZAÇÃO DE CHAVES ---
+        # Garante que o dicionário final tenha as chaves certas, mesmo que a IA erre
+        final_data = {
+            'currency_tip': data.get('currency_tip') or data.get('currency', 'Não informado'),
+            'electricity': data.get('electricity') or data.get('plug', 'Não informado'),
+            'phrases': data.get('phrases', 'Não informado'),
+            'safety': data.get('safety', 'Não informado'),
+            'food': data.get('food', 'Não informado'),
+            'curiosity': data.get('curiosity', 'Não informado')
+        }
 
-        # Salva no banco
-        trip.ai_insights = data
+        trip.ai_insights = final_data
         trip.save()
-        
+        print("--- SUCESSO AO SALVAR NO BANCO ---")
         return True
 
     except Exception as e:
-        print(f"Erro na IA: {e}")
+        # ISSO VAI MOSTRAR O ERRO REAL NO SEU TERMINAL DOCKER
+        print(f"\n\nERRO CRÍTICO NA IA: {e}\n\n")
         return False
 
 #-- Função Adicional para Extrair Código do País --#  
