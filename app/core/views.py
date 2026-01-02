@@ -783,7 +783,7 @@ def trip_generate_insights(request, trip_id):
     
     # Chama a IA usando o título da viagem como destino
     # (Pode melhorar usando trip.location se tiver esse campo específico)
-    insights = generate_trip_insights_ai(trip.title)
+    insights = generate_trip_insights_ai(trip.id)
     
     if insights:
         trip.ai_insights = insights
