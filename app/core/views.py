@@ -778,21 +778,27 @@ def trip_generate_itinerary(request, trip_id):
     return redirect('trip_detail', pk=trip.id)
 
 @login_required
-def trip_generate_insights(request, trip_id):
-    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+def trip_generate_insights(request, pk):
+    trip = get_object_or_404(Trip, pk=pk)
     
-    # Chama a IA usando o título da viagem como destino
-    # (Pode melhorar usando trip.location se tiver esse campo específico)
-    insights = generate_trip_insights_ai(trip.id)
+    # Verifica permissão
+    if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
+        messages.error(request, "Você não tem permissão para atualizar as dicas.")
+        return redirect('trip_detail', pk=pk)
+
+    # --- A CORREÇÃO ESTÁ AQUI ---
+    # Chamamos a função passando o ID.
+    # NÃO fazemos "trip.ai_insights = ..." pois a função já salva no banco internamente.
+    # NÃO fazemos "trip.save()" aqui, senão sobrescrevemos o trabalho da função.
     
-    if insights:
-        trip.ai_insights = insights
-        trip.save()
-        messages.success(request, "Dicas de viagem geradas com sucesso!")
+    success = generate_trip_insights_ai(trip.id)
+
+    if success:
+        messages.success(request, "Guia de Bolso (IA) atualizado com sucesso!")
     else:
-        messages.error(request, "Não foi possível gerar as dicas no momento.")
-        
-    return redirect('trip_detail', pk=trip.id)
+        messages.error(request, "Erro ao conectar com a IA. Verifique sua chave de API.")
+
+    return redirect('trip_detail', pk=pk)
 
 # --- VIEWS PARA FINANCIAL ---
 @login_required
