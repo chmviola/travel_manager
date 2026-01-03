@@ -3,6 +3,21 @@
 {% block page_title %} Logs de Acesso do Sistema {% endblock %}
 
 {% block content %}
+
+{% if target_user %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info alert-dismissible">
+            <h5><i class="icon fas fa-filter"></i> Filtrando por: <b>{{ target_user.get_full_name|default:target_user.username }}</b></h5>
+            Você está visualizando apenas os registros deste usuário.
+            <a href="{% url 'access_logs' %}" class="btn btn-outline-light btn-sm ml-3" style="text-decoration: none;">
+                <i class="fas fa-times"></i> Limpar Filtro (Ver Todos)
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row">
     <div class="col-12">
         <div class="card card-dark">

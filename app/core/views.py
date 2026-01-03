@@ -1372,6 +1372,29 @@ def email_settings_view(request):
 @login_required
 @user_passes_test(is_admin)
 def access_logs_view(request):
-    # Pega os últimos 200 registros para não pesar a página
-    logs = AccessLog.objects.all()[:200]
-    return render(request, 'config/access_logs.html', {'logs': logs})
+    logs = AccessLog.objects.all()
+    
+    # --- FILTRO POR USUÁRIO (NOVO) ---
+    target_user_id = request.GET.get('user_id')
+    target_user = None
+
+    if target_user_id:
+        try:
+            # Filtra os logs apenas daquele ID
+            logs = logs.filter(user_id=target_user_id)
+            # Busca o objeto User só para mostrar o nome na tela (opcional)
+            from django.contrib.auth.models import User
+            target_user = User.objects.get(pk=target_user_id)
+        except Exception:
+            pass # Se o ID for inválido, ignora e mostra tudo
+            
+    # Pega os últimos 200 registros (após filtrar)
+    logs = logs[:200]
+    
+    context = {
+        'logs': logs,
+        'target_user': target_user # Enviamos para o template saber que está filtrado
+    }
+    
+    return render(request, 'config/access_logs.html', context)
+

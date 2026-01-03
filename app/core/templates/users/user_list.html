@@ -50,6 +50,11 @@
                         {% endif %}
                     </td>
                     <td class="text-right">
+
+                        <a href="{% url 'access_logs' %}?user_id={{ u.id }}" class="btn btn-secondary btn-sm" title="Ver Logs de Acesso">
+                            <i class="fas fa-search"></i>
+                        </a>
+                        
                         <a href="{% url 'user_update' u.id %}" class="btn btn-info btn-sm">
                             <i class="fas fa-pencil-alt"></i>
                         </a>
