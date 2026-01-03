@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block page_title %} Logs de Acesso do Sistema {% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card card-dark">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-history mr-1"></i> Auditoria de Login/Logout</h3>
+                <div class="card-tools">
+                    <span class="badge badge-light">Últimos 200 registros</span>
+                </div>
+            </div>
+            
+            <div class="card-body table-responsive p-0">
+                <table class="table table-hover text-nowrap table-striped">
+                    <thead>
+                        <tr>
+                            <th>Data / Hora</th>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td>
+                                {% if log.user %}
+                                    <span class="font-weight-bold">{{ log.user.get_full_name|default:log.user.username }}</span>
+                                    <small class="d-block text-muted">{{ log.user.email }}</small>
+                                {% else %}
+                                    <span class="text-muted">Usuário excluído</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.action == 'LOGIN' %}
+                                    <span class="badge badge-success"><i class="fas fa-sign-in-alt"></i> LOGIN</span>
+                                {% else %}
+                                    <span class="badge badge-danger"><i class="fas fa-sign-out-alt"></i> LOGOUT</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted font-monospace">{{ log.ip_address|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center p-4 text-muted">Nenhum registro de acesso encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
