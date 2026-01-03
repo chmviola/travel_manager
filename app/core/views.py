@@ -11,7 +11,7 @@ import ast
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
-from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration
+from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration, AccessLog
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm, EmailConfigurationForm
 from django.db.models import Sum, Q
@@ -1368,3 +1368,10 @@ def email_settings_view(request):
 
     return render(request, 'config/email_settings.html', {'form': form, 'title': 'Configuração de E-mail'})
 
+# --- VIEW DE LOGS DE ACESSO (SOMENTE ADMIN) ---
+@login_required
+@user_passes_test(is_admin)
+def access_logs_view(request):
+    # Pega os últimos 200 registros para não pesar a página
+    logs = AccessLog.objects.all()[:200]
+    return render(request, 'config/access_logs.html', {'logs': logs})

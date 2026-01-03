@@ -60,6 +60,9 @@ urlpatterns = [
     # Rota de Configuração de E-mail
     path('config/email/', views.email_settings_view, name='email_settings'),
 
+    # Rota de Logs de Acesso
+    path('config/logs/', views.access_logs_view, name='access_logs'),
+
     # CHECKLIST
     path('trips/<int:trip_id>/checklist/', views.checklist_view, name='checklist_view'),
     path('trips/<int:trip_id>/checklist/generate/', views.checklist_generate, name='checklist_generate'),

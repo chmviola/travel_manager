@@ -293,3 +293,19 @@ class EmailConfiguration(models.Model):
             # Se já existe, atualiza o primeiro em vez de criar novo
             self.pk = EmailConfiguration.objects.first().pk
         super().save(*args, **kwargs)
+
+# --- MODELO DE LOGS DE ACESSO (AUDITORIA) ---
+class AccessLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name="Usuário")
+    session_key = models.CharField(max_length=100, null=True, blank=True) # Para rastrear a sessão
+    action = models.CharField(max_length=20, choices=[('LOGIN', 'Login'), ('LOGOUT', 'Logout')])
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="Endereço IP")
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Data/Hora")
+
+    class Meta:
+        ordering = ['-timestamp'] # Mais recentes primeiro
+        verbose_name = "Log de Acesso"
+        verbose_name_plural = "Logs de Acesso"
+
+    def __str__(self):
+        return f"{self.user} - {self.action} - {self.timestamp}"
