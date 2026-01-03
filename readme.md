@@ -2,9 +2,9 @@
   <img src="app/core/static/img/logo.png" alt="Logo do App" width="200">
 </p>
 
-# TravelManager v0.079
+# TravelManager v0.093
 
-**TravelManager** é uma aplicação web robusta e inteligente desenvolvida para o gerenciamento completo de viagens pessoais e em grupo. Além de controlar despesas e itinerários, o sistema utiliza **Inteligência Artificial (OpenAI)** para atuar como um agente de viagens pessoal e agora permite **Colaboração em Tempo Real** e **Gestão de Memórias Fotográficas**.
+**TravelManager** é uma aplicação web robusta e inteligente desenvolvida para o gerenciamento completo de viagens pessoais e em grupo. Além de controlar despesas e itinerários, o sistema utiliza **Inteligência Artificial (OpenAI)** para atuar como um agente de viagens pessoal e agora conta com **Auditoria de Segurança**, **Configuração Dinâmica de E-mail** e uma **Timeline Otimizada**.
 
 ---
 
@@ -23,25 +23,30 @@
 
 ## 📖 Sobre o Projeto
 
-O **TravelManager** centraliza todas as informações de uma viagem. Com uma interface baseada no AdminLTE agora **totalmente responsiva (Mobile First)**, ele permite criar timelines detalhadas, visualizar gastos com conversão automática, armazenar documentos e fotos, e compartilhar roteiros com amigos e familiares com níveis de permissão distintos.
+O **TravelManager** centraliza todas as informações de uma viagem. Com uma interface baseada no AdminLTE agora **totalmente responsiva (Mobile First)**, ele permite criar timelines detalhadas dia a dia, visualizar gastos com conversão automática, armazenar documentos e fotos, e compartilhar roteiros com amigos e familiares com níveis de permissão distintos.
 
 ---
 
 ## 🚀 Funcionalidades
 
 ### 🌍 Gestão de Roteiros
-* **Timeline Interativa:** Visualização cronológica com ícones intuitivos (Voo, Hotel, Trem, Ônibus, Restaurante).
-* **Identificação Visual:** Detecção automática de bandeiras dos países e previsão do tempo integrada na timeline.
-* **Mapas Dinâmicos:** Integração com Google Maps para visualizar trajetos e locais específicos.
+* **Timeline "Dia a Dia" (NOVO):** Navegação otimizada por abas de datas. Carrega no mapa e na lista apenas os itens do dia selecionado, evitando poluição visual em viagens longas.
+* **Identificação Visual:** Detecção automática de bandeiras dos países e previsão do tempo integrada.
+* **Mapas Dinâmicos:** Integração com Google Maps para visualizar trajetos e locais específicos do dia.
 
-### 👥 Colaboração e Compartilhamento (NOVO)
-* **Convite de Usuários:** Compartilhe viagens com outros usuários cadastrados via e-mail.
+### 🛡️ Administração & Segurança (NOVO)
+* **Logs de Acesso:** Sistema de auditoria que registra todos os Logins e Logouts, capturando IP e data.
+* **Filtros de Auditoria:** Ferramenta de busca nos logs para inspecionar o histórico de acesso de um usuário específico.
+* **Configuração de E-mail (SMTP):** Interface visual para configurar o servidor de envio de e-mails (Host, Porta, Usuário, Senha, TLS/SSL) sem necessidade de alterar arquivos de código.
+
+### 👥 Colaboração e Compartilhamento
+* **Convite de Usuários:** Compartilhe viagens com outros usuários cadastrados.
 * **Permissões Granulares:**
     * **Leitor:** Apenas visualiza o roteiro e fotos.
     * **Editor:** Pode adicionar itens, editar gastos e subir fotos.
     * **Dono:** Controle total e gestão de acessos.
 
-### 📸 Galeria de Fotos (NOVO)
+### 📸 Galeria de Fotos
 * **Upload Múltiplo:** Carregamento em massa de fotos da viagem.
 * **Visualização Polaroid:** Grid responsivo com legendas e visualização em lightbox (modal).
 
@@ -59,11 +64,11 @@ O **TravelManager** centraliza todas as informações de uma viagem. Com uma int
 
 O sistema utiliza a API da OpenAI (GPT-4o-mini) para recursos avançados:
 
-1.  **Planejador Automático:** Cria roteiros dia-a-dia baseados no destino, duração e interesses do usuário, respeitando a lógica de dias da viagem.
-2.  **Guia de Bolso:** Gera dicas culturais, frases úteis, voltagem de tomadas e etiqueta de gorjetas para o destino.
+1.  **Planejador Automático:** Cria roteiros baseados no destino, duração e interesses.
+2.  **Guia de Bolso Aprimorado:** Gera dicas culturais, frases úteis, voltagem, gorjetas e agora inclui **Gastronomia Típica** (pratos imperdíveis do local).
 3.  **Checklist Inteligente:** Sugere o que levar na mala baseado no clima e tipo de viagem.
 
-![Screenshot do Logo](app/core/static/img/infografico4.png)
+![Screenshot do Infográfico](app/core/static/img/infografico5.png)
 
 ---
 
@@ -96,16 +101,15 @@ O sistema utiliza a API da OpenAI (GPT-4o-mini) para recursos avançados:
 │   │   ├── forms.py
 │   │   ├── __init__.py
 │   │   ├── models.py
+│   │   ├── signals.py                <-- NOVO (Lógica de Logs)
 │   │   ├── static
 │   │   │   └── img
-│   │   │       ├── infografico1.png
-│   │   │       ├── infografico2.png
-│   │   │       ├── infografico3.png
-│   │   │       ├── logo-orinial.jpg
-│   │   │       └── logo.png
+│   │   │       ├── ...
 │   │   ├── templates
 │   │   │   ├── base.html
 │   │   │   ├── config
+│   │   │   │   ├── access_logs.html  <-- NOVO (Auditoria)
+│   │   │   │   ├── email_settings.html <-- NOVO (SMTP)
 │   │   │   │   ├── api_form.html
 │   │   │   │   ├── api_list.html
 │   │   │   │   └── profile.html
@@ -156,11 +160,12 @@ O sistema utiliza a API da OpenAI (GPT-4o-mini) para recursos avançados:
 ### Pré-requisitos
 
 * Docker e Docker Compose instalados.
-* Chaves de API (OpenAI e Google Maps) - *Podem ser inseridas via interface após o login*.
 
 ### Configuração de Ambiente
 
-Crie um arquivo `.env` na raiz (baseado no exemplo) ou ajuste as variáveis no `docker-compose-dev.yml`.
+Crie um arquivo `.env` na raiz ou ajuste as variáveis no `docker-compose-dev.yml`.
+
+As configurações sensíveis (OpenAI Key, Google Maps Key, SMTP) agora são gerenciadas **diretamente pela interface administrativa** após o primeiro login.
 
 ---
 
@@ -182,34 +187,34 @@ docker compose -f docker-compose.yml up -d --build
 
 ```
 
-Acesse: `http://localhost:8080` (Ou via proxy reverso configurado).
+Acesse: `http://localhost:8080`
 
 ---
 
 ## 🗺 Roadmap
 
-Abaixo, o status atual das funcionalidades planejadas.
+Abaixo, o status atual das funcionalidades.
 
-### ✅ Concluído (v0.079)
+### ✅ Concluído (v0.080)
 
 * [x] **Integração com OpenAI** (Roteiros, Dicas e Checklist).
+* [x] **Guia de Bolso Expandido** (Inclusão de Gastronomia e formatação automática).
+* [x] **Timeline "Dia a Dia"** (Navegação por abas de data e filtro de mapa).
+* [x] **Módulo Administrativo de E-mail** (Configuração SMTP visual).
+* [x] **Logs de Acesso** (Registro de Login/Logout com filtros por usuário).
 * [x] **Exportação de Documentos** (PDF do Roteiro e Checklist).
-* [x] **Gestão de Chaves de API** via banco de dados.
 * [x] **Mapa Interativo** e Geocoding na timeline.
-* [x] **Compartilhamento de Viagem:** Sistema de convites com permissões (Leitor/Editor).
+* [x] **Compartilhamento de Viagem:** Sistema de convites com permissões.
 * [x] **Galeria de Fotos:** Upload múltiplo e visualização organizada.
 * [x] **Responsividade Mobile:** Ajustes de layout para acesso via celular.
-* [x] **Ícones Expandidos:** Suporte para Trem e Ônibus na timeline.
-* [x] **Feedback de UX:** Toasts de sucesso e Loading states nos botões de IA.
 
 ### 🔜 Próximos Passos (Sugestões)
 
-* [ ] **Divisão de Gastos (Splitwise):** Permitir indicar "quem pagou" uma despesa e calcular o acerto de contas entre os viajantes.
-* [ ] **Integração com Google Calendar:** Botão para exportar o roteiro (.ics) direto para a agenda do celular.
-* [ ] **Notificações por E-mail:** Enviar alerta real via SMTP quando um usuário for convidado para uma viagem.
+* [ ] **Divisão de Gastos (Splitwise):** Permitir indicar "quem pagou" uma despesa.
+* [ ] **Integração com Google Calendar:** Botão para exportar o roteiro (.ics).
+* [ ] **Notificações por E-mail:** Enviar alerta real via SMTP (usando a nova config).
 * [ ] **Login Social:** Autenticação via Google/Facebook (OAuth2).
-* [ ] **Modo Offline (PWA):** Permitir visualizar o roteiro básico mesmo sem internet.
-* [ ] **Parsing de E-mails:** (Avançado) Ler confirmações de voo/hotel encaminhadas e criar itens automaticamente.
+* [ ] **Modo Offline (PWA):** Visualizar roteiro sem internet.
 
 ```
 
@@ -219,8 +224,11 @@ Abaixo, o status atual das funcionalidades planejadas.
 
 * Copyright © 2025. Todos os direitos reservados.
 
+
 ```
 
-*Documentação gerada automaticamente com base na versão v0.0.79 do TravelManager.*
+*Documentação gerada automaticamente com base na versão v0.0.93 do TravelManager.*
+
+```
 
 ```
