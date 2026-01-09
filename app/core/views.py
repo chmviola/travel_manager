@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone # Importante para saber o ano atual
+from django.urls import reverse
 from collections import defaultdict
 import json
 import ast
@@ -532,7 +533,13 @@ def trip_item_create(request, trip_id):
 
             item.save()
             messages.success(request, "Item adicionado com sucesso!")
-            return redirect('trip_detail', pk=trip.id)
+            # --- MUDANÇA AQUI: Redireciona para a data do item ---
+            base_url = reverse('trip_detail', args=[trip.id])
+            if item.start_datetime:
+                date_str = item.start_datetime.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            return redirect(base_url)
+            # -----------------------------------------------------
     else:
         form = TripItemForm()
 
@@ -627,7 +634,14 @@ def trip_item_update(request, pk):
             
             updated_item.save()
             messages.success(request, "Item atualizado com sucesso.")
-            return redirect('trip_detail', pk=trip.id)
+            # --- MUDANÇA AQUI: Redireciona para a data do item atualizado ---
+            base_url = reverse('trip_detail', args=[trip.id])
+            if updated_item.start_datetime:
+                # Pega a data nova (caso o usuário tenha mudado o dia)
+                date_str = updated_item.start_datetime.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            return redirect(base_url)
+            # --------------------------------------------------------------
             
     else:
         # --- PREPARAÇÃO PARA EXIBIÇÃO (GET) ---
