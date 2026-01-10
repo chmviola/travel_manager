@@ -6,7 +6,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-4">
-        <div class="card card-primary card-outline">
+<div class="card card-primary card-outline">
             <div class="card-body box-profile">
                 <div class="text-center">
                     <img class="profile-user-img img-fluid img-circle"
@@ -26,7 +26,7 @@
                     </li>
                 </ul>
 
-            {% if visited_flags %}
+                {% if visited_flags %}
                 <div class="text-center border-top pt-3">
                     <small class="text-muted text-uppercase font-weight-bold">
                         <i class="fas fa-globe-americas mr-1"></i> Países Visitados
@@ -42,7 +42,8 @@
                         {% endfor %}
                     </div>
                 </div>
-            {% endif %}
+                {% endif %}
+                </div>
         </div>
         
         <div class="card">
