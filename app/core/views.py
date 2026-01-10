@@ -1147,8 +1147,26 @@ def profile_view(request):
     # Enviamos o form de senha vazio para ser renderizado no modal
     password_form = CustomPasswordChangeForm(user)
 
+    # 2. LÓGICA DAS BANDEIRAS (NOVO)
+    # Buscamos todas as viagens do usuário e já trazemos os itens juntos (prefetch) para ser rápido
+    user_trips = Trip.objects.filter(user=request.user).prefetch_related('items')
+    
+    visited_flags = set() # Usamos um Set para não repetir bandeiras
+    
+    for trip in user_trips:
+        for item in trip.items.all():
+            if item.location_address:
+                # Reutiliza sua função existente que extrai 'br', 'us', 'fr' do endereço
+                code = get_country_code_from_address(item.location_address)
+                if code:
+                    visited_flags.add(code)
+    
+    # Ordena as bandeiras alfabeticamente para ficar bonito na tela
+    visited_flags = sorted(list(visited_flags))
+
     context = {
-        'form': form,
+        'form': form if 'form' in locals() else None, # Ajuste conforme sua view
+        'visited_flags': visited_flags, # <--- Passamos as bandeiras aqui
         'password_form': password_form,
         'user': user
     }

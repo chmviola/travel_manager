@@ -25,7 +25,24 @@
                         <b>Usuário desde</b> <a class="float-right">{{ user.date_joined|date:"d/m/Y" }}</a>
                     </li>
                 </ul>
-            </div>
+
+            {% if visited_flags %}
+                <div class="text-center border-top pt-3">
+                    <small class="text-muted text-uppercase font-weight-bold">
+                        <i class="fas fa-globe-americas mr-1"></i> Países Visitados
+                    </small>
+                    
+                    <div class="d-flex justify-content-center flex-wrap mt-2" style="gap: 8px;">
+                        {% for flag in visited_flags %}
+                            <span class="flag-icon flag-icon-{{ flag }} shadow-sm" 
+                                  style="font-size: 24px; border-radius: 4px; border: 1px solid #eee;" 
+                                  title="{{ flag|upper }}"
+                                  data-toggle="tooltip">
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
         </div>
         
         <div class="card">
