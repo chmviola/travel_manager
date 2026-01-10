@@ -902,31 +902,25 @@ def financial_dashboard(request):
 
 @login_required
 def expense_update(request, pk):
-    """
-    Edita um gasto existente (seja ele vinculado a um item ou solto).
-    """
-    # Mantendo sua query original (Nota: isso restringe edição apenas ao dono da viagem)
+    # Sua query original
     expense = get_object_or_404(Expense, pk=pk, trip__user=request.user)
     
     if request.method == 'POST':
-        # Passamos trip_id para o form saber filtrar os itens corretamente
+        # Mantendo sua lógica de trip_id no form
         form = ExpenseForm(request.POST, instance=expense, trip_id=expense.trip.id)
         
         if form.is_valid():
-            # Alteração aqui: Atribuímos a uma variável para acessar a data atualizada
-            updated_expense = form.save()
+            updated_expense = form.save() # Salva e guarda o objeto
             
-            # --- LÓGICA DE REDIRECIONAMENTO INTELIGENTE ---
+            # --- CORREÇÃO DO REDIRECIONAMENTO ---
             base_url = reverse('trip_detail', args=[expense.trip.id])
             
-            # Se a despesa tem data, volta para a aba daquela data
             if updated_expense.date:
                 date_str = updated_expense.date.strftime('%Y-%m-%d')
                 return redirect(f"{base_url}?date={date_str}")
-            
-            # Se não tem data, volta para a visão geral
+                
             return redirect(base_url)
-            # ----------------------------------------------
+            # ------------------------------------
             
     else:
         form = ExpenseForm(instance=expense, trip_id=expense.trip.id)

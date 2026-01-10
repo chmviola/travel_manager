@@ -65,8 +65,10 @@
             {% for date_opt in available_dates %}
                 <a href="?date={{ date_opt|date:'Y-m-d' }}" 
                    class="btn btn-sm mb-1 mr-1 shadow-sm 
-                   {% if date_opt == selected_date %}
-                       bg-gradient-primary border-primary font-weight-bold
+                   {% if request.GET.date == date_opt|date:'Y-m-d' %}
+                       bg-gradient-primary border-primary font-weight-bold active
+                   {% elif not request.GET.date and forloop.first %}
+                       bg-gradient-primary border-primary font-weight-bold active
                    {% else %}
                        btn-default text-muted
                    {% endif %}"
@@ -80,7 +82,7 @@
                 </a>
             {% endfor %}
             
-            </div>
+        </div>
         {% endif %}
 
         <!-- TIMELINE DOS ITENS -->
