@@ -905,6 +905,7 @@ def expense_update(request, pk):
     """
     Edita um gasto existente (seja ele vinculado a um item ou solto).
     """
+    # Mantendo sua query original (Nota: isso restringe edição apenas ao dono da viagem)
     expense = get_object_or_404(Expense, pk=pk, trip__user=request.user)
     
     if request.method == 'POST':
