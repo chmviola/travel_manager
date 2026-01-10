@@ -71,9 +71,17 @@
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-save"></i> Salvar Gasto
                     </button>
-                    <a href="{% url 'trip_detail' trip.id %}" class="btn btn-default float-right">Cancelar</a>
+                {% if form.instance.pk and form.instance.date %}
+                    <a href="{% url 'trip_detail' trip.id %}?date={{ form.instance.date|date:'Y-m-d' }}" class="btn btn-secondary">
+                        Cancelar
+                    </a>
+                {% else %}
+                    <a href="{% url 'trip_detail' trip.id %}{% if request.GET.date %}?date={{ request.GET.date }}{% endif %}" class="btn btn-secondary">
+                        Cancelar
+                    </a>
+                {% endif %}
                 </div>
-                </form>
+            </form>
         </div>
         </div>
 </div>

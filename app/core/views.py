@@ -555,10 +555,19 @@ def trip_expense_create(request, trip_id):
             expense = form.save(commit=False)
             expense.trip = trip
             expense.save()
-            return redirect('trip_detail', pk=trip.id)
+            messages.success(request, "Despesa registrada com sucesso.")
+            # --- MUDANÇA AQUI: Redireciona para a data da despesa ---
+            base_url = reverse('trip_detail', args=[trip.id])
+            if expense.date: # Assumindo que seu campo se chama 'date'
+                date_str = expense.date.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            return redirect(base_url)
+            # --------------------------------------------------------
     else:
-        form = ExpenseForm(trip_id=trip.id)
-    
+        # Dica: Se quiser pré-preencher a data vinda da URL na criação
+        initial_date = request.GET.get('date')
+        form = ExpenseForm(initial={'date': initial_date} if initial_date else None)
+
     return render(request, 'trips/expense_form.html', {'form': form, 'trip': trip})
 
 #--- VIEW PARA EDITAR VIAGEM ---
@@ -901,16 +910,30 @@ def expense_update(request, pk):
     if request.method == 'POST':
         # Passamos trip_id para o form saber filtrar os itens corretamente
         form = ExpenseForm(request.POST, instance=expense, trip_id=expense.trip.id)
+        
         if form.is_valid():
-            form.save()
-            return redirect('trip_detail', pk=expense.trip.id)
+            # Alteração aqui: Atribuímos a uma variável para acessar a data atualizada
+            updated_expense = form.save()
+            
+            # --- LÓGICA DE REDIRECIONAMENTO INTELIGENTE ---
+            base_url = reverse('trip_detail', args=[expense.trip.id])
+            
+            # Se a despesa tem data, volta para a aba daquela data
+            if updated_expense.date:
+                date_str = updated_expense.date.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            
+            # Se não tem data, volta para a visão geral
+            return redirect(base_url)
+            # ----------------------------------------------
+            
     else:
         form = ExpenseForm(instance=expense, trip_id=expense.trip.id)
     
     return render(request, 'trips/expense_form.html', {
         'form': form,
         'trip': expense.trip,
-        'item_name': expense.item.name if expense.item else None # Mostra no título se tiver item
+        'item_name': expense.item.name if expense.item else None 
     })
 
 @login_required
