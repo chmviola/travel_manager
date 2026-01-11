@@ -200,7 +200,7 @@
                                         data-item-id="{{ item.id }}" 
                                         data-link="{{ item.link|default:'' }}"
                                         title="Adicionar/Ver Link">
-                                    <i class="fas fa-link">Link</i>
+                                    <i class="fas fa-link"></i>
                                 </button>
 
                                 <a href="{% url 'trip_item_expense_manage' item.id %}" 
@@ -804,33 +804,32 @@ $('#modalItemMap').on('shown.bs.modal', function (event) {
             }
         });
     }
-
-    // SCRIPT DO MODAL DE LINK
-    $('#modalLink').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget); // Botão que acionou o modal
-        var itemId = button.data('item-id'); // Extrai info dos atributos data-*
-        var currentLink = button.data('link');
-
-        var modal = $(this);
-        
-        // 1. Atualiza o Action do formulário para apontar para o ID certo
-        // Atenção: Ajuste a string '/item/0/link/' conforme a sua estrutura de URL se necessário,
-        // mas a lógica de replace abaixo costuma funcionar bem.
-        var actionUrl = "{% url 'trip_item_set_link' 0 %}".replace('0', itemId);
-        modal.find('#formLink').attr('action', actionUrl);
-        
-        // 2. Preenche o input com o link atual (se houver)
-        modal.find('#inputLink').val(currentLink);
-
-        // 3. Mostra ou esconde o botão de "Visitar Link"
-        if (currentLink) {
-            modal.find('#linkVisitBtn').attr('href', currentLink);
-            modal.find('#btnVisitArea').removeClass('d-none');
-        } else {
-            modal.find('#btnVisitArea').addClass('d-none');
-        }
-    }
 });
 
+// SCRIPT DO MODAL DE LINK
+$('#modalLink').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget); // Botão que acionou o modal
+    var itemId = button.data('item-id'); // Extrai info dos atributos data-*
+    var currentLink = button.data('link');
+
+    var modal = $(this);
+        
+    // 1. Atualiza o Action do formulário para apontar para o ID certo
+    // Atenção: Ajuste a string '/item/0/link/' conforme a sua estrutura de URL se necessário,
+    // mas a lógica de replace abaixo costuma funcionar bem.
+    var actionUrl = "{% url 'trip_item_set_link' 0 %}".replace('0', itemId);
+    modal.find('#formLink').attr('action', actionUrl);
+        
+    // 2. Preenche o input com o link atual (se houver)
+    modal.find('#inputLink').val(currentLink);
+
+    // 3. Mostra ou esconde o botão de "Visitar Link"
+    if (currentLink) {
+        modal.find('#linkVisitBtn').attr('href', currentLink);
+        modal.find('#btnVisitArea').removeClass('d-none');
+    } else {
+        modal.find('#btnVisitArea').addClass('d-none');
+    }
+});
 </script>
 {% endblock %}
