@@ -59,8 +59,19 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-success">Upload</button>
-                    <a href="{% url 'trip_detail' trip.id %}" class="btn btn-default float-right">Voltar para Viagem</a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                    
+                    {% if item.start_datetime %}
+                        <a href="{% url 'trip_detail' trip.id %}?date={{ item.start_datetime|date:'Y-m-d' }}" class="btn btn-default float-right">
+                            Voltar para Viagem
+                        </a>
+                    {% else %}
+                        <a href="{% url 'trip_detail' trip.id %}" class="btn btn-default float-right">
+                            Voltar para Viagem
+                        </a>
+                    {% endif %}
                 </div>
             </form>
         </div>

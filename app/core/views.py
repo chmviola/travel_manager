@@ -738,15 +738,26 @@ def trip_item_expense_manage(request, item_id):
 @login_required
 def trip_item_attachments(request, item_id):
     item = get_object_or_404(TripItem, pk=item_id, trip__user=request.user)
-    attachments = item.attachments.all() # Pega os arquivos já salvos
+    attachments = item.attachments.all()
     
     if request.method == 'POST':
-        form = AttachmentForm(request.POST, request.FILES) # request.FILES é obrigatório para upload
+        form = AttachmentForm(request.POST, request.FILES)
         if form.is_valid():
             attachment = form.save(commit=False)
             attachment.item = item
             attachment.save()
-            return redirect('trip_item_attachments', item_id=item.id)
+            messages.success(request, "Arquivo anexado com sucesso.")
+
+            # --- CORREÇÃO: Redireciona para a timeline na data do item ---
+            base_url = reverse('trip_detail', args=[item.trip.id])
+            
+            if item.start_datetime:
+                date_str = item.start_datetime.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            
+            return redirect(base_url)
+            # -------------------------------------------------------------
+            
     else:
         form = AttachmentForm()
     
