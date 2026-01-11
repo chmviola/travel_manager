@@ -23,3 +23,11 @@
 
 ## 📦 Commit range
 `v0.0.96..HEAD`
+# 🚀 Release v0.0.98 — 2026-01-11
+
+## ✨ Novas Funcionalidades
+- feat: criação da página com o changelog e o link no rodapé
+- feat: criação do espaço para colocar a url nos item de viagem
+
+## 📦 Commit range
+`v0.0.97..HEAD`
