@@ -164,6 +164,10 @@
         <img src="{% static 'img/logo.png' %}" alt="Logo" style="height: 18px; width: auto; margin-right: 5px; vertical-align: text-bottom;">
         
         <b>Versão</b> {{ app_version }}
+
+        <a href="{% url 'changelog' %}" class="text-muted ml-1" title="Ver histórico de mudanças" style="font-size: 0.9em;">
+            <i class="fas fa-history"></i>
+        </a>
     </div>
     
     <strong>Copyright &copy; 2025 <a href="#">Carlos Viola</a>.</strong> Todos os direitos reservados.

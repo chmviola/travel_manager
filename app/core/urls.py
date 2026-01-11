@@ -86,4 +86,7 @@ urlpatterns = [
     # Rotas de Galeria de Fotos da Viagem
     path('trips/<int:trip_id>/gallery/', views.trip_gallery, name='trip_gallery'),
     path('trips/photo/<int:photo_id>/delete/', views.trip_photo_delete, name='trip_photo_delete'),
+
+    # Rota para o CHANGELOG
+    path('changelog/', views.changelog_view, name='changelog'),
 ]

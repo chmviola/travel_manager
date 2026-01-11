@@ -5,4 +5,5 @@ python-decouple>=3.8
 requests
 xhtml2pdf==0.2.15
 openai
+markdown
 Pillow>=10.0.0

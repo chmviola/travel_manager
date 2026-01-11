@@ -9,6 +9,8 @@ from django.urls import reverse
 from collections import defaultdict
 import json
 import ast
+import markdown
+import os
 from datetime import datetime, time, timedelta
 # Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
@@ -1305,6 +1307,33 @@ def config_api_delete(request, pk):
         return redirect('config_api_list')
     # Se tentar acessar via GET, redireciona para a lista por segurança
     return redirect('config_api_list')
+
+#--- VIEW para o CHANGELOG ---
+def changelog_view(request):
+    # Caminho do arquivo. 
+    # settings.BASE_DIR geralmente aponta para a pasta onde está o manage.py
+    file_path = os.path.join(settings.BASE_DIR, 'CHANGELOG.md')
+    
+    changelog_html = ""
+    
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            text = f.read()
+            # Converte Markdown para HTML com algumas extensões úteis
+            # 'fenced_code' permite blocos de código
+            # 'nl2br' transforma quebras de linha em <br>
+            changelog_html = markdown.markdown(text, extensions=['fenced_code', 'nl2br'])
+    else:
+        changelog_html = """
+        <div class="alert alert-warning">
+            Arquivo CHANGELOG.md não encontrado no servidor.
+        </div>
+        """
+
+    return render(request, 'config/changelog.html', {
+        'changelog_html': changelog_html, 
+        'title': 'Histórico de Versões'
+    })
 
 #--- VIEWS PARA GALERIA DE FOTOS DA VIAGEM ---
 @login_required
