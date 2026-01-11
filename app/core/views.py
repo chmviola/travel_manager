@@ -542,6 +542,28 @@ def trip_item_create(request, trip_id):
                 item.details = {'notes': raw_notes}
             # ---------------------
 
+            # --- INÍCIO DA CORREÇÃO (GEOCODING) ---
+            if item.location_address:
+                try:
+                    # 1. Busca a chave no Banco de Dados
+                    config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API')
+                    
+                    # 2. Conecta no Google Maps
+                    gmaps = googlemaps.Client(key=config.value)
+                    
+                    # 3. Converte Endereço -> Lat/Lng
+                    geocode_result = gmaps.geocode(item.location_address)
+                    
+                    if geocode_result:
+                        location = geocode_result[0]['geometry']['location']
+                        item.location_lat = location['lat']
+                        item.location_lng = location['lng']
+                        print(f"Geocoding Sucesso: {item.location_lat}, {item.location_lng}")
+                except APIConfiguration.DoesNotExist:
+                    print("ERRO: Chave GOOGLE_MAPS_API não cadastrada no banco.")
+                except Exception as e:
+                    print(f"Erro no Geocoding: {e}")
+
             item.save()
             messages.success(request, "Item adicionado com sucesso!")
             # --- MUDANÇA AQUI: Redireciona para a data do item ---
@@ -652,6 +674,27 @@ def trip_item_update(request, pk):
             # 3. Salva no formato JSON correto
             updated_item.details = {'notes': clean_text}
             
+            # --- INÍCIO DA CORREÇÃO (GEOCODING NA EDIÇÃO) ---
+            # Pegamos o item original do banco para comparar se o endereço mudou
+            original_item = TripItem.objects.get(pk=pk)
+            
+            address_changed = updated_item.location_address != original_item.location_address
+            missing_coords = not updated_item.location_lat or not updated_item.location_lng
+            
+            if updated_item.location_address and (address_changed or missing_coords):
+                try:
+                    config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API')
+                    gmaps = googlemaps.Client(key=config.value)
+                    geocode_result = gmaps.geocode(updated_item.location_address)
+                    
+                    if geocode_result:
+                        location = geocode_result[0]['geometry']['location']
+                        updated_item.location_lat = location['lat']
+                        updated_item.location_lng = location['lng']
+                except Exception as e:
+                    print(f"Erro no Geocoding (Update): {e}")
+            # --- FIM DA CORREÇÃO ---
+
             updated_item.save()
             messages.success(request, "Item atualizado com sucesso.")
             # --- MUDANÇA AQUI: Redireciona para a data do item atualizado ---
