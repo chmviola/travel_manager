@@ -64,10 +64,19 @@ def home(request):
         map_locations.append({
             'name': loc['name'],
             'trip__title': loc['trip__title'],
-            # Convertendo Decimal do Python para Float do JS
             'location_lat': float(loc['location_lat']), 
             'location_lng': float(loc['location_lng']),
         })
+    
+    # --- CORREÇÃO AQUI: BUSCA A CHAVE NO BANCO ---
+    google_maps_api_key = None
+    try:
+        # Tenta pegar a chave salva no banco
+        config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API')
+        google_maps_api_key = config.value
+    except APIConfiguration.DoesNotExist:
+        print("AVISO: Chave GOOGLE_MAPS_API não encontrada no banco.")
+    # ---------------------------------------------
 
     context = {
         'trips': trips,
@@ -78,7 +87,7 @@ def home(request):
         'eur_rate': eur_rate,
         # Usamos json.dumps para garantir que vá como texto JSON válido
         'map_locations': json.dumps(map_locations), 
-        'google_maps_api_key': settings.GOOGLE_MAPS_API_KEY
+        'google_maps_api_key': google_maps_api_key
     }
 
     return render(request, 'index.html', context)
