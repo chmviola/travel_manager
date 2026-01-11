@@ -693,7 +693,6 @@ def trip_item_expense_manage(request, item_id):
     item = get_object_or_404(TripItem, pk=item_id, trip__user=request.user)
     
     # Tenta pegar o primeiro gasto vinculado a este item
-    # (Assumimos aqui uma relação de 1 para 1 para simplificar o botão da timeline)
     existing_expense = item.related_expenses.first()
     
     if request.method == 'POST':
@@ -707,13 +706,22 @@ def trip_item_expense_manage(request, item_id):
             expense.trip = item.trip
             expense.item = item # Garante o vínculo
             expense.save()
-            return redirect('trip_detail', pk=item.trip.id)
+            
+            # --- CORREÇÃO AQUI: Redirecionamento Inteligente ---
+            base_url = reverse('trip_detail', args=[item.trip.id])
+            
+            if expense.date:
+                date_str = expense.date.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            
+            return redirect(base_url)
+            # ---------------------------------------------------
     else:
         if existing_expense:
-            # Modo Edição: Carrega os dados existentes
+            # Modo Edição
             form = ExpenseForm(instance=existing_expense, trip_id=item.trip.id)
         else:
-            # Modo Criação: Preenche o campo 'item' e sugere a data do item
+            # Modo Criação: Preenche item e data sugerida
             form = ExpenseForm(
                 initial={'item': item, 'date': item.start_datetime.date()}, 
                 trip_id=item.trip.id
@@ -722,7 +730,9 @@ def trip_item_expense_manage(request, item_id):
     return render(request, 'trips/expense_form.html', {
         'form': form, 
         'trip': item.trip,
-        'item_name': item.name # Para mostrar no título qual item estamos gerenciando
+        # INCLUÍMOS ESTA VARIÁVEL PARA O BOTÃO CANCELAR FUNCIONAR NA CRIAÇÃO
+        'target_date': item.start_datetime.date() if item.start_datetime else None,
+        'item_name': item.name
     })
 
 @login_required
