@@ -188,13 +188,13 @@
                                 
                                 {% if can_edit %}
                                 <a href="{% url 'trip_item_attachments' item.id %}" 
-                                    class="mr-2 {% if item.attachments.exists %}text-info{% else %}text-muted{% endif %}"
+                                    class="{% if item.attachments.exists %}text-info{% else %}text-muted{% endif %}"
                                     title="Anexos (PDFs/Imagens)">
                                     <i class="fas fa-paperclip"></i>
                                 </a>
                                 
                                 <button type="button" 
-                                        class="btn btn-tool mr-2 {% if item.link %}text-primary{% endif %}" 
+                                        class="btn btn-tool {% if item.link %}text-primary{% endif %}" 
                                         data-toggle="modal" 
                                         data-target="#modalLink" 
                                         data-item-id="{{ item.id }}" 
