@@ -775,6 +775,31 @@ def attachment_delete(request, pk):
     attachment.delete()
     return redirect('trip_item_attachments', item_id=item_id)
 
+@login_required
+def trip_item_set_link(request, item_id):
+    item = get_object_or_404(TripItem, pk=item_id, trip__user=request.user)
+    
+    if request.method == 'POST':
+        # Pega o link do formulário
+        link_url = request.POST.get('link_url')
+        
+        # Salva (ou limpa se estiver vazio)
+        item.link = link_url if link_url else None
+        item.save()
+        
+        messages.success(request, "Link atualizado com sucesso!")
+        
+        # --- REDIRECIONAMENTO INTELIGENTE ---
+        base_url = reverse('trip_detail', args=[item.trip.id])
+        if item.start_datetime:
+            date_str = item.start_datetime.strftime('%Y-%m-%d')
+            return redirect(f"{base_url}?date={date_str}")
+            
+        return redirect(base_url)
+    
+    # Se tentar acessar via GET, manda de volta
+    return redirect('trip_detail', pk=item.trip.id)
+
 #--- VIEW PARA GERAR ITINERÁRIO USANDO IA ---
 @login_required
 def trip_generate_itinerary(request, trip_id):

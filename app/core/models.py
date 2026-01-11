@@ -88,6 +88,9 @@ class TripItem(models.Model):
     start_datetime = models.DateTimeField(verbose_name="Início/Check-in")
     end_datetime = models.DateTimeField(null=True, blank=True, verbose_name="Fim/Check-out")
     
+    # Links do item
+    link = models.URLField(max_length=500, blank=True, null=True, verbose_name="Link Externo")
+
     # Geolocalização (Para o Google Maps)
     # DecimalField é melhor que Float para coordenadas para manter precisão
     location_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)

@@ -193,6 +193,16 @@
                                     <i class="fas fa-paperclip"></i>
                                 </a>
                                 
+                                <button type="button" 
+                                        class="btn btn-tool {% if item.link %}text-primary{% endif %}" 
+                                        data-toggle="modal" 
+                                        data-target="#modalLink" 
+                                        data-item-id="{{ item.id }}" 
+                                        data-link="{{ item.link|default:'' }}"
+                                        title="Adicionar/Ver Link">
+                                    <i class="fas fa-link"></i>
+                                </button>
+
                                 <a href="{% url 'trip_item_expense_manage' item.id %}" 
                                     class="mr-2 {% if item.related_expenses.exists %}text-success{% else %}text-muted{% endif %}"
                                     title="Gerenciar Gastos deste Item">
@@ -485,6 +495,47 @@
     </div>
 </div>
 
+<!-- Modal para exibir o link -->
+<div class="modal fade" id="modalLink" tabindex="-1" role="dialog" aria-labelledby="modalLinkLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLinkLabel"><i class="fas fa-link mr-2"></i> Gerenciar Link</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <form id="formLink" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>URL do Link (Site, Reserva, Localização)</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                            </div>
+                            <input type="url" name="link_url" id="inputLink" class="form-control" placeholder="https://..." maxlength="500">
+                        </div>
+                        <small class="text-muted">Cole o endereço completo aqui.</small>
+                    </div>
+
+                    <div id="btnVisitArea" class="mt-3 text-center d-none">
+                        <a href="#" id="linkVisitBtn" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Testar/Abrir Link
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -752,6 +803,32 @@ $('#modalItemMap').on('shown.bs.modal', function (event) {
                 alert('Não foi possível encontrar este endereço no mapa.');
             }
         });
+    }
+
+    // SCRIPT DO MODAL DE LINK
+    $('#modalLink').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Botão que acionou o modal
+        var itemId = button.data('item-id'); // Extrai info dos atributos data-*
+        var currentLink = button.data('link');
+
+        var modal = $(this);
+        
+        // 1. Atualiza o Action do formulário para apontar para o ID certo
+        // Atenção: Ajuste a string '/item/0/link/' conforme a sua estrutura de URL se necessário,
+        // mas a lógica de replace abaixo costuma funcionar bem.
+        var actionUrl = "{% url 'trip_item_set_link' 0 %}".replace('0', itemId);
+        modal.find('#formLink').attr('action', actionUrl);
+        
+        // 2. Preenche o input com o link atual (se houver)
+        modal.find('#inputLink').val(currentLink);
+
+        // 3. Mostra ou esconde o botão de "Visitar Link"
+        if (currentLink) {
+            modal.find('#linkVisitBtn').attr('href', currentLink);
+            modal.find('#btnVisitArea').removeClass('d-none');
+        } else {
+            modal.find('#btnVisitArea').addClass('d-none');
+        }
     }
 });
 
