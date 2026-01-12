@@ -268,17 +268,17 @@ def trip_list(request):
     }
 
     for trip in trips:
-        trip.flags = set() 
+        # trip.flags = set() 
         
-        # Pega todos os itens dessa viagem que tenham endereço
-        items = trip.items.exclude(location_address__isnull=True).exclude(location_address__exact='')
+        # # Pega todos os itens dessa viagem que tenham endereço
+        # items = trip.items.exclude(location_address__isnull=True).exclude(location_address__exact='')
         
-        for item in items:
-            address_lower = item.location_address.lower()
+        # for item in items:
+        #     address_lower = item.location_address.lower()
             
-            for country_name, country_code in country_map.items():
-                if country_name in address_lower:
-                    trip.flags.add(country_code)
+        #     for country_name, country_code in country_map.items():
+        #         if country_name in address_lower:
+        #             trip.flags.add(country_code)
         
         trip.current_user_role = trip.get_user_role(request.user)
 
