@@ -17,7 +17,7 @@ from datetime import datetime, time, timedelta
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration, AccessLog
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm, EmailConfigurationForm
+from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm, EmailConfigurationForm, ICSImportForm
 from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -25,6 +25,8 @@ from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
+from icalendar import Calendar, Event as ICalEvent
+import pytz
 
 #--- VIEW PARA A PÁGINA INICIAL (DASHBOARD) ---
 @login_required
@@ -1216,6 +1218,112 @@ def checklist_pdf(request, trip_id):
         return HttpResponse('Erro ao gerar PDF <pre>' + html + '</pre>')
     
     return response
+
+# --- VIEW DE IMPORTAÇÃO/ EXPORTAÇÃO GOOGLE CALENDER ---
+# --- EXPORTAR PARA CALENDAR (.ICS) ---
+@login_required
+def trip_export_ics(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id)
+    
+    # Cria o Calendário
+    cal = Calendar()
+    cal.add('prodid', '-//Travel Manager//carlosviola.com//')
+    cal.add('version', '2.0')
+    
+    items = trip.items.all()
+    
+    for item in items:
+        if item.start_datetime:
+            event = ICalEvent()
+            event.add('summary', f"✈️ {item.name}")
+            
+            # Descrição: Junta notas e link
+            description = ""
+            if item.link:
+                description += f"Link: {item.link}\n"
+            
+            # Tenta extrair texto limpo das notas (usando sua função ou acessando direto)
+            notes = item.details.get('notes', '') if isinstance(item.details, dict) else str(item.details)
+            if notes:
+                description += f"Notas: {notes}"
+                
+            event.add('description', description)
+            
+            # Localização
+            if item.location_address:
+                event.add('location', item.location_address)
+            
+            # Data de Início
+            event.add('dtstart', item.start_datetime)
+            
+            # Data de Fim (Se não tiver, assume 1 hora de duração)
+            if item.end_datetime:
+                event.add('dtend', item.end_datetime)
+            else:
+                event.add('dtend', item.start_datetime + timedelta(hours=1))
+            
+            event.add('dtstamp', datetime.now())
+            cal.add_component(event)
+
+    # Gera o arquivo para download
+    response = HttpResponse(cal.to_ical(), content_type="text/calendar")
+    response['Content-Disposition'] = f'attachment; filename="trip_{trip.id}.ics"'
+    return response
+
+
+# --- IMPORTAR DO CALENDAR (.ICS) ---
+@login_required
+def trip_import_ics(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = ICSImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            ics_file = request.FILES['ics_file']
+            
+            try:
+                # Lê o arquivo
+                cal = Calendar.from_ical(ics_file.read())
+                count = 0
+                
+                for component in cal.walk():
+                    if component.name == "VEVENT":
+                        # Extrai dados básicos
+                        summary = str(component.get('summary', 'Evento Importado'))
+                        dtstart = component.get('dtstart').dt
+                        dtend = component.get('dtend')
+                        location = str(component.get('location', ''))
+                        description = str(component.get('description', ''))
+                        
+                        # Tratamento de Fuso Horário e Tipos de Data
+                        # Se for data pura (dia todo), converte para datetime
+                        if not isinstance(dtstart, datetime):
+                            dtstart = datetime.combine(dtstart, time(0,0))
+                        
+                        # Se tiver timezone info, converte ou remove para salvar no banco (depende da sua config)
+                        # Assumindo que seu banco salva tz-aware ou naive, o Django costuma lidar bem,
+                        # mas é bom garantir.
+                        
+                        # Cria o Item
+                        TripItem.objects.create(
+                            trip=trip,
+                            name=summary,
+                            item_type='ACTIVITY', # Tipo padrão
+                            start_datetime=dtstart,
+                            end_datetime=dtend.dt if dtend else None,
+                            location_address=location,
+                            details={'notes': description}
+                        )
+                        count += 1
+                
+                messages.success(request, f"{count} itens importados com sucesso!")
+                
+            except Exception as e:
+                messages.error(request, f"Erro ao processar arquivo: {str(e)}")
+                
+            return redirect('trip_detail', pk=trip.id)
+            
+    return redirect('trip_detail', pk=trip.id)
 
 # --- VIEWS DE CONFIGURAÇÃO DE API ---
 @login_required

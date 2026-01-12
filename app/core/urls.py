@@ -44,6 +44,10 @@ urlpatterns = [
     path('usuarios/<int:pk>/editar/', views.user_update, name='user_update'),
     path('usuarios/<int:pk>/excluir/', views.user_delete, name='user_delete'),
 
+    # Rotas para Importação / Exportação Google Calender
+    path('viagens/<int:trip_id>/export-ics/', views.trip_export_ics, name='trip_export_ics'),
+    path('viagens/<int:trip_id>/import-ics/', views.trip_import_ics, name='trip_import_ics'),
+
     # Rotas de Perfil do Usuário
     path('profile/', views.profile_view, name='user_profile'),
     path('profile/password/', views.change_password, name='change_password'),

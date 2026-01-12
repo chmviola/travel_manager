@@ -375,3 +375,10 @@ class EmailConfigurationForm(forms.ModelForm):
         if not password and self.instance.pk:
             return self.instance.password
         return password
+    
+#-- Formulário para Import/Export Google Calender ---
+class ICSImportForm(forms.Form):
+    ics_file = forms.FileField(
+        label="Arquivo de Calendário (.ics)",
+        widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.ics'})
+    )
