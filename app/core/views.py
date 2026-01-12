@@ -8,6 +8,7 @@ from django.utils import timezone # Importante para saber o ano atual
 from django.urls import reverse
 from collections import defaultdict
 import json
+import googlemaps
 import ast
 import markdown
 import os
@@ -521,6 +522,8 @@ def trip_detail_pdf(request, pk):
 #--- VIEWS PARA CRIAR ITENS DE VIAGEM (TRIP ITEM) ---
 @login_required
 def trip_item_create(request, trip_id):
+    # Nota: A query abaixo restringe apenas ao dono. Se quiser permitir editores, 
+    # use get_object_or_404(Trip, pk=trip_id) e faça a verificação de role depois.
     trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
     
     if request.method == 'POST':
@@ -529,20 +532,15 @@ def trip_item_create(request, trip_id):
             item = form.save(commit=False)
             item.trip = trip
             
-            # --- CORREÇÃO AQUI ---
-            # O campo 'details' do form vem como string (o texto da nota).
-            # Nós o transformamos em JSON manualmentes.
+            # --- TRATAMENTO DO JSON ---
             raw_notes = form.cleaned_data.get('details', '')
-            
-            # Se o usuário colou um JSON sem querer, tentamos limpar, senão usa o texto puro
             if isinstance(raw_notes, dict):
                 item.details = raw_notes
             else:
-                # Garante que salvamos apenas o texto dentro da chave 'notes'
                 item.details = {'notes': raw_notes}
-            # ---------------------
+            # --------------------------
 
-            # --- INÍCIO DA CORREÇÃO (GEOCODING) ---
+            # --- INÍCIO DA CORREÇÃO (GEOCODING NA CRIAÇÃO) ---
             if item.location_address:
                 try:
                     # 1. Busca a chave no Banco de Dados
@@ -558,21 +556,24 @@ def trip_item_create(request, trip_id):
                         location = geocode_result[0]['geometry']['location']
                         item.location_lat = location['lat']
                         item.location_lng = location['lng']
-                        print(f"Geocoding Sucesso: {item.location_lat}, {item.location_lng}")
+                        print(f"Geocoding Create Sucesso: {item.location_lat}, {item.location_lng}")
+                        
                 except APIConfiguration.DoesNotExist:
                     print("ERRO: Chave GOOGLE_MAPS_API não cadastrada no banco.")
                 except Exception as e:
-                    print(f"Erro no Geocoding: {e}")
+                    print(f"Erro no Geocoding (Create): {e}")
+            # --- FIM DA CORREÇÃO ---
 
             item.save()
             messages.success(request, "Item adicionado com sucesso!")
-            # --- MUDANÇA AQUI: Redireciona para a data do item ---
+            
+            # --- Redireciona para a data do item ---
             base_url = reverse('trip_detail', args=[trip.id])
             if item.start_datetime:
                 date_str = item.start_datetime.strftime('%Y-%m-%d')
                 return redirect(f"{base_url}?date={date_str}")
             return redirect(base_url)
-            # -----------------------------------------------------
+            # ---------------------------------------
     else:
         form = TripItemForm()
 
@@ -605,16 +606,107 @@ def trip_expense_create(request, trip_id):
 
 #--- VIEW PARA EDITAR VIAGEM ---
 @login_required
-def trip_update(request, pk):
-    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+def trip_item_update(request, pk):
+    item = get_object_or_404(TripItem, pk=pk)
+    trip = item.trip
+    
+    # Verifica permissão
+    if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
+         messages.error(request, "Sem permissão para editar este item.")
+         return redirect('trip_detail', pk=trip.id)
+
+    # --- FUNÇÃO AUXILIAR INTERNA PARA LIMPAR O JSON ---
+    def extract_notes_text(data):
+        """Extrai apenas o texto, removendo camadas de JSON/Dict"""
+        if data is None:
+            return ""
+        
+        # Se for dicionário, pega a chave 'notes'
+        if isinstance(data, dict):
+            return extract_notes_text(data.get('notes', ''))
+            
+        # Se for string, verifica se é um dicionário disfarçado
+        if isinstance(data, str):
+            data = data.strip()
+            if data.startswith("{") and "notes" in data:
+                try:
+                    # Tenta converter string em dict
+                    parsed = ast.literal_eval(data)
+                    # Chama recursivamente para limpar o resultado
+                    return extract_notes_text(parsed)
+                except:
+                    pass
+        return data # Retorna o texto puro
+    # --------------------------------------------------
+
     if request.method == 'POST':
-        form = TripForm(request.POST, instance=trip)
+        form = TripItemForm(request.POST, instance=item)
         if form.is_valid():
-            form.save()
-            return redirect('trip_detail', pk=trip.id)
+            updated_item = form.save(commit=False)
+            
+            # 1. Pega o que o usuário digitou
+            user_input = form.cleaned_data.get('details', '')
+            
+            # 2. Garante que pegamos só o texto limpo (caso haja sujeira)
+            clean_text = extract_notes_text(user_input)
+            
+            # 3. Salva no formato JSON correto
+            updated_item.details = {'notes': clean_text}
+            
+            # --- INÍCIO DA CORREÇÃO (GEOCODING NA EDIÇÃO) ---
+            # Pegamos o item original do banco para comparar se o endereço mudou
+            original_item = TripItem.objects.get(pk=pk)
+            
+            address_changed = updated_item.location_address != original_item.location_address
+            missing_coords = not updated_item.location_lat or not updated_item.location_lng
+            
+            # Só consome a API se o endereço mudou ou se não tem coordenadas salvas
+            if updated_item.location_address and (address_changed or missing_coords):
+                try:
+                    # 1. Busca a chave no Banco de Dados
+                    config = APIConfiguration.objects.get(key='GOOGLE_MAPS_API')
+                    
+                    # 2. Conecta no Google Maps
+                    gmaps = googlemaps.Client(key=config.value)
+                    
+                    # 3. Converte Endereço -> Lat/Lng
+                    geocode_result = gmaps.geocode(updated_item.location_address)
+                    
+                    if geocode_result:
+                        location = geocode_result[0]['geometry']['location']
+                        updated_item.location_lat = location['lat']
+                        updated_item.location_lng = location['lng']
+                        print(f"Geocoding Update Sucesso: {updated_item.location_lat}, {updated_item.location_lng}")
+                        
+                except APIConfiguration.DoesNotExist:
+                    print("ERRO: Chave GOOGLE_MAPS_API não cadastrada no banco.")
+                except Exception as e:
+                    print(f"Erro no Geocoding (Update): {e}")
+            # --- FIM DA CORREÇÃO ---
+
+            updated_item.save()
+            messages.success(request, "Item atualizado com sucesso.")
+            
+            # --- Redireciona para a data do item atualizado ---
+            base_url = reverse('trip_detail', args=[trip.id])
+            if updated_item.start_datetime:
+                # Pega a data nova (caso o usuário tenha mudado o dia)
+                date_str = updated_item.start_datetime.strftime('%Y-%m-%d')
+                return redirect(f"{base_url}?date={date_str}")
+            return redirect(base_url)
+            # --------------------------------------------------
+            
     else:
-        form = TripForm(instance=trip)
-    return render(request, 'trips/trip_form.html', {'form': form, 'edit_mode': True})
+        # --- PREPARAÇÃO PARA EXIBIÇÃO (GET) ---
+        original_details = item.details
+        item.details = extract_notes_text(original_details)
+        form = TripItemForm(instance=item)
+
+    return render(request, 'trips/trip_item_form.html', {
+        'form': form, 
+        'trip': trip, 
+        'title': 'Editar Item'
+    })
 
 #--- VIEW PARA DELETAR VIAGEM ---
 @login_required
