@@ -82,6 +82,7 @@
                 <table class="table table-striped table-valign-middle">
                     <thead>
                     <tr>
+                        <th style="width: 10px">Países</th>
                         <th>Viagem</th>
                         <th>Início</th>
                         <th>Término</th>
@@ -90,7 +91,21 @@
                     </thead>
                     <tbody>
                     {% for trip in trips|slice:":5" %} <tr>
+                    
                     <tr>
+                        <td class="align-middle">
+                            {% if trip.flags %}
+                                {% for flag in trip.flags %}
+                                    <span class="flag-icon flag-icon-{{ flag }}" 
+                                          title="{{ flag|upper }}"
+                                          style="font-size: 1.1em; margin-right: 2px;">
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8em;">-</span>
+                            {% endif %}
+                        </td>
+
                         <td>
                             {{ trip.title }}
                         </td>

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from .utils import get_country_code_from_address
 
 # --- MODELO DE VIAGEM ---
 class Trip(models.Model):
@@ -52,6 +53,24 @@ class Trip(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"
+    
+    @property
+    def flags(self):
+        """
+        Retorna uma lista de códigos de países (ex: ['br', 'us']) 
+        baseado nos endereços dos itens desta viagem.
+        """
+        codes = set()
+        # Itera sobre todos os itens da viagem
+        for item in self.items.all():
+            if item.location_address:
+                # Usa a função utilitária para extrair o código (ex: 'fr', 'br')
+                # Se a função demorar (API externa), isso pode deixar o dashboard lento.
+                # O ideal é que get_country_code_from_address seja rápida (regex/split).
+                code = get_country_code_from_address(item.location_address)
+                if code:
+                    codes.add(code.lower())
+        return list(codes)
 
 # --- MODELO DE ITENS DA VIAGEM ---
 class TripItem(models.Model):
