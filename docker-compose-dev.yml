@@ -1,15 +1,16 @@
+version: '3.8'
+
 services:
   # --- Banco de Dados (Ambiente DEV) ---
   travel_db_dev:
     image: postgres:15-alpine
     container_name: travel_manager_db_dev
     volumes:
-      # Mapeia para uma pasta diferente da produção
       - /var/data/travel_db_data_dev:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=travel_db
-      - POSTGRES_USER=travel_user
-      - POSTGRES_PASSWORD=travel_pass
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     restart: always
     networks:
       - chmviola
@@ -20,25 +21,24 @@ services:
     container_name: travel_manager_web_dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
-#      - ./app:/usr/src/app
-      # Mapeia media para pasta de dev
+      # - ./app:/usr/src/app  <-- Mantive comentado como no original
       - /var/data/media_data_dev:/usr/src/app/media
       - /var/data/migrations-dev:/usr/src/app/core/migrations
     environment:
       - DEBUG=1
-      - SECRET_KEY=changeme-dev-key
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_ALLOWED_HOSTS=*
       - SQL_ENGINE=django.db.backends.postgresql
-      - SQL_DATABASE=travel_db
-      - SQL_USER=travel_user
-      - SQL_PASSWORD=travel_pass
-      # Importante: Aponta para o container de banco de DEV
-      - SQL_HOST=travel_db_dev 
+      - SQL_DATABASE=${DB_NAME}
+      - SQL_USER=${DB_USER}
+      - SQL_PASSWORD=${DB_PASSWORD}
+      - SQL_HOST=travel_db_dev
       - SQL_PORT=5432
-#      - WEATHER_API_KEY=8bf7c0827daf456bbdb01057253012
+      # Adicionando a chave do Google Maps aqui também para padronizar
+      # Lembre-se que agora seu código busca no banco, mas é bom ter a var disponível se precisar reverter
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY} 
     depends_on:
       - travel_db_dev
-    restart: always
     networks:
       - chmviola
 
