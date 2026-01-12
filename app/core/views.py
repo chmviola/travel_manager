@@ -607,15 +607,29 @@ def trip_expense_create(request, trip_id):
 #--- VIEW PARA EDITAR VIAGEM ---
 @login_required
 def trip_update(request, pk):
-    trip = get_object_or_404(Trip, pk=pk, user=request.user)
+    """
+    Edita os dados principais da viagem (Título, Datas, Status).
+    """
+    trip = get_object_or_404(Trip, pk=pk)
+    
+    # Segurança: Apenas o dono pode editar as configurações gerais da viagem
+    if trip.user != request.user:
+         messages.error(request, "Você não tem permissão para editar esta viagem.")
+         return redirect('trip_list')
+
     if request.method == 'POST':
         form = TripForm(request.POST, instance=trip)
         if form.is_valid():
             form.save()
+            messages.success(request, "Viagem atualizada com sucesso.")
             return redirect('trip_detail', pk=trip.id)
     else:
         form = TripForm(instance=trip)
-    return render(request, 'trips/trip_form.html', {'form': form, 'edit_mode': True})
+
+    return render(request, 'trips/trip_form.html', {
+        'form': form, 
+        'title': 'Editar Viagem'
+    })
 
 #--- VIEW PARA DELETAR VIAGEM ---
 @login_required
