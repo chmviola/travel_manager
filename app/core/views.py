@@ -383,7 +383,7 @@ def trip_detail(request, pk):
     import ast
     for item in items:
         # # Lógica de Bandeira
-        # item.flag_code = get_country_code_from_address(item.location_address)
+        item.flag_code = get_country_code_from_address(item.location_address)
         # if item.flag_code:
         #     trip.flags.add(item.flag_code)
 
