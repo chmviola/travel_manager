@@ -2,7 +2,7 @@
   <img src="app/core/static/img/logo.png" alt="Logo do App" width="200">
 </p>
 
-# TravelManager v0.093
+# TravelManager v0.1.00
 
 **TravelManager** é uma aplicação web robusta e inteligente desenvolvida para o gerenciamento completo de viagens pessoais e em grupo. Além de controlar despesas e itinerários, o sistema utiliza **Inteligência Artificial (OpenAI)** para atuar como um agente de viagens pessoal e agora conta com **Auditoria de Segurança**, **Configuração Dinâmica de E-mail** e uma **Timeline Otimizada**.
 
@@ -222,12 +222,12 @@ Abaixo, o status atual das funcionalidades.
 
 **Carlos Viola**
 
-* Copyright © 2025. Todos os direitos reservados.
+* Copyright © 2026. Todos os direitos reservados.
 
 
 ```
 
-*Documentação gerada automaticamente com base na versão v0.0.93 do TravelManager.*
+*Documentação gerada automaticamente com base na versão v0.1.00 do TravelManager.*
 
 ```
 
