@@ -27,7 +27,7 @@ pip-delete-this-directory.txt
 #.env
 .env.local
 .env.*.local
-!.env.example          # ← versão de exemplo pode ser versionada
+#!.env.example          # ← versão de exemplo pode ser versionada
 
 # Arquivos de banco de dados locais (SQLite padrão)
 db.sqlite3
