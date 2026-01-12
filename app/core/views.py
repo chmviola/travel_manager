@@ -376,16 +376,16 @@ def trip_detail(request, pk):
     # --- REMOVIDA A LINHA QUE SOBRESCREVIA 'items' COM TUDO DE NOVO ---
 
     # 4. Processamento de Itens (Flags e Clima) - Aplica nos itens FILTRADOS
-    trip.flags = set() 
+    # trip.flags = set() 
     items_changed = False
 
     # --- LIMPEZA DE DADOS PARA EXIBIÇÃO (Sua lógica original mantida) ---
     import ast
     for item in items:
-        # Lógica de Bandeira
-        item.flag_code = get_country_code_from_address(item.location_address)
-        if item.flag_code:
-            trip.flags.add(item.flag_code)
+        # # Lógica de Bandeira
+        # item.flag_code = get_country_code_from_address(item.location_address)
+        # if item.flag_code:
+        #     trip.flags.add(item.flag_code)
 
         # Lógica de Limpeza das Notas
         if item.details:
