@@ -23,18 +23,21 @@ pipeline {
 
         stage('Deploy via Portainer') {
             steps {
-                script {
-                    echo 'Solicitando atualização ao Portainer...'
-                    
-                    // Substitua pela URL que você copiou no Passo 3
-                    // O comando curl faz uma requisição POST que aciona o Portainer
-                    sh 'curl -X POST -d "" "https://portainer.chmviola.com.br/api/stacks/webhooks/fe2c41c1-d687-42fb-8466-61e1d54c4e9d"'
-                    
-                    echo 'Sinal enviado! O Portainer vai baixar o código e recriar a stack.'
+                // O withCredentials busca o segredo pelo ID 'portainer-webhook-dev'
+                // e o coloca dentro da variável 'WEBHOOK_URL'
+                withCredentials([string(credentialsId: 'portainer-webhook-dev', variable: 'WEBHOOK_URL')]) {
+                    script {
+                        echo 'Solicitando atualização ao Portainer...'
+                        
+                        // O Jenkins substitui $WEBHOOK_URL pelo valor real (e oculta no log com ****)
+                        sh 'curl -X POST -d "" "$WEBHOOK_URL"'
+                        
+                        echo 'Sinal enviado! O Portainer vai baixar o código e recriar a stack.'
+                    }
                 }
             }
         }
-
+        
         stage('Health Check') {
             steps {
                 script {
