@@ -64,4 +64,18 @@
 - feat: adiciona a bandeira do pais na tabela de minhas viagens no dashboard
 
 ## 📦 Commit range
-`v0.1.01..HEAD`
+`v0.1.01..HEAD`# 🚀 Release v0.1.03 — 2026-01-13
+
+## ✨ Novas Funcionalidades
+- feat: criação do link e modulo de recuperação de senha e modificação da tela de recuperar senha
+- feat: criação do link e modulo de recuperação de senha
+
+## 🐛 Correções
+- fix: ajuste visual nas telas de troca de senha
+- fix: dados cadastrados no cadastro de email não estão gravando em banco
+- fix: no dashboad financeiro o widget do dólar está vazio
+- fix: no dashboad financeiro o filtro do gráfico donuts não funciona
+- fix: no dashboad financeiro, as categorias sumiram da tabela e o filtro do gráfico donuts não funciona
+
+## 📦 Commit range
+`v0.1.02..HEAD`
