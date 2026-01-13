@@ -3,6 +3,12 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordResetForm, PasswordChangeForm
 from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto, EmailConfiguration
 from .utils import get_db_mail_connection
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.template import loader
+from django.core.mail import EmailMultiAlternatives
+from django.contrib.sites.shortcuts import get_current_site
 import re
 
 #--- FORMULÁRIOS PERSONALIZADOS COM BOOTSTRAP E VALIDAÇÕES ESPECÍFICAS ---
@@ -388,23 +394,61 @@ class ICSImportForm(forms.Form):
 class CustomPasswordResetForm(PasswordResetForm):
     def save(self, domain_override=None, subject_template_name='registration/password_reset_subject.txt',
              email_template_name='registration/password_reset_email.html', use_https=False,
-             token_generator=None, from_email=None, request=None, html_email_template_name=None,
+             token_generator=default_token_generator, from_email=None, request=None, html_email_template_name=None,
              extra_email_context=None):
         
-        # 1. Busca nossa conexão personalizada
+        # 1. Pega o e-mail limpo do formulário
+        email = self.cleaned_data["email"]
+        
+        # 2. Busca nossa conexão personalizada do Banco de Dados
         connection = get_db_mail_connection()
         
-        # 2. Tenta definir o remetente (From) baseado no banco
+        # 3. Define o remetente (From)
         if not from_email:
             try:
-                from .models import EmailConfiguration
                 config = EmailConfiguration.objects.first()
                 if config:
                     from_email = config.default_from_email
             except:
                 pass
+        
+        # 4. Loop para encontrar usuários com esse e-mail e enviar a mensagem
+        # (Lógica padrão do Django, mas adaptada para usar nossa 'connection')
+        for user in self.get_users(email):
+            if not domain_override:
+                current_site = get_current_site(request)
+                site_name = current_site.name
+                domain = current_site.domain
+            else:
+                site_name = domain = domain_override
+            
+            # Contexto para o template do e-mail
+            context = {
+                'email': user.email,
+                'domain': domain,
+                'site_name': site_name,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)), # ID criptografado
+                'user': user,
+                'token': token_generator.make_token(user), # Token de segurança
+                'protocol': 'https' if use_https else 'http',
+                **(extra_email_context or {}),
+            }
+            
+            # Renderiza o Assunto e o Corpo
+            subject = loader.render_to_string(subject_template_name, context)
+            # Remove quebras de linha indesejadas do assunto
+            subject = ''.join(subject.splitlines())
+            body = loader.render_to_string(email_template_name, context)
 
-        # 3. Chama o método original passando a conexão
-        return super().save(domain_override, subject_template_name, email_template_name, use_https,
-                            token_generator, from_email, request, html_email_template_name,
-                            extra_email_context, connection=connection)
+            # --- O PULO DO GATO: Envia usando a NOSSA conexão ---
+            email_message = EmailMultiAlternatives(
+                subject, body, from_email, [user.email], connection=connection
+            )
+            
+            # Se houver template HTML (opcional)
+            if html_email_template_name:
+                html_email = loader.render_to_string(html_email_template_name, context)
+                email_message.attach_alternative(html_email, 'text/html')
+
+            email_message.send()
+
