@@ -22,11 +22,12 @@ from django.db.models import Sum, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from icalendar import Calendar, Event as ICalEvent
 import pytz
+
 
 #--- VIEW PARA A PÁGINA INICIAL (DASHBOARD) ---
 @login_required
@@ -999,6 +1000,9 @@ def financial_dashboard(request):
     trip_labels = list(expenses_by_trip.keys())
     trip_data = [round(v, 2) for v in expenses_by_trip.values()]
 
+    # Adicione esta linha para popular o dropdown
+    all_trips = Trip.objects.filter(user=request.user).order_by('-start_date')
+
     context = {
         # Widgets / KPIs
         'total_global': total_global_brl,
@@ -1009,6 +1013,8 @@ def financial_dashboard(request):
         # Tabela
         'all_expenses': all_expenses,
         
+        'all_trips': all_trips,
+        
         # Gráficos (JSON)
         'cat_labels': json.dumps(cat_labels),
         'cat_data': json.dumps(cat_data),
@@ -1017,6 +1023,47 @@ def financial_dashboard(request):
     }
     
     return render(request, 'financial_dashboard.html', context)
+
+# --- VIEW PARA O GRÁFICO DONUT NO FINANCIAL DASHBOARD ---
+@login_required
+def financial_chart_api(request):
+    """
+    API que recalcula os gastos por categoria baseado no filtro de viagem.
+    """
+    trip_id = request.GET.get('trip_id')
+    
+    # 1. Filtra as despesas
+    expenses = Expense.objects.filter(trip__user=request.user)
+    if trip_id and trip_id != 'all':
+        expenses = expenses.filter(trip_id=trip_id)
+        
+    # 2. Recalcula os valores convertidos
+    stats = defaultdict(float)
+    choices = dict(Expense.CATEGORY_CHOICES)
+    
+    for expense in expenses:
+        # Pega a taxa
+        rate = get_exchange_rate(expense.currency)
+        val_brl = float(expense.amount) * rate
+        
+        # Soma na categoria
+        stats[expense.category] += val_brl
+
+    # 3. Formata para o Gráfico
+    sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
+    
+    labels = []
+    data = []
+    
+    for cat_code, val in sorted_stats:
+        cat_name = choices.get(cat_code, cat_code)
+        labels.append(cat_name)
+        data.append(round(val, 2))
+        
+    return JsonResponse({
+        'labels': labels,
+        'data': data
+    })
 
 @login_required
 def expense_update(request, pk):
