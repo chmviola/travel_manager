@@ -69,6 +69,12 @@
                 <div class="card-header">
                     <h3 class="card-title">Gastos por Categoria</h3>
                     <div class="card-tools">
+                        <select id="tripFilter" class="form-control form-control-sm" style="width: 200px; display: inline-block;">
+                            <option value="all">Todas as Viagens</option>
+                            {% for trip in all_trips %}
+                                <option value="{{ trip.id }}">{{ trip.title }}</option>
+                            {% endfor %}
+                        </select>
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                             <i class="fas fa-minus"></i>
                         </button>
@@ -211,26 +217,47 @@
   });
   
     $(function () {
-        // --- 1. CONFIGURAÇÃO DO GRÁFICO DE CATEGORIAS (DONUT) ---
+        // --- 1. CONFIGURAÇÃO DO GRÁFICO DE ROSCA (COM ATUALIZAÇÃO) ---
         var donutChartCanvas = $('#donutChart').get(0).getContext('2d')
+        
         var donutData = {
-            labels: {{ cat_labels|safe }}, // Dados vindos do Python
-            datasets: [
-                {
-                    data: {{ cat_data|safe }}, // Dados vindos do Python
-                    backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
-                }
-            ]
+            // Note o uso do |safe pois seus dados vêm como JSON do python
+            labels: {{ cat_labels|safe }},
+            datasets: [{
+                data: {{ cat_data|safe }},
+                backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de', '#8d6e63', '#7e57c2', '#ec407a', '#26a69a', '#9ccc65'],
+            }]
         }
+        
         var donutOptions = {
             maintainAspectRatio : false,
             responsive : true,
         }
-        new Chart(donutChartCanvas, {
+
+        // Criamos a instância e guardamos numa variável
+        var donutChartInstance = new Chart(donutChartCanvas, {
             type: 'doughnut',
             data: donutData,
             options: donutOptions
-        })
+        });
+
+        // --- EVENTO DE MUDANÇA NO FILTRO ---
+        $('#tripFilter').change(function() {
+            var selectedTripId = $(this).val();
+            
+            // Chama a nova API
+            $.ajax({
+                url: "{% url 'financial_chart_api' %}",
+                data: { 'trip_id': selectedTripId },
+                dataType: 'json',
+                success: function (data) {
+                    // Atualiza os dados do gráfico
+                    donutChartInstance.data.labels = data.labels;
+                    donutChartInstance.data.datasets[0].data = data.data;
+                    donutChartInstance.update(); // Redesenha
+                }
+            });
+        });
 
         // --- 2. CONFIGURAÇÃO DO GRÁFICO DE VIAGENS (BARRA) ---
         var barChartCanvas = $('#barChart').get(0).getContext('2d')

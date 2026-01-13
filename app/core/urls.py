@@ -35,7 +35,7 @@ urlpatterns = [
 
     # Dashboard Financeiro
     path('financeiro/', views.financial_dashboard, name='financial_dashboard'),
-
+    path('financeiro/api/chart-data/', views.financial_chart_api, name='financial_chart_api'),
     path('fix-locations/', views.fix_locations, name='fix_locations'),
 
     # Rotas de Gestão de Usuários
