@@ -543,20 +543,20 @@ def get_country_code_from_address(address):
             
     return None
 
-#-- Função de envio de email ---#
+#-- Função de envio de email --#
 def get_db_mail_connection():
-    """
-    Retorna uma conexão de e-mail (Backend) usando as configurações do banco de dados.
-    """
-    print("--- DEBUG EMAIL: Iniciando busca de configuração ---")
+    print("--- DEBUG EMAIL: Iniciando busca ---")
     try:
         from .models import EmailConfiguration
         
-        # REMOVIDO O FILTRO 'is_active', pois o campo não existe no seu modelo
-        config = EmailConfiguration.objects.first() 
+        # Conta quantos registros existem para debug
+        total_configs = EmailConfiguration.objects.count()
+        print(f"--- DEBUG EMAIL: Total de registros na tabela: {total_configs} ---")
+        
+        config = EmailConfiguration.objects.first()
 
         if config:
-            print(f"--- DEBUG EMAIL: Configuração encontrada! Host: {config.host} | Port: {config.port} | User: {config.username} ---")
+            print(f"--- DEBUG EMAIL: Config encontrado! Host: {config.host} Port: {config.port} ---")
             return get_connection(
                 host=config.host,
                 port=config.port,
@@ -567,11 +567,9 @@ def get_db_mail_connection():
                 fail_silently=False
             )
         else:
-            print("--- DEBUG EMAIL: Nenhuma configuração encontrada no banco de dados. ---")
-
+            print("--- DEBUG EMAIL: Tabela existe mas está VAZIA. ---")
     except Exception as e:
-        print(f"--- DEBUG EMAIL: Erro ao carregar configuração: {e} ---")
-        
-    print("--- DEBUG EMAIL: Usando conexão PADRÃO do settings.py (Provavelmente localhost) ---")
+        print(f"--- DEBUG EMAIL: ERRO CRÍTICO: {e} ---")
+    
     return get_connection(fail_silently=False)
 
