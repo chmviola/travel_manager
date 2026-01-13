@@ -544,16 +544,25 @@ def get_country_code_from_address(address):
     return None
 
 #-- Função de envio de email ---#
+from django.core.mail import get_connection
+
 def get_db_mail_connection():
     """
     Retorna uma conexão de e-mail (Backend) usando as configurações do banco de dados.
     """
+    print("--- DEBUG EMAIL: Iniciando busca de configuração ---") # LOG
     try:
-        # Importação local para evitar Erro de Importação Circular com models.py
         from .models import EmailConfiguration
         
-        config = EmailConfiguration.objects.first()
+        # Tenta pegar a primeira configuração ATIVA
+        config = EmailConfiguration.objects.filter(is_active=True).first()
+        
+        # Se não tiver filtro de ativo no seu model, use: objects.first()
+        if not config:
+             config = EmailConfiguration.objects.first()
+
         if config:
+            print(f"--- DEBUG EMAIL: Configuração encontrada! Host: {config.host} | Port: {config.port} | User: {config.username} ---") # LOG
             return get_connection(
                 host=config.host,
                 port=config.port,
@@ -563,8 +572,12 @@ def get_db_mail_connection():
                 use_ssl=config.use_ssl,
                 fail_silently=False
             )
+        else:
+            print("--- DEBUG EMAIL: Nenhuma configuração encontrada no banco de dados. ---") # LOG
+
     except Exception as e:
-        print(f"Erro ao carregar configuração de e-mail do banco: {e}")
+        print(f"--- DEBUG EMAIL: Erro ao carregar configuração: {e} ---") # LOG
         
-    # Fallback: Se der erro ou não tiver config, tenta usar o settings.py padrão
+    print("--- DEBUG EMAIL: Usando conexão PADRÃO do settings.py (Provavelmente localhost) ---") # LOG
     return get_connection(fail_silently=False)
+
