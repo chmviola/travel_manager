@@ -95,17 +95,25 @@ urlpatterns = [
     path('trips/<int:trip_id>/gallery/', views.trip_gallery, name='trip_gallery'),
     path('trips/photo/<int:photo_id>/delete/', views.trip_photo_delete, name='trip_photo_delete'),
 
-    # --- RECUPERAÇÃO DE SENHA ---
-    path('reset_password/', auth_views.PasswordResetView.as_view(...), ...),
+# --- RECUPERAÇÃO DE SENHA (CORRIGIDO) ---
+    
+    # 1. Solicitar recuperação (Digitar E-mail)
+    path('reset_password/', auth_views.PasswordResetView.as_view(
+        template_name="registration/password_reset_form.html",
+        form_class=CustomPasswordResetForm  # <--- IMPORTANTE: Usa seu form que lê do banco
+    ), name="password_reset"),
 
+    # 2. Aviso de e-mail enviado
     path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(
         template_name="registration/password_reset_done.html"
     ), name="password_reset_done"),
 
+    # 3. Link que chega no e-mail (Digitar nova senha)
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
         template_name="registration/password_reset_confirm.html"
     ), name="password_reset_confirm"),
 
+    # 4. Sucesso final
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
         template_name="registration/password_reset_complete.html"
     ), name="password_reset_complete"),
