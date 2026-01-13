@@ -3,7 +3,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from core import views
 from . import views
-from core.forms import CustomPasswordResetForm
+# --- ADICIONE ESTA LINHA ABAIXO ---
+from django.contrib.auth import views as auth_views
+from core.forms import CustomPasswordResetForm 
+# ----------------------------------
 
 urlpatterns = [
     # Rotas de Viagem
