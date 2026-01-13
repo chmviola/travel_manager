@@ -1003,17 +1003,26 @@ def financial_dashboard(request):
     # Adicione esta linha para popular o dropdown
     all_trips = Trip.objects.filter(user=request.user).order_by('-start_date')
 
+    # --- [NOVO] Adicione esta linha para pegar a cotação ---
+    try:
+        usd_rate = get_exchange_rate('USD')
+    except:
+        usd_rate = 0.0
+    # -------------------------------------------------------
+
     context = {
         # Widgets / KPIs
         'total_global': total_global_brl,
         'expense_count': all_expenses.count(),
-        'total_year': total_year_brl,      # <--- Dado Novo
-        'current_year': current_year,      # <--- Para mostrar no label
+        'total_year': total_year_brl,
+        'current_year': current_year,
         
-        # Tabela
-        'all_expenses': all_expenses,
+        # --- [NOVO] Adicione esta linha aqui dentro ---
+        'usd_rate': usd_rate,
+        # ----------------------------------------------
         
         'all_trips': all_trips,
+        'all_expenses': all_expenses,
         
         # Gráficos (JSON)
         'cat_labels': json.dumps(cat_labels),
