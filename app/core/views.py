@@ -1041,7 +1041,7 @@ def financial_chart_api(request):
             
     stats = defaultdict(float)
     # Garante que pegamos as opções do Model corretamente
-    choices = dict(Expense.CATEGORY_CHOICES)
+    choices = dict(Expense._meta.get_field('category').choices)
     
     for expense in expenses:
         # Usa a função utilitária ou 1.0 se falhar
