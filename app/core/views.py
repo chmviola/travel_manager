@@ -1027,36 +1027,37 @@ def financial_dashboard(request):
 # --- VIEW PARA O GRÁFICO DONUT NO FINANCIAL DASHBOARD ---
 @login_required
 def financial_chart_api(request):
-    """
-    API que recalcula os gastos por categoria baseado no filtro de viagem.
-    """
     trip_id = request.GET.get('trip_id')
     
-    # 1. Filtra as despesas
+    # Filtra despesas do usuário
     expenses = Expense.objects.filter(trip__user=request.user)
+    
+    # Aplica filtro se não for 'all' e se for um número válido
     if trip_id and trip_id != 'all':
-        expenses = expenses.filter(trip_id=trip_id)
-        
-    # 2. Recalcula os valores convertidos
+        try:
+            expenses = expenses.filter(trip_id=int(trip_id))
+        except ValueError:
+            pass # Se não for número, ignora e retorna tudo
+            
     stats = defaultdict(float)
+    # Garante que pegamos as opções do Model corretamente
     choices = dict(Expense.CATEGORY_CHOICES)
     
     for expense in expenses:
-        # Pega a taxa
+        # Usa a função utilitária ou 1.0 se falhar
         rate = get_exchange_rate(expense.currency)
         val_brl = float(expense.amount) * rate
-        
-        # Soma na categoria
         stats[expense.category] += val_brl
 
-    # 3. Formata para o Gráfico
+    # Ordena e separa
     sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
     
     labels = []
     data = []
     
     for cat_code, val in sorted_stats:
-        cat_name = choices.get(cat_code, cat_code)
+        # Pega o nome legível (ex: 'Alimentação') ou o código (ex: 'FOOD') se não achar
+        cat_name = str(choices.get(cat_code, cat_code)) 
         labels.append(cat_name)
         data.append(round(val, 2))
         

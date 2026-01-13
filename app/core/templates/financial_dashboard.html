@@ -133,9 +133,10 @@
                                 </td>
                                 <td>{{ expense.trip.title }}</td>
                                 <td>
-                                    <span class="badge badge-secondary">{{ expense.get_category_display }}</span>
-                                </td>
-                                <td>
+                                    <span class="badge badge-secondary">
+                                        {{ expense.get_category_display|default:expense.category }}
+                                    </span>
+                                </td>                                <td>
                                     {{ expense.description }}
                                     {% if expense.item %}
                                         <br><small class="text-muted"><i class="fas fa-link"></i> {{ expense.item.name }}</small>
@@ -246,17 +247,28 @@
             options: { maintainAspectRatio : false, responsive : true }
         });
 
-        // Filtro do Gráfico
+        // --- EVENTO DE FILTRO DO GRÁFICO DONUT ---
         $('#tripFilter').change(function() {
             var selectedTripId = $(this).val();
+            console.log("Filtro alterado para: " + selectedTripId); // Debug
+            
             $.ajax({
                 url: "{% url 'financial_chart_api' %}",
                 data: { 'trip_id': selectedTripId },
                 dataType: 'json',
                 success: function (data) {
+                    console.log("Dados recebidos:", data); // Debug
+                    
+                    // Atualiza labels e dados
                     donutChartInstance.data.labels = data.labels;
                     donutChartInstance.data.datasets[0].data = data.data;
+                    
+                    // IMPORTANTE: O Chart.js precisa saber que mudou para animar
                     donutChartInstance.update();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Erro no AJAX:", error);
+                    console.log(xhr.responseText);
                 }
             });
         });
