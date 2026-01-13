@@ -48,23 +48,11 @@
 ## ✨ Novas Funcionalidades
 - feat: criação do botão de exportar/importar para google calender
 - feat: criação da página com o changelog e o link no rodapé
-- feat: criação do espaço para colocar a url nos item de viagem
-- feat: cria uma linha nova com as bandeiras dos paises visitados no profile do perfil do user
-
 ## 🐛 Correções
 - fix: conserto dos datas de corpyright, versões na documentação e readme.md
-- fix: carrega o mapa do detalhe das viagens com a chave que está no banco de dados
-- fix: carrega o mapa dos itens com a chave que está no banco de dados
-- fix: carrega o mapa do dashboard com a chave que está no banco de dados
-- fix: ao sair da tela de edição do attachment  do item de uma viagem sempre voltava para o primeiro dia da viagem
-- fix: ao sair da tela de edição do gasto do item de uma viagem sempre voltava para o primeiro dia da viagem
-- fix: correção das posições dos box no profile do perfil do user
-- fix: ao sair da tela de edição de item de uma viagem sempre voltava para o primeiro dia da viagem
 
 ## 📚 Documentação
 - docs: documentação do Release v0.0.99
-- docs: documentação do Release v0.0.98
-- docs: documentação realease v0.0.97
 
 ## 📦 Commit range
 `v0.0.99..HEAD`

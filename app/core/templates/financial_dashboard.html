@@ -11,9 +11,7 @@
 {% block content %}
 <div class="container-fluid">
     
-    <div class="row"> <!-- Indicadores Principais -->
-        <div class="col-lg-3 col-6"> <!-- Total Gasto em Viagens -->
-            <div class="small-box bg-success">
+    <div class="row"> <div class="col-lg-3 col-6"> <div class="small-box bg-success">
                 <div class="inner">
                     <h3>R$ {{ total_global|floatformat:2|intcomma }}</h3>
                     <p>Total Gasto em Viagens (Convertido)</p>
@@ -24,8 +22,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-6"> <!-- Total de Viagens -->
-            <div class="small-box bg-info">
+        <div class="col-lg-3 col-6"> <div class="small-box bg-info">
                 <div class="inner">
                     <h3>{{ expense_count }}</h3>
                     <p>Lançamentos Registrados</p>
@@ -35,9 +32,19 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-3 col-6"> <!-- Gasto no Ano Atual -->
-            <div class="small-box bg-warning">
+        
+        <div class="col-lg-3 col-6"> <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>R$ {{ usd_rate|floatformat:2|intcomma }}</h3>
+                    <p>Dólar Hoje (Estimado)</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-6"> <div class="small-box bg-danger">
                 <div class="inner">
                     <h3>R$ {{ total_year|floatformat:2|intcomma }}</h3>
                     <p>Gasto em {{ current_year }}</p>
@@ -47,27 +54,30 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-3 col-6"> <!-- Placeholder para Futuro Indicador -->
-            <div class="small-box bg-secondary">
-                <div class="inner">
-                    <h3>---</h3>
-                    <p>Em breve...</p>
-                </div>
-            <div class="icon">
-                <i class="fas fa-ellipsis-h"></i>
-            </div>
-        </div>
-        </div>
-    
     </div>
 
-    <div class="row"> <!-- Gráficos e Tabela de Gastos -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Custo Total por Viagem</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
 
-        <div class="col-md-6"> <!-- Gráfico de Donut (Categorias) -->
+        <div class="col-md-6">
             <div class="card card-danger">
                 <div class="card-header">
                     <h3 class="card-title">Gastos por Categoria</h3>
+
                     <div class="card-tools">
                         <select id="tripFilter" class="form-control form-control-sm" style="width: 200px; display: inline-block;">
                             <option value="all">Todas as Viagens</option>
@@ -85,112 +95,80 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-6">  <!-- Gráfico de Barras (Viagens) -->
-            <div class="card card-primary">
-                <div class="card-header">
-                    <h3 class="card-title">Custo por Viagem</h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h3 class="card-title"><i class="fas fa-list mr-2"></i>Histórico Completo de Gastos</h3>
+                    
+                    <div class="d-flex align-items-center">
+                        <label for="tableTripFilter" class="mr-2 mb-0 font-weight-normal">Filtrar Tabela:</label>
+                        <select id="tableTripFilter" class="form-control form-control-sm" style="width: 200px;">
+                            <option value="">Todas as Viagens</option>
+                            {% for trip in all_trips %}
+                                <option value="{{ trip.title }}">{{ trip.title }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="chart">
-                        <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <div class="row mt-12"> <!-- Tabela de Gastos -->
-            <div class="col-12">
-                <div class="card card-primary card-outline">
-                    <div class="card-header border-0">
-                        <h3 class="card-title">
-                            <i class="fas fa-file-invoice-dollar mr-1"></i> Histórico Completo de Gastos
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <table id="expensesTable" class="table table-bordered table-striped table-hover">
-                            <thead>
+                    <table id="expensesTable" class="table table-bordered table-striped">
+                        <thead>
                             <tr>
                                 <th>Data</th>
                                 <th>Viagem</th>
-                                <th>Descrição / Item</th>
-                                <th class="text-right">Original</th>
-                                <th class="text-right">Em Reais (R$)</th>
-                                <th class="text-center">Ações</th>
+                                <th>Categoria</th>
+                                <th>Descrição</th>
+                                <th>Valor Orig.</th>
+                                <th>Valor (R$)</th>
                             </tr>
-                            </thead>
-                            <tbody>
+                        </thead>
+                        <tbody>
                             {% for expense in all_expenses %}
                             <tr>
-                                <td data-order="{{ expense.date|date:'Ymd' }}">
+                                <td data-sort="{{ expense.date|date:'Ymd' }}">
                                     {{ expense.date|date:"d/m/Y" }}
                                 </td>
-
+                                <td>{{ expense.trip.title }}</td>
                                 <td>
-                                    <a href="{% url 'trip_detail' expense.trip.id %}" class="text-dark font-weight-bold">
-                                        {{ expense.trip.title }}
-                                    </a>
+                                    <span class="badge badge-secondary">{{ expense.get_category_display }}</span>
                                 </td>
-
                                 <td>
                                     {{ expense.description }}
                                     {% if expense.item %}
-                                        <br><small class="text-info"><i class="fas fa-link"></i> {{ expense.item.name }}</small>
-                                    {% else %}
-                                        <br><small class="text-muted">{{ expense.category }}</small>
+                                        <br><small class="text-muted"><i class="fas fa-link"></i> {{ expense.item.name }}</small>
                                     {% endif %}
                                 </td>
-
-                                <td class="text-right" data-order="{{ expense.amount }}">
-                                    <small class="badge badge-light border">
-                                        {{ expense.currency }} {{ expense.amount|floatformat:2|intcomma }}
-                                    </small>
+                                <td>
+                                    {{ expense.currency }} {{ expense.amount|floatformat:2 }}
                                 </td>
-
-                                <td class="text-right text-success font-weight-bold" data-order="{{ expense.converted_value }}">
+                                <td class="font-weight-bold text-primary" data-order="{{ expense.converted_value }}">
                                     R$ {{ expense.converted_value|floatformat:2|intcomma }}
-                                </td>
-
-                                <td class="text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar">
-                                            <i class="fas fa-pen text-primary"></i>
-                                        </a>
-                                        <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir" onclick="return confirm('Deseja realmente excluir este gasto?');">
-                                            <i class="fas fa-trash text-danger"></i>
-                                        </a>
-                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
-                            </tbody>
-                            
-                            <tfoot>
-                                <tr class="bg-light">
-                                    <th colspan="4" class="text-right text-uppercase">Total Geral Acumulado:</th>
-                                    <th class="text-right text-success" style="font-size: 1.1em;">R$ {{ total_global|floatformat:2|intcomma }}</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-light font-weight-bold">
+                                <td colspan="5" class="text-right">Total Filtrado:</td>
+                                <td id="tableTotal" class="text-primary">R$ 0,00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -198,103 +176,109 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  $(function () {
-    $("#expensesTable").DataTable({
-      "responsive": true, 
-      "lengthChange": false, 
-      "autoWidth": false,
-      "pageLength": 25, // Mostra 25 itens por página
-      "order": [[ 0, "desc" ]], // Ordena pela primeira coluna (Data) decrescente
-      "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json" // Tradução para Português
-        },
-      "buttons": ["copy", "csv", "excel", "pdf", "print", "colVis"]
-    }).buttons().container().appendTo('#expensesTable_wrapper .col-md-6:eq(0)');
-  });
-  
     $(function () {
-        // --- 1. CONFIGURAÇÃO DO GRÁFICO DE ROSCA (COM ATUALIZAÇÃO) ---
+        // --- 1. CONFIGURAÇÃO DA TABELA (DATATABLES) COM TOTALIZADOR ---
+        var table = $("#expensesTable").DataTable({
+            "responsive": true, 
+            "lengthChange": false, 
+            "autoWidth": false,
+            "pageLength": 10,
+            "order": [[ 0, "desc" ]], // Ordena por Data (Coluna 0) decrescente
+            "buttons": ["copy", "csv", "excel", "pdf", "print"],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/pt-BR.json"
+            },
+            
+            // FUNÇÃO MÁGICA DO RODAPÉ (Soma Dinâmica)
+            "footerCallback": function ( row, data, start, end, display ) {
+                var api = this.api();
+    
+                // Função para limpar a formatação (R$ 1.000,00 -> 1000.00)
+                var intVal = function ( i ) {
+                    return typeof i === 'string' ?
+                        i.replace(/R\$\s?/g, '').replace(/\./g, '').replace(/,/g, '.')*1 :
+                        typeof i === 'number' ? i : 0;
+                };
+    
+                // Calcula o Total de todas as páginas filtradas
+                var total = api
+                    .column( 5, { search: 'applied' } ) // Coluna 5 é Valor (R$)
+                    .data()
+                    .reduce( function (a, b) {
+                        return intVal(a) + intVal(b);
+                    }, 0 );
+    
+                // Atualiza o rodapé com formatação brasileira
+                $( api.column( 5 ).footer() ).html(
+                    'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                );
+            }
+        });
+
+        // Adiciona os botões de exportação no local padrão do AdminLTE
+        table.buttons().container().appendTo('#expensesTable_wrapper .col-md-6:eq(0)');
+
+        // --- GATILHO DO FILTRO DA TABELA ---
+        $('#tableTripFilter').on('change', function () {
+            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+            // Aplica o filtro na Coluna 1 (Viagem) e redesenha a tabela
+            // O redeseho dispara o footerCallback e atualiza o total automaticamente
+            table.column(1).search(val ? '^'+val+'$' : '', true, false).draw();
+        });
+
+
+        // --- 2. GRÁFICO DE ROSCA (JÁ EXISTENTE - MANTIDO) ---
         var donutChartCanvas = $('#donutChart').get(0).getContext('2d')
-        
         var donutData = {
-            // Note o uso do |safe pois seus dados vêm como JSON do python
             labels: {{ cat_labels|safe }},
             datasets: [{
                 data: {{ cat_data|safe }},
                 backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de', '#8d6e63', '#7e57c2', '#ec407a', '#26a69a', '#9ccc65'],
             }]
         }
-        
-        var donutOptions = {
-            maintainAspectRatio : false,
-            responsive : true,
-        }
-
-        // Criamos a instância e guardamos numa variável
         var donutChartInstance = new Chart(donutChartCanvas, {
             type: 'doughnut',
             data: donutData,
-            options: donutOptions
+            options: { maintainAspectRatio : false, responsive : true }
         });
 
-        // --- EVENTO DE MUDANÇA NO FILTRO ---
+        // Filtro do Gráfico
         $('#tripFilter').change(function() {
             var selectedTripId = $(this).val();
-            
-            // Chama a nova API
             $.ajax({
                 url: "{% url 'financial_chart_api' %}",
                 data: { 'trip_id': selectedTripId },
                 dataType: 'json',
                 success: function (data) {
-                    // Atualiza os dados do gráfico
                     donutChartInstance.data.labels = data.labels;
                     donutChartInstance.data.datasets[0].data = data.data;
-                    donutChartInstance.update(); // Redesenha
+                    donutChartInstance.update();
                 }
             });
         });
 
-        // --- 2. CONFIGURAÇÃO DO GRÁFICO DE VIAGENS (BARRA) ---
+        // --- 3. GRÁFICO DE BARRAS (JÁ EXISTENTE - MANTIDO) ---
         var barChartCanvas = $('#barChart').get(0).getContext('2d')
-        var barChartData = {
-            labels  : {{ trip_labels|safe }},
-            datasets: [
-                {
-                    label               : 'Custo Total (R$)',
-                    backgroundColor     : 'rgba(60,141,188,0.9)',
-                    borderColor         : 'rgba(60,141,188,0.8)',
-                    pointRadius          : false,
-                    pointColor          : '#3b8bba',
-                    pointStrokeColor    : 'rgba(60,141,188,1)',
-                    pointHighlightFill  : '#fff',
-                    pointHighlightStroke: 'rgba(60,141,188,1)',
-                    data                : {{ trip_data|safe }}
-                },
-            ]
-        }
-        
-        var barChartOptions = {
-            responsive              : true,
-            maintainAspectRatio     : false,
-            datasetFill             : false,
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
-        }
-
         new Chart(barChartCanvas, {
             type: 'bar',
-            data: barChartData,
-            options: barChartOptions
+            data: {
+                labels: {{ trip_labels|safe }},
+                datasets: [{
+                    label: 'Custo Total (R$)',
+                    backgroundColor: 'rgba(60,141,188,0.9)',
+                    borderColor: 'rgba(60,141,188,0.8)',
+                    data: {{ trip_data|safe }}
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { yAxes: [{ ticks: { beginAtZero: true } }] }
+            }
         })
     })
 </script>
