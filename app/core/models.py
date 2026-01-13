@@ -232,12 +232,12 @@ class TripCollaborator(models.Model):
 class APIConfiguration(models.Model):
     KEY_CHOICES = [
         ('WEATHER_API', 'WeatherAPI (Clima)'),
-        ('GOOGLE_MAPS', 'Google Maps API'),
+        ('GOOGLE_MAPS_API', 'Google Maps API')
         ('OPENAI_API', 'OpenAI API'),
         # Futuramente você pode adicionar outras aqui (OpenAI, AWS, etc)
     ]
 
-    key = models.CharField(max_length=50, choices=KEY_CHOICES, unique=True, verbose_name="Serviço/API")
+    key = models.CharField(max_length=50, choices=KEY_CHOICES, unique=True)
     value = models.CharField(max_length=255, verbose_name="Chave de Acesso (Key)")
     is_active = models.BooleanField(default=True, verbose_name="Ativo")
     description = models.TextField(blank=True, null=True, verbose_name="Descrição/Notas")
