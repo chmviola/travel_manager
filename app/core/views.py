@@ -1027,52 +1027,52 @@ def financial_dashboard(request):
 # --- VIEW PARA O GRÁFICO DONUT NO FINANCIAL DASHBOARD ---
 @login_required
 def financial_chart_api(request):
-    """
-    API que recalcula os gastos por categoria baseado no filtro de viagem.
-    """
     trip_id = request.GET.get('trip_id')
     
-    # 1. Filtra as despesas do usuário atual
+    # 1. Filtra despesas
     expenses = Expense.objects.filter(trip__user=request.user)
     
-    # Aplica filtro se não for 'all' e se for um número válido
     if trip_id and trip_id != 'all':
         try:
             expenses = expenses.filter(trip_id=int(trip_id))
         except ValueError:
-            pass # Se não for número, ignora e retorna tudo
+            pass 
             
     stats = defaultdict(float)
     
-    # --- CORREÇÃO AQUI ---
-    # Em vez de tentar adivinhar o nome da constante, perguntamos ao Django
-    # quais são as opções configuradas no campo 'category' do banco de dados.
-    field_object = Expense._meta.get_field('category')
-    choices = dict(field_object.choices)
-    # ---------------------
+    # --- CORREÇÃO BLINDADA AQUI ---
+    # Tenta pegar as escolhas do campo. Se não tiver, cria um dicionário vazio.
+    choices = {}
+    try:
+        field_object = Expense._meta.get_field('category')
+        if field_object.choices:
+            choices = dict(field_object.choices)
+    except:
+        # Se der qualquer erro ao tentar pegar choices, seguimos sem elas
+        choices = {}
+    # ------------------------------
     
     for expense in expenses:
-        # Usa a função utilitária de conversão
-        # Se der erro na taxa, assume 1.0 para não quebrar o gráfico
+        # Tratamento de erro na conversão de moeda
         try:
             rate = get_exchange_rate(expense.currency)
         except:
             rate = 1.0
             
         val_brl = float(expense.amount) * rate
-        
-        # Soma na categoria
         stats[expense.category] += val_brl
 
-    # Ordena do maior gasto para o menor
+    # Ordena
     sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
     
     labels = []
     data = []
     
     for cat_code, val in sorted_stats:
-        # Pega o nome bonito (ex: 'Alimentação') ou usa o código (ex: 'FOOD') se falhar
+        # Se existir no dicionário de choices, usa o nome bonito.
+        # Se não existir (ou choices for vazio), usa o próprio código/texto salvo.
         cat_name = str(choices.get(cat_code, cat_code))
+        
         labels.append(cat_name)
         data.append(round(val, 2))
         
