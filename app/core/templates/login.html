@@ -31,7 +31,7 @@
     <div class="card-body login-card-body">
       <p class="login-box-msg">Faça login para gerenciar suas viagens</p>
 
-      <form method="post">
+<form method="post">
         {% csrf_token %}
         
         {% if form.errors %}
@@ -49,8 +49,7 @@
           </div>
         </div>
 
-        <div class="input-group mb-3">
-          <input type="password" name="password" class="form-control" placeholder="Senha" required>
+        <div class="input-group mb-2"> <input type="password" name="password" class="form-control" placeholder="Senha" required>
           <div class="input-group-append">
             <div class="input-group-text">
               <span class="fas fa-lock"></span>
@@ -58,15 +57,11 @@
           </div>
         </div>
 
+        <p class="mb-3 text-right"> <a href="{% url 'password_reset' %}">Esqueci a minha senha</a>
+        </p>
+
         <div class="row">
-          <div class="col-8">
-            </div>
-            <div class="col-12 text-center">
-              <p class="mb-1 mt-2 text-center">
-                <a href="{% url 'password_reset' %}">Esqueci a minha senha</a>
-              </p>
-            </div>
-          <div class="col-4">
+          <div class="col-12">
             <button type="submit" class="btn btn-primary btn-block">Entrar</button>
           </div>
         </div>
