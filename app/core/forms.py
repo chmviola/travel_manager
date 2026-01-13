@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto, EmailConfiguration
-import re  # <--- Importante para validação regex
+from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto, EmailConfiguration, PasswordResetForm
+from .utils import get_db_mail_connection
+import re
 
 #--- FORMULÁRIOS PERSONALIZADOS COM BOOTSTRAP E VALIDAÇÕES ESPECÍFICAS ---
 class TripForm(forms.ModelForm):
@@ -382,3 +383,28 @@ class ICSImportForm(forms.Form):
         label="Arquivo de Calendário (.ics)",
         widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.ics'})
     )
+
+#-- Formulário para recuperação de senha --#
+class CustomPasswordResetForm(PasswordResetForm):
+    def save(self, domain_override=None, subject_template_name='registration/password_reset_subject.txt',
+             email_template_name='registration/password_reset_email.html', use_https=False,
+             token_generator=None, from_email=None, request=None, html_email_template_name=None,
+             extra_email_context=None):
+        
+        # 1. Busca nossa conexão personalizada
+        connection = get_db_mail_connection()
+        
+        # 2. Tenta definir o remetente (From) baseado no banco
+        if not from_email:
+            try:
+                from .models import EmailConfiguration
+                config = EmailConfiguration.objects.first()
+                if config:
+                    from_email = config.default_from_email
+            except:
+                pass
+
+        # 3. Chama o método original passando a conexão
+        return super().save(domain_override, subject_template_name, email_template_name, use_https,
+                            token_generator, from_email, request, html_email_template_name,
+                            extra_email_context, connection=connection)

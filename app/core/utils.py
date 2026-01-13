@@ -5,6 +5,8 @@ from django.conf import settings
 from datetime import timedelta, datetime
 from openai import OpenAI
 from .models import APIConfiguration, Trip
+from django.core.mail import get_connection
+
 
 #-- Função Adicional para Buscar Dicas de Viagem AI --#
 def get_travel_intel(destination):
@@ -540,3 +542,29 @@ def get_country_code_from_address(address):
             return country_code
             
     return None
+
+#-- Função de envio de email ---#
+def get_db_mail_connection():
+    """
+    Retorna uma conexão de e-mail (Backend) usando as configurações do banco de dados.
+    """
+    try:
+        # Importação local para evitar Erro de Importação Circular com models.py
+        from .models import EmailConfiguration
+        
+        config = EmailConfiguration.objects.first()
+        if config:
+            return get_connection(
+                host=config.host,
+                port=config.port,
+                username=config.username,
+                password=config.password,
+                use_tls=config.use_tls,
+                use_ssl=config.use_ssl,
+                fail_silently=False
+            )
+    except Exception as e:
+        print(f"Erro ao carregar configuração de e-mail do banco: {e}")
+        
+    # Fallback: Se der erro ou não tiver config, tenta usar o settings.py padrão
+    return get_connection(fail_silently=False)

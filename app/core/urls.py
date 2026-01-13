@@ -3,6 +3,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from core import views
 from . import views
+from core.forms import CustomPasswordResetForm
 
 urlpatterns = [
     # Rotas de Viagem
@@ -90,6 +91,24 @@ urlpatterns = [
     # Rotas de Galeria de Fotos da Viagem
     path('trips/<int:trip_id>/gallery/', views.trip_gallery, name='trip_gallery'),
     path('trips/photo/<int:photo_id>/delete/', views.trip_photo_delete, name='trip_photo_delete'),
+
+    # --- RECUPERAÇÃO DE SENHA ---
+    path('reset_password/', auth_views.PasswordResetView.as_view(
+        template_name="registration/password_reset_form.html",
+        form_class=CustomPasswordResetForm  # Usa nosso form com config de banco
+    ), name="password_reset"),
+
+    path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(
+        template_name="registration/password_reset_done.html"
+    ), name="password_reset_done"),
+
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name="registration/password_reset_confirm.html"
+    ), name="password_reset_confirm"),
+
+    path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(
+        template_name="registration/password_reset_complete.html"
+    ), name="password_reset_complete"),
 
     # Rota para o CHANGELOG
     path('changelog/', views.changelog_view, name='changelog'),
