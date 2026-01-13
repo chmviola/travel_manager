@@ -12,8 +12,24 @@
             
             <form method="POST">
                 {% csrf_token %}
-                <div class="card-body">
+<div class="card-body">
                     
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <h5><i class="icon fas fa-ban"></i> Erro ao salvar!</h5>
+                            <ul>
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> Estas configurações serão usadas para enviar convites, notificações e recuperação de senha.
                     </div>
@@ -23,6 +39,7 @@
                             <div class="form-group">
                                 <label>Host SMTP (Servidor)</label>
                                 {{ form.host }}
+                                {% if form.host.errors %}<span class="text-danger">{{ form.host.errors.0 }}</span>{% endif %}
                                 <small class="text-muted">Ex: smtp.gmail.com</small>
                             </div>
                         </div>
@@ -30,6 +47,7 @@
                             <div class="form-group">
                                 <label>Porta</label>
                                 {{ form.port }}
+                                {% if form.port.errors %}<span class="text-danger">{{ form.port.errors.0 }}</span>{% endif %}
                                 <small class="text-muted">Ex: 587 (TLS) ou 465 (SSL)</small>
                             </div>
                         </div>
@@ -38,14 +56,16 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Usuário</label>
+                                <label>Usuário/E-mail</label>
                                 {{ form.username }}
+                                {% if form.username.errors %}<span class="text-danger">{{ form.username.errors.0 }}</span>{% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Senha</label>
                                 {{ form.password }}
+                                {% if form.password.errors %}<span class="text-danger">{{ form.password.errors.0 }}</span>{% endif %}
                             </div>
                         </div>
                     </div>
@@ -53,22 +73,22 @@
                     <div class="form-group">
                         <label>E-mail de Envio (Remetente)</label>
                         {{ form.default_from_email }}
+                        {% if form.default_from_email.errors %}<span class="text-danger">{{ form.default_from_email.errors.0 }}</span>{% endif %}
                         <small class="text-muted">Este é o e-mail que aparecerá no campo "De:"</small>
                     </div>
 
                     <div class="form-group">
                         <div class="custom-control custom-switch">
                             {{ form.use_tls }}
-                            <label for="{{ form.use_tls.id_for_label }}">Usar TLS (Recomendado para porta 587)</label>
+                            <label class="custom-control-label" for="{{ form.use_tls.id_for_label }}">Usar TLS (Recomendado para porta 587)</label>
                         </div>
                         <div class="custom-control custom-switch mt-2">
                             {{ form.use_ssl }}
-                            <label for="{{ form.use_ssl.id_for_label }}">Usar SSL (Recomendado para porta 465)</label>
+                            <label class="custom-control-label" for="{{ form.use_ssl.id_for_label }}">Usar SSL (Recomendado para porta 465)</label>
                         </div>
                     </div>
-
                 </div>
-
+                
                 <div class="card-footer d-flex justify-content-between">
                     <button type="submit" name="action" value="save" class="btn btn-primary">
                         <i class="fas fa-save"></i> Salvar Configuração
