@@ -544,25 +544,19 @@ def get_country_code_from_address(address):
     return None
 
 #-- Função de envio de email ---#
-from django.core.mail import get_connection
-
 def get_db_mail_connection():
     """
     Retorna uma conexão de e-mail (Backend) usando as configurações do banco de dados.
     """
-    print("--- DEBUG EMAIL: Iniciando busca de configuração ---") # LOG
+    print("--- DEBUG EMAIL: Iniciando busca de configuração ---")
     try:
         from .models import EmailConfiguration
         
-        # Tenta pegar a primeira configuração ATIVA
-        config = EmailConfiguration.objects.filter(is_active=True).first()
-        
-        # Se não tiver filtro de ativo no seu model, use: objects.first()
-        if not config:
-             config = EmailConfiguration.objects.first()
+        # REMOVIDO O FILTRO 'is_active', pois o campo não existe no seu modelo
+        config = EmailConfiguration.objects.first() 
 
         if config:
-            print(f"--- DEBUG EMAIL: Configuração encontrada! Host: {config.host} | Port: {config.port} | User: {config.username} ---") # LOG
+            print(f"--- DEBUG EMAIL: Configuração encontrada! Host: {config.host} | Port: {config.port} | User: {config.username} ---")
             return get_connection(
                 host=config.host,
                 port=config.port,
@@ -573,11 +567,11 @@ def get_db_mail_connection():
                 fail_silently=False
             )
         else:
-            print("--- DEBUG EMAIL: Nenhuma configuração encontrada no banco de dados. ---") # LOG
+            print("--- DEBUG EMAIL: Nenhuma configuração encontrada no banco de dados. ---")
 
     except Exception as e:
-        print(f"--- DEBUG EMAIL: Erro ao carregar configuração: {e} ---") # LOG
+        print(f"--- DEBUG EMAIL: Erro ao carregar configuração: {e} ---")
         
-    print("--- DEBUG EMAIL: Usando conexão PADRÃO do settings.py (Provavelmente localhost) ---") # LOG
+    print("--- DEBUG EMAIL: Usando conexão PADRÃO do settings.py (Provavelmente localhost) ---")
     return get_connection(fail_silently=False)
 
