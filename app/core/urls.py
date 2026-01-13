@@ -96,10 +96,7 @@ urlpatterns = [
     path('trips/photo/<int:photo_id>/delete/', views.trip_photo_delete, name='trip_photo_delete'),
 
     # --- RECUPERAÇÃO DE SENHA ---
-    path('reset_password/', auth_views.PasswordResetView.as_view(
-        template_name="registration/password_reset_form.html",
-        form_class=CustomPasswordResetForm  # Usa nosso form com config de banco
-    ), name="password_reset"),
+    path('reset_password/', auth_views.PasswordResetView.as_view(...), ...),
 
     path('reset_password_sent/', auth_views.PasswordResetDoneView.as_view(
         template_name="registration/password_reset_done.html"
