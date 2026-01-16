@@ -21,23 +21,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. Segundo: Define a função que depende do BASE_DIR
 def get_version_from_changelog():
-    # Agora o Python já sabe o que é BASE_DIR
-    changelog_path = os.path.join(BASE_DIR, 'app', 'CHANGELOG.md')
-    default_version = '0.0.0'
+    # Tenta encontrar o arquivo no BASE_DIR ou na subpasta app
+    paths = [
+        os.path.join(BASE_DIR, 'CHANGELOG.md'),
+        os.path.join(BASE_DIR, 'app', 'CHANGELOG.md')
+    ]
     
-    try:
-        if os.path.exists(changelog_path):
-            with open(changelog_path, 'r', encoding='utf-8') as f:
-                for i, line in enumerate(f):
-                    if i > 50: break 
-                    match = re.search(r'Release v?(\d+\.\d+\.\d+)', line)
-                    if match:
-                        return match.group(1)
-        return default_version
-    except Exception:
-        return default_version
+    for changelog_path in paths:
+        try:
+            if os.path.exists(changelog_path):
+                with open(changelog_path, 'r', encoding='utf-8') as f:
+                    for i, line in enumerate(f):
+                        if i > 50: break # Limite de busca por performance
+                        # Regex flexível para capturar a versão
+                        match = re.search(r'Release v?(\d+\.\d+\.\d+)', line, re.IGNORECASE)
+                        if match:
+                            return match.group(1)
+        except Exception:
+            continue
+            
+    return '0.0.0'
 
-# 3. Terceiro: Atribui a versão à variável global
 APP_VERSION = get_version_from_changelog()
 # --------------------------------------------------------
 
@@ -101,7 +105,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'core.context_processors.version_context',
+                'core.context_processors.export_version',
             ],
         },
     },

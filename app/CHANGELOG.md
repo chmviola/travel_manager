@@ -1,3 +1,7 @@
+# 🚀 Release v0.1.06 — 2026-01-16
+
+*Aguardando geração de notas...*
+
 # 🚀 Release v0.1.05 — 2026-01-16
 
 ### 🐛 Correções
