@@ -21,25 +21,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. Segundo: Define a função que depende do BASE_DIR
 def get_version_from_changelog():
-    # Tenta encontrar o arquivo no BASE_DIR ou na subpasta app
+    print(f"--- DEBUG VERSION: BASE_DIR é {BASE_DIR} ---")
+    
+    # Lista de tentativas de caminho
     paths = [
-        os.path.join(BASE_DIR, 'CHANGELOG.md'),
-        os.path.join(BASE_DIR, 'app', 'CHANGELOG.md')
+        os.path.join(BASE_DIR, 'CHANGELOG.md'),         # Tenta na raiz do app
+        os.path.join(BASE_DIR, '..', 'CHANGELOG.md'),   # Tenta um nível acima (caso o app esteja numa subpasta)
+        os.path.join(BASE_DIR, 'app', 'CHANGELOG.md'),  # Tenta numa subpasta app
     ]
     
     for changelog_path in paths:
+        # Normaliza o caminho para evitar problemas com / ou \
+        full_path = os.path.abspath(changelog_path)
+        print(f"--- DEBUG VERSION: Tentando ler em: {full_path} ---")
+        
         try:
-            if os.path.exists(changelog_path):
-                with open(changelog_path, 'r', encoding='utf-8') as f:
+            if os.path.exists(full_path):
+                print("--- DEBUG VERSION: Arquivo ENCONTRADO! Lendo conteúdo... ---")
+                with open(full_path, 'r', encoding='utf-8') as f:
                     for i, line in enumerate(f):
-                        if i > 50: break # Limite de busca por performance
-                        # Regex flexível para capturar a versão
+                        if i > 20: break 
+                        print(f"--- DEBUG VERSION Linha {i}: {line.strip()} ---") # Mostra o que está lendo
+                        
+                        # Regex para capturar vX.X.X
                         match = re.search(r'Release v?(\d+\.\d+\.\d+)', line, re.IGNORECASE)
                         if match:
-                            return match.group(1)
-        except Exception:
+                            version = match.group(1)
+                            print(f"--- DEBUG VERSION: SUCESSO! Versão extraída: {version} ---")
+                            return version
+            else:
+                print("--- DEBUG VERSION: Arquivo não existe neste caminho. ---")
+        except Exception as e:
+            print(f"--- DEBUG VERSION: Erro ao ler arquivo: {e} ---")
             continue
             
+    print("--- DEBUG VERSION: Falha total. Retornando 0.0.0 ---")
     return '0.0.0'
 
 APP_VERSION = get_version_from_changelog()
