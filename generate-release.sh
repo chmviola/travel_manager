@@ -1,55 +1,41 @@
 #!/bin/bash
 
-# =========================
-# Configurações
-# =========================
-VERSION=$1
+# Caminho para o Changelog dentro da pasta app
+CHANGELOG_PATH="app/CHANGELOG.md"
 DATE=$(date +%Y-%m-%d)
 
+# 1. Extrai a versão (Lê a primeira linha que contém "🚀 Release")
+VERSION=$(grep "🚀 Release" "$CHANGELOG_PATH" | head -n 1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+
 if [ -z "$VERSION" ]; then
-  echo "Uso: ./generate-release.sh vX.Y.Z"
+  echo "Erro: Não foi possível encontrar a versão em $CHANGELOG_PATH"
   exit 1
 fi
 
+echo "Gerando notas para v$VERSION..."
+
+# 2. Pega a última tag
 LAST_TAG=$(git tag --sort=-creatordate | head -n 1)
+RANGE="${LAST_TAG:+$LAST_TAG..}HEAD"
 
-if [ -z "$LAST_TAG" ]; then
-  RANGE="HEAD"
-else
-  RANGE="$LAST_TAG..HEAD"
-fi
+OUTPUT="RELEASE_v${VERSION}.md"
+echo "" > "$OUTPUT"
 
-OUTPUT="RELEASE_${VERSION}.md"
-
-echo "# 🚀 Release ${VERSION} — ${DATE}" > $OUTPUT
-echo "" >> $OUTPUT
-
-# =========================
-# Função para seção
-# =========================
 add_section () {
-  TITLE=$1
-  PREFIX=$2
-
-  COMMITS=$(git log $RANGE --pretty=format:"- %s" | grep "^- ${PREFIX}:")
-
+  COMMITS=$(git log $RANGE --pretty=format:"- %s" | grep "^- $2:")
   if [ -n "$COMMITS" ]; then
-    echo "## ${TITLE}" >> $OUTPUT
-    echo "$COMMITS" >> $OUTPUT
-    echo "" >> $OUTPUT
+    echo "## $1" >> "$OUTPUT"
+    echo "$COMMITS" >> "$OUTPUT"
+    echo "" >> "$OUTPUT"
   fi
 }
 
 add_section "✨ Novas Funcionalidades" "feat"
 add_section "🐛 Correções" "fix"
-add_section "🔧 Melhorias Técnicas" "refactor"
-add_section "⚡ Performance" "perf"
+add_section "🔧 Melhorias" "refactor"
 add_section "🧹 Manutenção" "chore"
-add_section "📚 Documentação" "docs"
 
-echo "## 📦 Commit range" >> $OUTPUT
-echo "\`${RANGE}\`" >> $OUTPUT
+echo "## 📦 Commit range" >> "$OUTPUT"
+echo "\`$RANGE\`" >> "$OUTPUT"
 
-echo ""
-echo "Release gerado em: ${OUTPUT}"
-echo ""
+echo "✅ Release Note: $OUTPUT"

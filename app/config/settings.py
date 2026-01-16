@@ -10,12 +10,31 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import re
 import os
 from pathlib import Path
 from decouple import config
 
-# Versão do Aplicativo (Edite apenas aqui!)
-APP_VERSION = '0.1.03'
+# --- Lógica de Versionamento Automático via CHANGELOG ---
+def get_version_from_changelog():
+    # Caminho ajustado: BASE_DIR / 'app' / 'CHANGELOG.md'
+    changelog_path = os.path.join(BASE_DIR, 'app', 'CHANGELOG.md')
+    default_version = '0.0.0'
+    
+    try:
+        if os.path.exists(changelog_path):
+            with open(changelog_path, 'r', encoding='utf-8') as f:
+                for i, line in enumerate(f):
+                    if i > 50: break 
+                    match = re.search(r'Release v?(\d+\.\d+\.\d+)', line)
+                    if match:
+                        return match.group(1)
+        return default_version
+    except Exception:
+        return default_version
+
+APP_VERSION = get_version_from_changelog()
+# --------------------------------------------------------
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

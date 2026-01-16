@@ -80,3 +80,6 @@ migrations/
 *.swo
 *~db.sqlite3
 app/db.sqlite3
+
+# Executáveis
+*.sh
