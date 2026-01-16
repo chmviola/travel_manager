@@ -15,9 +15,13 @@ import os
 from pathlib import Path
 from decouple import config
 
-# --- Lógica de Versionamento Automático via CHANGELOG ---
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 1. Primeiro: Define o BASE_DIR (movido para o topo)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# 2. Segundo: Define a função que depende do BASE_DIR
 def get_version_from_changelog():
-    # Caminho ajustado: BASE_DIR / 'app' / 'CHANGELOG.md'
+    # Agora o Python já sabe o que é BASE_DIR
     changelog_path = os.path.join(BASE_DIR, 'app', 'CHANGELOG.md')
     default_version = '0.0.0'
     
@@ -33,11 +37,11 @@ def get_version_from_changelog():
     except Exception:
         return default_version
 
+# 3. Terceiro: Atribui a versão à variável global
 APP_VERSION = get_version_from_changelog()
 # --------------------------------------------------------
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # Google Maps API Key
 GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPS_API_KEY', default='chave_nao_configurada')

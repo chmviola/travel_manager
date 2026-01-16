@@ -1,3 +1,7 @@
+# 🚀 Release v0.1.05 — 2026-01-16
+
+*Iniciando desenvolvimento...*
+
 # 🚀 Release v0.1.04 — 2026-01-16
 
 
