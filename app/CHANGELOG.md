@@ -1,6 +1,12 @@
 # 🚀 Release v0.1.05 — 2026-01-16
 
-*Aguardando geração de notas...*
+### 🐛 Correções
+- fix: ajustando script de automação de versão
+- fix: versionamento automatico
+
+### 📦 Commit range
+`v0.1.04..HEAD`
+
 
 # 🚀 Release v0.0.94 — 2026-01-09
 
