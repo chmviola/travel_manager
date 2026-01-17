@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Gerenciamento de Usuários{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Usuários do Sistema</h3>
+        <div class="card-tools">
+            <a href="{% url 'user_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-user-plus"></i> Novo Usuário
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped projects">
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Tipo</th>
+                    <th class="text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <strong>{{ u.username }}</strong><br/>
+                        <small>{{ u.get_full_name }}</small>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_superuser %}
+                            <span class="badge badge-warning">Admin (Root)</span>
+                        {% elif u.groups.exists %}
+                            {% for g in u.groups.all %}
+                                <span class="badge badge-info">{{ g.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="badge badge-secondary">Padrão</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+
+                        <a href="{% url 'access_logs' %}?user_id={{ u.id }}" class="btn btn-secondary btn-sm" title="Ver Logs de Acesso">
+                            <i class="fas fa-search"></i>
+                        </a>
+                        
+                        <a href="{% url 'user_update' u.id %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                        {% if u.id != request.user.id %}
+                        <a href="{% url 'user_delete' u.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Excluir este usuário?');">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

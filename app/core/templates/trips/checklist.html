@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Checklist: {{ trip.title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <a href="{% url 'trip_detail' trip.id %}" class="btn btn-default mr-2">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            
+            <a href="{% url 'checklist_pdf' trip.id %}" target="_blank" class="btn btn-outline-secondary">
+                <i class="fas fa-print mr-1"></i> Imprimir / PDF
+            </a>
+        </div>
+        
+        <div class="btn-group">
+            <a href="{% url 'checklist_clear_completed' trip.id %}" class="btn btn-danger" onclick="return confirm('Deseja apagar permanentemente todos os itens já marcados?');">
+                <i class="fas fa-trash-alt mr-1"></i> Limpar Marcados
+            </a>
+
+            <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modalAddCategory">
+                <i class="fas fa-folder-plus mr-1"></i> Nova Categoria
+            </button>
+
+            <a href="{% url 'checklist_generate' trip.id %}" class="btn btn-warning shadow-sm" onclick="return confirm('Isso vai apagar a lista atual e gerar uma nova com IA. Continuar?');">
+                <i class="fas fa-magic mr-1"></i> Gerar com IA
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% for category, items in items_by_category.items %}
+<div class="col-md-4">
+    <div class="card card-primary card-outline">
+        <div class="card-header">
+            <h5 class="card-title">{{ category }}</h5>
+            <div class="card-tools">
+                <button type="button" class="btn btn-tool" data-toggle="modal" data-target="#modalAddItem" onclick="setCategory('{{ category }}')">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <ul class="todo-list">
+                {% for item in items %}
+                <li class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="icheck-primary d-inline ml-2">
+                            <input type="checkbox" id="todoCheck{{ item.id }}" {% if item.is_checked %}checked{% endif %}
+                                   onclick="window.location.href='{% url 'checklist_toggle' item.id %}'">
+                            <label for="todoCheck{{ item.id }}"></label>
+                        </div>
+                        <span class="text {% if item.is_checked %}text-muted{% endif %}" 
+                              style="{% if item.is_checked %}text-decoration: line-through;{% endif %}">
+                            {{ item.item }}
+                        </span>
+                    </div>
+                    <div class="pr-2">
+                        <a href="{% url 'checklist_delete_item' item.id %}" class="text-danger" onclick="return confirm('Excluir este item?')">
+                            <i class="fas fa-trash-alt fa-sm"></i>
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>    
+    {% empty %}
+    <div class="col-12 text-center mt-5">
+        <i class="fas fa-suitcase fa-4x text-muted mb-3"></i>
+        <h3>Sua mala está vazia!</h3>
+        <p class="text-muted">Clique no botão "Gerar Sugestão com IA" para criar uma lista personalizada.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="modal fade" id="modalAddItem" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'checklist_add_item' trip.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar Item à Mala</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        <select name="category" id="modalCategoryInput" class="form-control">
+                            <option value="Roupas">Roupas</option>
+                            <option value="Higiene">Higiene</option>
+                            <option value="Documentos">Documentos</option>
+                            <option value="Eletrônicos">Eletrônicos</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Item</label>
+                        <input type="text" name="item" class="form-control" placeholder="Ex: Protetor Solar" required autofocus>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Item</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAddCategory" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'checklist_add_item' trip.id %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title text-white">Criar Nova Categoria</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Crie um novo grupo para organizar seus itens (ex: Ski, Camping, Trabalho).</p>
+                    
+                    <div class="form-group">
+                        <label>Nome da Nova Categoria</label>
+                        <input type="text" name="category" class="form-control" placeholder="Ex: Equipamentos de Ski" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Primeiro Item</label>
+                        <input type="text" name="item" class="form-control" placeholder="Ex: Óculos de proteção" required>
+                        <small class="text-muted">Para criar a caixa, é necessário adicionar pelo menos um item.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info">Criar Categoria</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function setCategory(cat) {
+        document.getElementById('modalCategoryInput').value = cat;
+    }
+</script>
+{% endblock %}

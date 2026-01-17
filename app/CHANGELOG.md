@@ -1,0 +1,163 @@
+# 🚀 Release v0.1.12 — 2026-01-17
+
+### 📦 Commit range
+`v0.1.11..HEAD`
+
+
+# 🚀 Release v0.1.11 — 2026-01-17
+
+### 🧹 Manutenção
+- chore: melhorando o ci/cd do projeto
+- chore: melhorando o ci/cd do projeto
+
+### 📦 Commit range
+`v0.1.10..HEAD`
+
+
+# 🚀 Release v0.1.10 — 2026-01-17
+
+### 🧹 Manutenção
+- chore: melhorando o ci/cd do projeto
+
+### 📝 Outras Alterações
+- Initial commit: TravelManager v0.1.09
+
+### 📦 Commit range
+`v0.1.09..HEAD`
+
+
+# 🚀 Release v0.1.09 — 2026-01-16
+
+### 🐛 Correções
+- fix: setting.py configurado somente com variáveis
+
+### 📦 Commit range
+`v0.1.08..HEAD`
+
+
+# 🚀 Release v0.1.08 — 2026-01-16
+
+### 🐛 Correções
+- fix: setting.py configurado somente com variáveis
+
+### 📦 Commit range
+`v0.1.07..HEAD`
+
+
+# 🚀 Release v0.1.07 — 2026-01-16
+
+### 🐛 Correções
+- fix: setting.py configurado somente com variáveis
+- fix: setting.py configurado somente com variáveis
+
+### 📦 Commit range
+`v0.1.06..HEAD`
+
+
+# 🚀 Release v0.1.06 — 2026-01-16
+
+### 🐛 Correções
+- fix: melhora a execução do container usando o gunicorn
+- fix: versionamento automático
+- fix: ajustando versionamento
+
+### 📦 Commit range
+`v0.1.05..HEAD`
+
+# 🚀 Release v0.1.05 — 2026-01-16
+
+### 🐛 Correções
+- fix: ajustando script de automação de versão
+- fix: versionamento automatico
+
+### 📦 Commit range
+`v0.1.04..HEAD`
+
+
+# 🚀 Release v0.0.94 — 2026-01-09
+
+## 🐛 Correções
+- fix: ao sair da tela de edição de item de uma viagem sempre voltava para o primeiro dia da viagem
+
+## 📦 Commit range
+`HEAD`
+# 🚀 Release v0.0.96 — 2026-01-09
+
+## ✨ Novas Funcionalidades
+- feat: cria uma linha nova com as bandeiras dos paises visitados no profile do perfil do user
+
+## 🐛 Correções
+- fix: correção das posições dos box no profile do perfil do user
+
+## 📦 Commit range
+`v0.0.94..HEAD`
+# 🚀 Release v0.0.97 — 2026-01-11
+
+## 🐛 Correções
+- fix: ao sair da tela de edição do attachment  do item de uma viagem sempre voltava para o primeiro dia da viagem
+- fix: ao sair da tela de edição do gasto do item de uma viagem sempre voltava para o primeiro dia da viagem
+
+## 📦 Commit range
+`v0.0.96..HEAD`
+# 🚀 Release v0.0.98 — 2026-01-11
+
+## ✨ Novas Funcionalidades
+- feat: criação da página com o changelog e o link no rodapé
+- feat: criação do espaço para colocar a url nos item de viagem
+
+## 📦 Commit range
+`v0.0.97..HEAD`
+# 🚀 Release v0.0.99 — 2026-01-11
+
+## 🐛 Correções
+- fix: carrega o mapa do detalhe das viagens com a chave que está no banco de dados
+- fix: carrega o mapa dos itens com a chave que está no banco de dados
+- fix: carrega o mapa do dashboard com a chave que está no banco de dados
+
+## 📚 Documentação
+- docs: documentação do Release v0.0.98
+
+## 📦 Commit range
+`v0.0.98..HEAD`
+# 🚀 Release v0.1.01 — 2026-01-12
+
+## ✨ Novas Funcionalidades
+- feat: criação do botão de exportar/importar para google calender
+- feat: criação da página com o changelog e o link no rodapé
+## 🐛 Correções
+- fix: conserto dos datas de corpyright, versões na documentação e readme.md
+
+## 📚 Documentação
+- docs: documentação do Release v0.0.99
+
+## 📦 Commit range
+`v0.0.99..HEAD`
+# 🚀 Release v0.1.02 — 2026-01-12
+
+## ✨ Novas Funcionalidades
+- feat: modificação da tabela financeira no  dashboard financeiro
+- feat: adicionando filtros no gráfico de rosca do dashboard financeiro
+- feat: adiciona a bandeira do pais na tabela de minhas viagens no dashboard
+
+## 📦 Commit range
+`v0.1.01..HEAD`# 🚀 Release v0.1.03 — 2026-01-13
+
+## ✨ Novas Funcionalidades
+- feat: criação do link e modulo de recuperação de senha e modificação da tela de recuperar senha
+- feat: criação do link e modulo de recuperação de senha
+
+## 🐛 Correções
+- fix: ajuste visual nas telas de troca de senha
+- fix: dados cadastrados no cadastro de email não estão gravando em banco
+- fix: no dashboad financeiro o widget do dólar está vazio
+- fix: no dashboad financeiro o filtro do gráfico donuts não funciona
+- fix: no dashboad financeiro, as categorias sumiram da tabela e o filtro do gráfico donuts não funciona
+
+## 📦 Commit range
+`v0.1.02..HEAD`
+
+## 🧹 Manutenção
+- chore: manutenção no versionamento automático
+
+## 📦 Commit range
+`v0.1.03..HEAD`

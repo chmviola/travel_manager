@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travel Manager | Login</title>
+
+  <link rel="icon" type="image/png" href="{% static 'img/logo.png' %}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+</head>
+
+<body class="hold-transition login-page">
+<div class="login-box">
+<div class="login-logo" style="display: flex; align-items: center; justify-content: center;">
+    <a href="#" style="display: flex; align-items: center;">
+        <img src="{% static 'img/logo.png' %}" 
+             alt="Logo" 
+             style="height: 60px; width: auto; margin-right: 15px;">
+             
+        <div><b>Travel</b>Manager</div>
+    </a>
+</div>  
+  <div class="text-center mt-2 text-muted">
+      <small>Versão {{ app_version }}</small>
+  </div>
+
+  <div class="card">
+    <div class="card-body login-card-body">
+      <p class="login-box-msg">Faça login para gerenciar suas viagens</p>
+
+<form method="post">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                Usuário ou senha inválidos.
+            </div>
+        {% endif %}
+
+        <div class="input-group mb-3">
+          <input type="text" name="username" class="form-control" placeholder="Usuário" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group mb-2"> <input type="password" name="password" class="form-control" placeholder="Senha" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+        </div>
+
+        <p class="mb-3 text-right"> <a href="{% url 'password_reset' %}">Esqueci a minha senha</a>
+        </p>
+
+        <div class="row">
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+</body>
+</html>

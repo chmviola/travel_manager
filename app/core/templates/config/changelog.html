@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Histórico de Atualizações{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-history mr-1"></i> Changelog
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="markdown-content">
+                    {{ changelog_html|safe }}
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                Este arquivo é gerado automaticamente a partir do <code>CHANGELOG.md</code>.
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .markdown-content h1 { font-size: 2rem; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 20px; }
+    .markdown-content h2 { font-size: 1.5rem; margin-top: 20px; color: #007bff; }
+    .markdown-content ul { padding-left: 20px; }
+    .markdown-content code { background-color: #f4f6f9; padding: 2px 5px; border-radius: 3px; color: #d63384; }
+</style>
+{% endblock %}

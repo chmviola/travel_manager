@@ -1,0 +1,892 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load l10n %}
+{% load core_extras %} ```
+{% load static %}
+
+{% block page_title %}
+    {{ trip.title }} <small class="text-muted" style="font-size: 0.6em;">{{ trip.get_status_display }}</small>
+{% endblock %}
+
+{% block header_flags %}
+    {% if trip.flags %}
+        <div style="border-right: 1px solid #dee2e6; padding-right: 10px; margin-right: 5px;">
+        {% for flag_code in trip.flags %}
+            <span class="flag-icon flag-icon-{{ flag_code }} shadow-sm" 
+                  style="font-size: 1.2em; border-radius: 2px; margin-right: 5px;" 
+                  title="Destino"></span>
+        {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    
+    <div class="col-md-6">
+        
+        <!-- AÇÕES DO ROTEIRO -->
+        <div class="mb-3 d-flex align-items-center flex-wrap">
+            {% if can_edit %}
+            <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm mr-2 mb-2">
+                <i class="fas fa-plus"></i> Novo Item
+            </a>
+            {% endif %}
+
+            {% if can_edit %}
+            <button type="button" class="btn btn-warning btn-sm shadow-sm mr-2 mb-2" data-toggle="modal" data-target="#modalAutoItinerary">
+                <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
+            </button>
+            {% endif %}
+
+            {% if can_edit %}
+            <a href="{% url 'checklist_view' trip.id %}" class="btn btn-primary btn-sm mr-2 mb-2">
+                <i class="fas fa-tasks"></i> Checklist
+            </a>
+            {% endif %}
+
+            <div class="btn-group mr-2 mb-2">
+                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-calendar-alt text-info mr-1"></i> Agenda
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{% url 'trip_export_ics' trip.id %}">
+                        <i class="fas fa-download mr-2 text-primary"></i> Exportar Google/Outlook
+                    </a>
+
+                    {% if can_edit %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalImportICS">
+                            <i class="fas fa-upload mr-2 text-success"></i> Importar Google Calendar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if can_edit %}
+            <a href="{% url 'trip_gallery' trip.id %}" class="btn btn-default btn-sm mr-2 mb-2">
+                <i class="fas fa-images text-success mr-1"></i> Galeria
+            </a>
+            {% endif %}
+
+            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" 
+               class="btn btn-default btn-sm mr-2 mb-2" title="Imprimir Roteiro">
+                <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
+            </a>
+        </div>
+
+        <!-- FILTRO DE DATAS -->
+        {% if available_dates %}
+        <div class="mb-3 d-flex flex-wrap align-items-center">
+            <span class="text-muted mr-2 text-sm"><i class="far fa-calendar-alt"></i> Dias:</span>
+            
+            {% for date_opt in available_dates %}
+                <a href="?date={{ date_opt|date:'Y-m-d' }}" 
+                   class="btn btn-sm mb-1 mr-1 shadow-sm 
+                   {% if request.GET.date == date_opt|date:'Y-m-d' %}
+                       bg-gradient-primary border-primary font-weight-bold active
+                   {% elif not request.GET.date and forloop.first %}
+                       bg-gradient-primary border-primary font-weight-bold active
+                   {% else %}
+                       btn-default text-muted
+                   {% endif %}"
+                   style="min-width: 80px;">
+                   
+                   {{ date_opt|date:"d/M" }}
+                   
+                   <small class="d-block" style="font-size: 0.7em; margin-top: -3px;">
+                       {{ date_opt|date:"D" }}
+                   </small>
+                </a>
+            {% endfor %}
+            
+        </div>
+        {% endif %}
+
+        <!-- TIMELINE DOS ITENS -->
+        <div class="timeline">
+            
+            {% if items %}
+                {% regroup items by start_datetime|date:"d/m/Y" as dates %}
+                
+                {% for date in dates %}
+                    <div class="time-label">
+                        <span class="bg-red">{{ date.grouper }}</span>
+                    </div>
+
+                    {% for item in date.list %}
+                    <div>
+                        <i class="fas 
+                            {% if item.item_type == 'FLIGHT' %}fa-plane bg-blue
+                            {% elif item.item_type == 'BUS' %}fa-bus bg-teal
+                            {% elif item.item_type == 'TRAIN' %}fa-train bg-cyan
+                            {% elif item.item_type == 'CRUISE' %}fa-ship bg-aqua
+                            {% elif item.item_type == 'TRANSPORT' %}fa-bus bg-green
+                            {% elif item.item_type == 'BUYING' %}fa-shopping-bag bg-pink
+                            {% elif item.item_type == 'ACTIVITY' %}fa-hiking bg-green 
+                            {% elif item.item_type == 'WINARY' %}fa-wine-bottle bg-red
+                            {% elif item.item_type == 'MUSEUM' %}fa-landmark bg-indigo
+                            {% elif item.item_type == 'RENTAL' %}fa-car bg-yellow
+                            {% elif item.item_type == 'HOTEL' %}fa-bed bg-purple    
+                            {% elif item.item_type == 'TOUR' %}fa-route bg-maroon
+                            {% elif item.item_type == 'INSURANCE' %}fa-shield-alt bg-navy
+                            {% elif item.item_type == 'RESTAURANT' %}fa-utensils bg-orange
+                            {% else %}fa-map-marker-alt bg-gray{% endif %}">
+                        </i>
+
+                        <div class="timeline-item">
+                            <span class="time"><i class="fas fa-clock"></i> {{ item.start_datetime|date:"H:i" }}</span>
+                            
+                            <h3 class="timeline-header">
+                                <strong>{{ item.get_item_type_display }}:</strong> {{ item.name }}
+                            </h3>
+
+                            <div class="timeline-body">
+                                {% if item.location_address %}
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        
+                                        <!-- Endereço à esquerda -->
+                                        <span class="text-muted text-sm me-2">
+                                            <i class="fas fa-map-pin me-1"></i> {{ item.location_address }}
+                                        </span>
+                                        
+                                        <!-- Bloco da direita -->
+                                         <div class="d-flex align-items-center ms-auto gap-2">
+
+                                            {% if item.flag_code %}
+                                            <span class="flag-icon flag-icon-{{ item.flag_code }} shadow-sm mr-2 mb-2" 
+                                                  style="font-size: 1.1em;"
+                                                  title="Local: {{ item.flag_code|upper }}">
+                                            </span>
+                                            {% endif %}
+
+                                            {% if item.weather_temp %}
+                                            <span class="badge badge-light border text-muted shadow-sm d-flex align-items-center"  
+                                                  style="font-weight: normal; white-space: nowrap; cursor: help;"
+                                                  data-toggle="tooltip"
+                                                  data-placement="top"
+                                                  title="{{ item.weather_condition|title }}">
+
+                                                <img src="{{ item.weather_icon }}" alt="" style="width: 20px; height: 20px; margin-right: 4px;">
+                                            {{ item.weather_temp }}°C
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if item.details %}
+                                    <div class="mt-2 p-2 bg-light rounded text-muted text-sm">
+                                        {% if item.details.notes %}
+                                            <i class="fas fa-info-circle mr-1"></i> {{ item.details.notes|linebreaksbr }}
+                                        {% else %}
+                                            {% for key, value in item.details.items %}
+                                                <strong>{{ key|title }}:</strong> {{ value }}<br>
+                                        {% endfor %}
+                                {% endif %}
+                            </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="timeline-footer">
+
+                                {% if item.location_lat and item.location_lng or item.location_address %}
+                                    <button type="button" 
+                                            class="btn btn-xs btn-outline-primary mr-2"
+                                            data-toggle="modal" 
+                                            data-target="#modalItemMap"
+                                            data-lat="{{ item.location_lat|unlocalize|default_if_none:'' }}"
+                                            data-lng="{{ item.location_lng|unlocalize|default_if_none:'' }}"
+                                            data-address="{{ item.location_address|default_if_none:'' }}" 
+                                            data-title="{{ item.name }}"
+                                            title="Ver no Mapa">
+                                        <i class="fas fa-map-marker-alt"></i> Ver Mapa
+                                    </button>
+                                {% endif %}
+                                
+                                {% if can_edit %}
+                                <a href="{% url 'trip_item_attachments' item.id %}" 
+                                    class="{% if item.attachments.exists %}text-info{% else %}text-muted{% endif %}"
+                                    title="Anexos (PDFs/Imagens)">
+                                    <i class="fas fa-paperclip"></i>
+                                </a>
+                                
+                                <button type="button" 
+                                        class="btn btn-tool {% if item.link %}text-primary{% endif %}" 
+                                        data-toggle="modal" 
+                                        data-target="#modalLink" 
+                                        data-item-id="{{ item.id }}" 
+                                        data-link="{{ item.link|default:'' }}"
+                                        title="Adicionar/Ver Link">
+                                    <i class="fas fa-link"></i>
+                                </button>
+
+                                <a href="{% url 'trip_item_expense_manage' item.id %}" 
+                                    class="mr-2 {% if item.related_expenses.exists %}text-success{% else %}text-muted{% endif %}"
+                                    title="Gerenciar Gastos deste Item">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </a>
+                               
+                                <span class="float-right"></span>
+                                    <a href="{% url 'trip_item_update' item.id %}" class="text-primary mr-2"><i class="fas fa-edit"></i></a>
+                               
+                                    <a href="{% url 'trip_item_delete' item.id %}" class="text-danger"><i class="fas fa-trash"></i></a>
+                                {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
+                
+                <div>
+                    <i class="fas fa-clock bg-gray"></i>
+                </div>
+
+            {% else %}
+                <div class="alert alert-light">
+                    Nenhum item adicionado ao roteiro ainda.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+
+{% if trip_rates %}
+    <div class="row mb-2">
+        <div class="col-12">
+            <h5 class="text-muted mb-2"><i class="fas fa-coins"></i> Cotações Locais (Hoje)</h5>
+        </div>
+        
+        {% for rate in trip_rates %}
+        <div class="col-md-3 col-sm-6 col-12">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-light-gray border">
+                    {% if rate.code == 'USD' %}<i class="fas fa-dollar-sign text-success"></i>
+                    {% elif rate.code == 'EUR' %}<i class="fas fa-euro-sign text-primary"></i>
+                    {% elif rate.code == 'GBP' %}<i class="fas fa-pound-sign text-danger"></i>
+                    {% else %}<i class="fas fa-money-bill text-secondary"></i>
+                    {% endif %}
+                </span>
+
+                <div class="info-box-content">
+                    <span class="info-box-text">1 {{ rate.code }} vale</span>
+                    <span class="info-box-number">
+                        R$ {{ rate.rate|floatformat:2|intcomma }}
+                    </span>
+                </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Mapa do Roteiro</h3>
+            </div>
+            <div id="timelineMap" style="height: 400px; width: 100%; border-radius: 8px; margin-bottom: 20px;">
+                <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
+                    <i class="fas fa-map-marked-alt mr-2"></i> O mapa será carregado aqui...
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-outline card-success">
+            <div class="card-header">
+                <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
+                <div class="card-tools">
+                    {% if can_edit %}
+                    <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
+                        <i class="fas fa-plus"></i> Add Gasto
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+    
+    <div class="card-body table-responsive p-0" style="height: 300px;">
+        <div class="px-3 pt-3">
+            <h2 class="text-bold text-success">
+                R$ {{ total_spent_brl|floatformat:2 }}
+            </h2>
+            <p class="text-muted small">
+                Câmbio atualizado automaticamente via AwesomeAPI.
+            </p>
+            <hr>
+        </div>        
+            <table class="table table-striped table-valign-middle">
+            <thead>
+                <tr>
+                    <th>Data</th> <th>Gasto</th>
+                    <th class="text-right">Original</th>
+                    <th class="text-right">Em Reais (R$)</th>
+                    <th class="text-center" style="width: 80px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in expenses %}
+                <tr>
+                    <td class="align-middle">
+                        <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ expense.date|date:"d/m" }}</small>
+                    </td>
+
+                    <td class="align-middle">
+                        {{ expense.description }}
+                        <br>
+                        <small class="text-muted">{{ expense.category }}</small>
+                    </td>
+                    
+                    <td class="text-right align-middle">
+                        <span class="badge badge-light" style="font-size: 0.9em;">
+                            {{ expense.currency }} {{ expense.amount|intcomma }}
+                        </span>
+                    </td>
+                    
+                    <td class="text-right text-success font-weight-bold align-middle">
+                        R$ {{ expense.converted_value|floatformat:2|intcomma }}
+                    </td>
+
+                    <td class="text-center align-middle">
+                        <div class="btn-group btn-group-sm">
+                            {% if can_edit %}
+                            <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar Gasto">
+                                <i class="fas fa-pen text-primary"></i>
+                            </a>
+                            
+                            <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
+                                <i class="fas fa-trash text-danger"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">Nenhum gasto registrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+        </div>
+
+        <!-- Sugerir Dicas de Viagem IA -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-purple card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-lightbulb text-warning mr-1"></i> Guia de Bolso (IA)
+                        </h3>
+                        <div class="card-tools">
+                            {% if can_edit %}
+                            <a href="{% url 'trip_generate_insights' trip.id %}" 
+                               class="btn btn-tool text-purple" 
+                               title="Atualizar Dicas"
+                               onclick="btnLoadingLink(this)"> <i class="fas fa-sync-alt"></i> Atualizar Dicas
+                            </a>
+                            {% endif %}
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        {% if trip.ai_insights %}
+                        
+                        <div class="row">
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-success"><i class="fas fa-coins fa-2x mb-2"></i></h5>
+                                    <span class="description-text">MOEDA & GORJETA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.currency_tip }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-info"><i class="fas fa-plug fa-2x mb-2"></i></h5>
+                                    <span class="description-text">ELETRICIDADE</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.electricity }}</p> 
+                                    </div>
+                            </div>
+                            
+                            <div class="col-md-4 col-sm-12 border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-warning"><i class="fas fa-language fa-2x mb-2"></i></h5>
+                                    <span class="description-text">FRASES ÚTEIS</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.phrases }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 border-right">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-danger"><i class="fas fa-user-shield fa-2x mb-2"></i></h5>
+                                    <span class="description-text">SEGURANÇA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.safety }}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-sm-6">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-orange"><i class="fas fa-utensils fa-2x mb-2"></i></h5>
+                                    <span class="description-text">GASTRONOMIA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.food|default:"Atualize as dicas para ver a gastronomia."|linebreaksbr }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-light p-3 text-center text-muted font-italic border-top">
+                            <i class="fas fa-info-circle mr-1"></i> {{ trip.ai_insights.curiosity }}
+                        </div>
+
+                        {% else %}
+                        <div class="text-center p-5">
+                            <p class="text-muted">Nenhuma dica gerada para este destino ainda.</p>
+                            {% if can_edit %}
+                            <a href="{% url 'trip_generate_insights' trip.id %}" class="btn btn-app bg-purple">
+                                <i class="fas fa-magic"></i> Gerar Guia Agora
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para exibir o mapa do item -->
+<div class="modal fade" id="modalItemMap" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="modalMapTitle">Localização</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="itemMap" style="width: 100%; height: 450px;"></div>
+            </div>
+        </div>
+    </div>
+</div> 
+
+<!-- Modal para Sugerir Roteiro IA -->
+<div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST" onsubmit="btnLoading(this.querySelector('button[type=submit]'), 'Criando Roteiro...')">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Planejador Automático</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>A Inteligência Artificial vai analisar seu destino (<strong>{{ trip.title }}</strong>) e a duração da viagem para criar sugestões de passeios dia a dia.</p>
+                    
+                    <div class="form-group">
+                        <label>O que você gosta de fazer?</label>
+                        <textarea name="interests" class="form-control" rows="3" placeholder="Ex: Gosto de museus de arte, cafeterias históricas e parques. Não gosto de baladas. Quero um ritmo tranquilo."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info text-sm">
+                        <i class="fas fa-info-circle"></i> Os itens serão adicionados à sua linha do tempo. Você poderá editá-los ou excluí-los depois.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Gerar Roteiro</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para exibir o link -->
+<div class="modal fade" id="modalLink" tabindex="-1" role="dialog" aria-labelledby="modalLinkLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLinkLabel"><i class="fas fa-link mr-2"></i> Gerenciar Link</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <form id="formLink" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>URL do Link (Site, Reserva, Localização)</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                            </div>
+                            <input type="url" name="link_url" id="inputLink" class="form-control" placeholder="https://..." maxlength="500">
+                        </div>
+                        <small class="text-muted">Cole o endereço completo aqui.</small>
+                    </div>
+
+                    <div id="btnVisitArea" class="mt-3 text-center d-none">
+                        <a href="#" id="linkVisitBtn" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt"></i> Testar/Abrir Link
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalImportICS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i> Importar Agenda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{% url 'trip_import_ics' trip.id %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Como importar do Google?</strong><br>
+                        1. Vá no seu Google Agenda (Configurações).<br>
+                        2. Clique em "Exportar agenda".<br>
+                        3. Extraia o ZIP e envie o arquivo <code>.ics</code> aqui.
+                    </div>
+                    <div class="form-group">
+                        <label>Selecione o arquivo .ics</label>
+                        <div class="custom-file">
+                            <input type="file" name="ics_file" class="custom-file-input" id="customFile" accept=".ics" required>
+                            <label class="custom-file-label" for="customFile">Escolher arquivo</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Importar Eventos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<style>
+    /* Padrão para Desktop */
+    .timeline-map-container {
+        height: 400px;
+    }
+
+    /* Padrão para Celulares (telas menores que 768px) */
+    @media (max-width: 768px) {
+        .timeline-map-container {
+            height: 250px; /* Menor para caber o dedo e fazer scroll */
+        }
+        
+        /* Ajuste fino na Timeline para ganhar espaço */
+        .timeline-header {
+            font-size: 1.1rem;
+        }
+        .time-label span {
+            font-size: 0.9rem;
+            padding: 3px 8px;
+        }
+    }
+</style>
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places"></script>
+
+<script>
+    // -- Modal de importação/exportação do Google Calender ---
+    $('.custom-file-input').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').addClass("selected").html(fileName);
+    });
+
+    // --- MAPA GERAL DA TIMELINE ---
+    function initTimelineMap() {
+        const mapEl = document.getElementById('timelineMap');
+        if (!mapEl) return; // Se não tiver a div, sai
+
+        // 1. Cria o Mapa
+        const map = new google.maps.Map(mapEl, {
+            zoom: 2,
+            center: { lat: 20, lng: 0 }, // Centro do mundo
+            styles: [] // Estilos opcionais
+        });
+
+        const bounds = new google.maps.LatLngBounds();
+        const geocoder = new google.maps.Geocoder();
+        let markersCount = 0;
+
+        // Dados vindos do Django
+        const locations = [
+            {% for item in items %}
+            {
+                name: "{{ item.name|escapejs }}",
+                address: "{{ item.location_address|default:''|escapejs }}",
+                lat: "{{ item.location_lat|unlocalize|default:'' }}",  // Supondo que você tenha esses campos
+                lng: "{{ item.location_lng|unlocalize|default:'' }}",
+                type: "{{ item.item_type }}"
+            },
+            {% endfor %}
+        ];
+
+        // Função para adicionar marcador
+        const addMarker = (position, title) => {
+            new google.maps.Marker({
+                position: position,
+                map: map,
+                title: title,
+                animation: google.maps.Animation.DROP
+            });
+            bounds.extend(position);
+            map.fitBounds(bounds);
+            markersCount++;
+        };
+
+        // 2. Processa os itens
+        locations.forEach((loc, index) => {
+            // CASO A: Já tem coordenada salva (Rápido e Preciso)
+            if (loc.lat && loc.lng) {
+                const pos = { lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) };
+                addMarker(pos, loc.name);
+            } 
+            // CASO B: Só tem endereço (Veio da IA) - Tenta descobrir
+            else if (loc.address) {
+                // Usamos timeout para não exceder o limite de requisições do Google (Rate Limit)
+                setTimeout(() => {
+                    geocoder.geocode({ 'address': loc.address }, function(results, status) {
+                        if (status === 'OK') {
+                            addMarker(results[0].geometry.location, loc.name);
+                        } else {
+                            console.log('Geocode falhou para ' + loc.name + ': ' + status);
+                        }
+                    });
+                }, index * 400); // Espera 400ms entre cada item
+            }
+        });
+
+        // Se não tiver nenhum item, centraliza num lugar padrão (ex: Paris)
+        if (locations.length === 0) {
+            map.setCenter({ lat: 48.8566, lng: 2.3522 });
+            map.setZoom(12);
+        }
+    }
+
+    // Inicializa o mapa assim que a janela carregar
+    window.addEventListener('load', initTimelineMap);
+
+   function initMap() {
+        // Ponto inicial padrão (caso não tenha itens)
+        const defaultLocation = { lat: -23.5505, lng: -46.6333 }; // SP
+        
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 10,
+            center: defaultLocation,
+        });
+
+        const geocoder = new google.maps.Geocoder();
+        const bounds = new google.maps.LatLngBounds();
+        const infoWindow = new google.maps.InfoWindow();
+
+        // 2. Recebendo os dados do Django para o JS
+        // Criamos uma lista de objetos JS com os dados que vieram do banco
+        const tripItems = [
+            {% for item in items %}
+            {
+                name: "{{ item.name|escapejs }}",
+                type: "{{ item.get_item_type_display }}",
+                address: "{{ item.location_address|default_if_none:''|escapejs }}",
+                lat: "{{ item.location_lat|unlocalize|default_if_none:'' }}",
+                lng: "{{ item.location_lng|unlocalize|default_if_none:'' }}"
+            },
+            {% endfor %}
+        ];
+
+        let markersCount = 0;
+
+        // 3. Função para adicionar Marcador no Mapa
+        const addMarker = (location, title, type) => {
+            const marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                title: title,
+                // Opcional: Você pode customizar o ícone baseando-se no 'type' aqui
+            });
+
+            // Adiciona clique para ver o nome
+            marker.addListener("click", () => {
+                infoWindow.setContent(`<strong>${type}</strong><br>${title}`);
+                infoWindow.open(map, marker);
+            });
+
+            // Expande o mapa para incluir este novo ponto
+            bounds.extend(location);
+            map.fitBounds(bounds);
+            markersCount++;
+        };
+
+        // 4. Processar os Itens
+        tripItems.forEach(item => {
+            // Cenário A: Já temos latitude e longitude salvas (ainda não implementamos o salvamento, mas fica pronto)
+            if (item.lat && item.lng) {
+                const loc = { lat: parseFloat(item.lat), lng: parseFloat(item.lng) };
+                addMarker(loc, item.name, item.type);
+            } 
+            // Cenário B: Temos apenas o endereço -> Usar Geocoding
+            else if (item.address) {
+                geocoder.geocode({ address: item.address }, (results, status) => {
+                    if (status === "OK") {
+                        const location = results[0].geometry.location;
+                        addMarker(location, item.name, item.type);
+                        
+                        // Nota: Idealmente, deveríamos salvar essas coordenadas no banco via AJAX
+                        // para não gastar API do Google toda vez que carregar a página.
+                    } else {
+                        console.error("Geocode falhou para o item " + item.name + ": " + status);
+                    }
+                });
+            }
+        });
+
+        // Se não houver itens, centraliza no padrão
+        if (tripItems.length === 0) {
+            map.setCenter(defaultLocation);
+        }
+    }
+
+    /**
+     * Bloqueia botão, adiciona spinner e muda texto
+     * @param {HTMLElement} btn - O botão clicado
+     * @param {String} text - O novo texto (ex: "Aguarde...")
+     */
+    function btnLoading(btn, text) {
+        // Adiciona classe disabled (visual) e style (funcional)
+        btn.classList.add('disabled');
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+        
+        // Mantém a largura para não "pular" o layout
+        btn.style.minWidth = btn.offsetWidth + 'px';
+
+        // Troca o conteúdo
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1"></i> ${text}`;
+        
+        // Se for um modal, não fecha ele automaticamente para o usuário ver o loading
+    }
+
+    /**
+     * Versão específica para botões pequenos de ícone (Tool buttons)
+     */
+    function btnLoadingLink(btn) {
+        btn.classList.add('disabled');
+        btn.style.pointerEvents = 'none';
+        // Substitui o ícone por spinner
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-spinner fa-spin';
+        }
+    }
+
+// Variável global para o mapa do modal
+let modalMap;
+let modalMarker;
+let modalGeocoder; // Novo
+
+$('#modalItemMap').on('shown.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const title = button.data('title');
+    $('#modalMapTitle').text(title);
+
+    // Tenta pegar Lat/Lng
+    const latStr = button.data('lat');
+    const lngStr = button.data('lng');
+    const address = button.data('address'); // Pega o endereço
+
+    // Função auxiliar para desenhar o mapa
+    const drawMap = (location) => {
+        if (!modalMap) {
+            modalMap = new google.maps.Map(document.getElementById('itemMap'), {
+                center: location,
+                zoom: 15
+            });
+            modalMarker = new google.maps.Marker({
+                position: location,
+                map: modalMap
+            });
+        } else {
+            modalMap.setCenter(location);
+            modalMap.setZoom(15);
+            modalMarker.setPosition(location);
+            google.maps.event.trigger(modalMap, "resize");
+        }
+    };
+
+    // Cenário 1: Temos Lat/Lng salvos
+    if (latStr && lngStr) {
+        const location = { lat: parseFloat(latStr), lng: parseFloat(lngStr) };
+        drawMap(location);
+    } 
+    // Cenário 2: Temos apenas Endereço (Fazemos o Geocoding na hora)
+    else if (address) {
+        if (!modalGeocoder) modalGeocoder = new google.maps.Geocoder();
+        
+        modalGeocoder.geocode({ 'address': address }, function(results, status) {
+            if (status === 'OK') {
+                const location = results[0].geometry.location;
+                drawMap(location);
+            } else {
+                alert('Não foi possível encontrar este endereço no mapa.');
+            }
+        });
+    }
+});
+
+    // Modal de Link (Novo)
+    $('#modalLink').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); 
+        var itemId = button.data('item-id'); 
+        var currentLink = button.data('link');
+
+        var modal = $(this);
+        
+        // Ajusta a URL de post
+        var actionUrl = "{% url 'trip_item_set_link' 0 %}".replace('0', itemId);
+        modal.find('#formLink').attr('action', actionUrl);
+        
+        // Preenche o input
+        modal.find('#inputLink').val(currentLink);
+
+        // Mostra botão de visitar se existir link
+        if (currentLink) {
+            modal.find('#linkVisitBtn').attr('href', currentLink);
+            modal.find('#btnVisitArea').removeClass('d-none');
+        } else {
+            modal.find('#btnVisitArea').addClass('d-none');
+        }
+    });
+</script>
+{% endblock %}
