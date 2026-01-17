@@ -74,18 +74,27 @@ WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY')
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-chave-temporaria-fallback')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'# Adicione esta lógica para ler a variável de ambiente
+# O .split(' ') permite que coloquemos múltiplos domínios separados por espaço se necessário
+CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS]
+
+# Como você está atrás de um proxy (Nginx), é bom garantir essas configurações também:
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # 3. ALLOWED_HOSTS
 # O Portainer deve enviar: "travel.chmviola.com.br,travel-dev.chmviola.com.br,localhost"
 # O .split(',') transforma isso na lista que o Django precisa.
 allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS')
 if allowed_hosts_env:
-    ALLOWED_HOSTS = allowed_hosts_env.split(',')
+    # O .strip() é crucial: remove espaços que podem vir do .env (ex: "site.com, site2.com")
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-# Application definition
 
+print(f"--- DEBUG ALLOWED_HOSTS: {ALLOWED_HOSTS} ---")
+print(f"--- DEBUG CSRF_ORIGINS: {CSRF_TRUSTED_ORIGINS} ---")
+
+    # Application definition
 INSTALLED_APPS = [
     'core',
     'django.contrib.admin',
@@ -219,10 +228,3 @@ LOGIN_URL = 'login' # Caso o usuário tente acessar uma página restrita sem est
 # Configuração de Arquivos de Mídia (Uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# Adicione esta lógica para ler a variável de ambiente
-# O .split(' ') permite que coloquemos múltiplos domínios separados por espaço se necessário
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost').split(' ')
-
-# Como você está atrás de um proxy (Nginx), é bom garantir essas configurações também:
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
