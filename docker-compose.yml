@@ -19,7 +19,7 @@ services:
   travel_web:
     build: ./app
     container_name: travel_manager_web
-    command: python manage.py runserver 0.0.0.0:8080
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     volumes:
 #      - ./app:/usr/src/app
       - /var/data/media_data:/usr/src/app/media
