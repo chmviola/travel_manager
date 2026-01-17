@@ -1,3 +1,13 @@
+# 🚀 Release v0.1.07 — 2026-01-16
+
+### 🐛 Correções
+- fix: setting.py configurado somente com variáveis
+- fix: setting.py configurado somente com variáveis
+
+### 📦 Commit range
+`v0.1.06..HEAD`
+
+
 # 🚀 Release v0.1.06 — 2026-01-16
 
 ### 🐛 Correções
