@@ -2,21 +2,11 @@
 
 ### 🐛 Correções
 - fix: melhora a execução do container usando o gunicorn
-- fix: melhora a execução do container usando o gunicorn
 - fix: versionamento automático
 - fix: ajustando versionamento
 
 ### 📦 Commit range
 `v0.1.05..HEAD`
-
-
-# 🚀 Release v0.1.06 — 2026-01-16
-
-*Aguardando geração de notas...*
-
-# 🚀 Release v0.1.06 — 2026-01-16
-
-*Aguardando geração de notas...*
 
 # 🚀 Release v0.1.05 — 2026-01-16
 
