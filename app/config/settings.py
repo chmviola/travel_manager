@@ -10,10 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import re
+from decouple import config, Csv
 import os
+import re
 from pathlib import Path
-from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # 1. Primeiro: Define o BASE_DIR (movido para o topo)
@@ -73,18 +73,20 @@ WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-my46n%q#w0_%u!qcng6ba3@&uvsuqu45ec8dmme4t615cl0s-v'
+# SECRET_KEY = 'django-insecure-my46n%q#w0_%u!qcng6ba3@&uvsuqu45ec8dmme4t615cl0s-v'
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG = True
+DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [
-    'travel.chmviola.com.br',
-    'travel-dev.chmviola.com.br',
-    'localhost',
-    '127.0.0.1',
-]
-
+# ALLOWED_HOSTS = [
+#     'travel.chmviola.com.br',
+#     'travel-dev.chmviola.com.br',
+#     'localhost',
+#     '127.0.0.1',
+# ]
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='127.0.0.1', cast=Csv())
 
 # Application definition
 
