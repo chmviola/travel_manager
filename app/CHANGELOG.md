@@ -1,6 +1,11 @@
 # 🚀 Release v0.1.08 — 2026-01-16
 
-*Aguardando geração de notas...*
+### 🐛 Correções
+- fix: setting.py configurado somente com variáveis
+
+### 📦 Commit range
+`v0.1.07..HEAD`
+
 
 # 🚀 Release v0.1.07 — 2026-01-16
 
