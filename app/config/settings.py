@@ -76,24 +76,30 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-chave-temporar
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'# Adicione esta lógica para ler a variável de ambiente
 
-# 1. PRIMEIRO: Define o ALLOWED_HOSTS
+# 1. ALLOWED_HOSTS (Blindado contra erros de formatação)
 allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS')
+
 if allowed_hosts_env:
-    # Remove espaços em branco com .strip() para evitar erros
-    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
+    # Passo A: Troca qualquer espaço possível por vírgula
+    # Passo B: Divide pela vírgula
+    # Passo C: Remove espaços vazios e itens nulos
+    ALLOWED_HOSTS = [
+        host.strip() 
+        for host in allowed_hosts_env.replace(' ', ',').split(',') 
+        if host.strip()
+    ]
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-# 2. SEGUNDO: Usa o ALLOWED_HOSTS já criado para definir o CSRF
+# 2. CSRF (Origens Confiáveis)
+# Adiciona https:// na frente de cada host válido
 CSRF_TRUSTED_ORIGINS = [f'https://{host}' for host in ALLOWED_HOSTS]
 
-# 3. Configurações de Proxy Seguro
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Debug para garantir que agora ficou certo (pode remover depois)
+print(f"--- DEBUG FINAL ALLOWED_HOSTS: {ALLOWED_HOSTS} ---")
+print(f"--- DEBUG FINAL CSRF: {CSRF_TRUSTED_ORIGINS} ---")
 
-print(f"--- DEBUG ALLOWED_HOSTS: {ALLOWED_HOSTS} ---")
-print(f"--- DEBUG CSRF_ORIGINS: {CSRF_TRUSTED_ORIGINS} ---")
-
-    # Application definition
+# Application definition
 INSTALLED_APPS = [
     'core',
     'django.contrib.admin',
