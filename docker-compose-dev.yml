@@ -17,7 +17,7 @@ services:
   travel_web_dev:
     build: ./app
     container_name: travel_manager_web_dev
-    command: python manage.py runserver 0.0.0.0:8000
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       # - ./app:/usr/src/app  <-- Mantive comentado como no original
       - /var/data/media_data_dev:/usr/src/app/media
