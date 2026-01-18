@@ -293,85 +293,135 @@
             </div>
         </div>
 
-        <div class="card card-outline card-success">
-            <div class="card-header">
-                <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
-                <div class="card-tools">
-                    {% if can_edit %}
-                    <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
-                        <i class="fas fa-plus"></i> Add Gasto
-                    </a>
-                    {% endif %}
+<div class="card card-outline card-success">
+    <div class="card-header">
+        <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
+        <div class="card-tools">
+            {% if can_edit %}
+            <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
+                <i class="fas fa-plus"></i> Add Gasto
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card-body table-responsive p-0">
+        
+        <div class="px-3 pt-3">
+            <div class="row text-center">
+                <div class="col-sm-4 border-right">
+                    <div class="description-block">
+                        <h5 class="description-header text-primary" id="display-total-planned">
+                            R$ {{ total_planned|floatformat:2 }}
+                        </h5>
+                        <span class="description-text text-muted">TOTAL</span>
+                    </div>
+                </div>
+                <div class="col-sm-4 border-right">
+                    <div class="description-block">
+                        <h5 class="description-header text-success" id="display-total-paid">
+                            R$ {{ total_paid|floatformat:2 }}
+                        </h5>
+                        <span class="description-text text-muted">PAGO</span>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="description-block">
+                        <h5 class="description-header text-danger" id="display-to-pay">
+                            R$ {{ to_pay|floatformat:2 }}
+                        </h5>
+                        <span class="description-text text-muted">FALTA</span>
+                    </div>
                 </div>
             </div>
-    
-    <div class="card-body table-responsive p-0" style="height: 300px;">
-        <div class="px-3 pt-3">
-            <h2 class="text-bold text-success">
-                R$ {{ total_spent_brl|floatformat:2 }}
-            </h2>
-            <p class="text-muted small">
+            
+            <div class="progress mt-2 mb-2" style="height: 6px;">
+                <div class="progress-bar bg-success" id="progress-bar-paid" role="progressbar" 
+                     style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
+            <p class="text-muted small text-center mb-0">
                 Câmbio atualizado automaticamente via AwesomeAPI.
             </p>
             <hr>
-        </div>        
-            <table class="table table-striped table-valign-middle">
-            <thead>
-                <tr>
-                    <th>Data</th> <th>Gasto</th>
-                    <th class="text-right">Original</th>
-                    <th class="text-right">Em Reais (R$)</th>
-                    <th class="text-center" style="width: 80px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for expense in expenses %}
-                <tr>
-                    <td class="align-middle">
-                        <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ expense.date|date:"d/m" }}</small>
-                    </td>
+        </div>
+        <div style="height: 300px; overflow-y: auto;">
+            <table class="table table-striped table-valign-middle table-head-fixed text-nowrap">
+                <thead>
+                    <tr>
+                        <th>Data</th> 
+                        <th>Gasto</th>
+                        <th class="text-right">Original</th>
+                        <th class="text-right">Em Reais (R$)</th>
+                        <th class="text-center">Pago?</th>
+                        <th class="text-center" style="width: 80px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td class="align-middle">
+                            <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ expense.date|date:"d/m" }}</small>
+                        </td>
 
-                    <td class="align-middle">
-                        {{ expense.description }}
-                        <br>
-                        <small class="text-muted">{{ expense.category }}</small>
-                    </td>
-                    
-                    <td class="text-right align-middle">
-                        <span class="badge badge-light" style="font-size: 0.9em;">
-                            {{ expense.currency }} {{ expense.amount|intcomma }}
-                        </span>
-                    </td>
-                    
-                    <td class="text-right text-success font-weight-bold align-middle">
-                        R$ {{ expense.converted_value|floatformat:2|intcomma }}
-                    </td>
+                        <td class="align-middle" style="white-space: normal;">
+                            {{ expense.title }}
+                            <br>
+                            <small class="text-muted">{{ expense.category }}</small>
+                        </td>
+                        
+                        <td class="text-right align-middle">
+                            <span class="badge badge-light" style="font-size: 0.9em;">
+                                {{ expense.currency }} {{ expense.amount|floatformat:2 }}
+                            </span>
+                        </td>
+                        
+                        <td class="text-right text-success font-weight-bold align-middle">
+                            R$ {{ expense.converted_amount|default:expense.amount|floatformat:2 }}
+                        </td>
 
-                    <td class="text-center align-middle">
-                        <div class="btn-group btn-group-sm">
+                        <td class="text-center align-middle">
                             {% if can_edit %}
-                            <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar Gasto">
-                                <i class="fas fa-pen text-primary"></i>
-                            </a>
-                            
-                            <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
-                                <i class="fas fa-trash text-danger"></i>
-                            </a>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input btn-toggle-paid" 
+                                       id="paidSwitch_{{ expense.id }}" 
+                                       data-id="{{ expense.id }}"
+                                       {% if expense.is_paid %}checked{% endif %}>
+                                <label class="custom-control-label" for="paidSwitch_{{ expense.id }}"></label>
+                            </div>
+                            {% else %}
+                                {% if expense.is_paid %}
+                                    <span class="badge badge-success">Sim</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Não</span>
+                                {% endif %}
                             {% endif %}
-                        </div>
-                    </td>
+                        </td>
 
+                        <td class="text-center align-middle">
+                            <div class="btn-group btn-group-sm">
+                                {% if can_edit %}
+                                <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar Gasto">
+                                    <i class="fas fa-pen text-primary"></i>
+                                </a>
+                                
+                                <a href="{% url 'expense_delete' expense.id %}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
+                                    <i class="fas fa-trash text-danger"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted">Nenhum gasto registrado.</td>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum gasto registrado.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-
         </div>
-        </div>
+    </div>
+</div>
 
         <!-- Sugerir Dicas de Viagem IA -->
         <div class="row">
