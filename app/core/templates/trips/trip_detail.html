@@ -938,56 +938,55 @@ $('#modalItemMap').on('shown.bs.modal', function (event) {
             modal.find('#btnVisitArea').addClass('d-none');
         }
     });
-</script>
-<script>
-$(document).ready(function() {
-    // Atualiza a barra de progresso inicial
-    updateProgressBar();
 
-    $('.btn-toggle-paid').change(function() {
-        var expenseId = $(this).data('id');
-        var isChecked = $(this).is(':checked');
-        var url = "{% url 'trip_expense_toggle_paid' 0 %}".replace('0', expenseId);
+    $(document).ready(function() {
+        // Atualiza a barra de progresso inicial
+        updateProgressBar();
 
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: {
-                'csrfmiddlewaretoken': '{{ csrf_token }}'
-            },
-            success: function(response) {
-                // Atualiza os valores nos cards (Formatando para moeda Brasil)
-                $('#display-total-paid').text('R$ ' + parseFloat(response.total_paid).toLocaleString('pt-BR', {minimumFractionDigits: 2}));
-                $('#display-to-pay').text('R$ ' + parseFloat(response.to_pay).toLocaleString('pt-BR', {minimumFractionDigits: 2}));
-                
-                // Animação visual nos textos para indicar mudança
-                $('#display-total-paid, #display-to-pay').fadeOut(100).fadeIn(100);
-                
-                updateProgressBar(response.total_paid, response.total_planned);
-            },
-            error: function() {
-                alert('Erro ao atualizar status. Tente novamente.');
-                // Reverte o checkbox em caso de erro
-                $('#paidSwitch_' + expenseId).prop('checked', !isChecked);
-            }
+        $('.btn-toggle-paid').change(function() {
+            var expenseId = $(this).data('id');
+            var isChecked = $(this).is(':checked');
+            var url = "{% url 'trip_expense_toggle_paid' 0 %}".replace('0', expenseId);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    // Atualiza os valores nos cards (Formatando para moeda Brasil)
+                    $('#display-total-paid').text('R$ ' + parseFloat(response.total_paid).toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+                    $('#display-to-pay').text('R$ ' + parseFloat(response.to_pay).toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+                    
+                    // Animação visual nos textos para indicar mudança
+                    $('#display-total-paid, #display-to-pay').fadeOut(100).fadeIn(100);
+                    
+                    updateProgressBar(response.total_paid, response.total_planned);
+                },
+                error: function() {
+                    alert('Erro ao atualizar status. Tente novamente.');
+                    // Reverte o checkbox em caso de erro
+                    $('#paidSwitch_' + expenseId).prop('checked', !isChecked);
+                }
+            });
         });
+
+        function updateProgressBar(paid, total) {
+            // Se não passar parâmetros, tenta pegar do HTML atual (carga inicial)
+            if (paid === undefined) {
+                var paidText = $('#display-total-paid').text().replace('R$ ', '').replace('.', '').replace(',', '.');
+                var totalText = $('#display-total-planned').text().replace('R$ ', '').replace('.', '').replace(',', '.');
+                paid = parseFloat(paidText);
+                total = parseFloat(totalText);
+            }
+
+            var percent = 0;
+            if (total > 0) {
+                percent = (paid / total) * 100;
+            }
+            $('#progress-bar-paid').css('width', percent + '%');
+        }
     });
-
-    function updateProgressBar(paid, total) {
-        // Se não passar parâmetros, tenta pegar do HTML atual (carga inicial)
-        if (paid === undefined) {
-            var paidText = $('#display-total-paid').text().replace('R$ ', '').replace('.', '').replace(',', '.');
-            var totalText = $('#display-total-planned').text().replace('R$ ', '').replace('.', '').replace(',', '.');
-            paid = parseFloat(paidText);
-            total = parseFloat(totalText);
-        }
-
-        var percent = 0;
-        if (total > 0) {
-            percent = (paid / total) * 100;
-        }
-        $('#progress-bar-paid').css('width', percent + '%');
-    }
-});
 </script>
 {% endblock %}
