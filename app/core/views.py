@@ -13,12 +13,11 @@ import ast
 import markdown
 import os
 from datetime import datetime, time, timedelta
-# Seus Models e Utils (Geralmente já estavam aí)
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration, AccessLog
 from django.conf import settings
 from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm, EmailConfigurationForm, ICSImportForm
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Case, When, F, DecimalField
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
@@ -27,6 +26,7 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from icalendar import Calendar, Event as ICalEvent
 import pytz
+from django.views.decorators.http import require_POST
 
 
 #--- VIEW PARA A PÁGINA INICIAL (DASHBOARD) ---
@@ -427,7 +427,25 @@ def trip_detail(request, pk):
 
     # 5. Processamento Financeiro (Mantém global da viagem ou filtra? Geralmente financeiro é global)
     # Aqui mantemos expenses global (trip.expenses) para o resumo financeiro mostrar o total da viagem
+    # --- LÓGICA FINANCEIRA ATUALIZADA ---
     expenses = trip.expenses.all()
+    
+    # Calcula o total geral (convertendo se necessário, aqui assumindo soma direta ou lógica simples)
+    # Se você já tiver lógica de conversão de moeda, mantenha ela, mas separe os grupos:
+    total_planned = 0
+    total_paid = 0
+    
+    for expense in expenses:
+        # Aplica sua conversão de moeda se existir (ex: get_exchange_rate)
+        # Supondo que 'expense.amount' seja o valor base ou convertido:
+        val = expense.amount # Ou sua lógica de conversão
+        
+        total_planned += val
+        if expense.is_paid:
+            total_paid += val
+
+    to_pay = total_planned - total_paid
+
     total_converted_brl = 0
     rates_cache = {}
 
@@ -468,6 +486,9 @@ def trip_detail(request, pk):
 
     context = {
         'trip': trip,
+        'total_planned': total_planned,
+        'total_paid': total_paid,
+        'to_pay': to_pay,
         'items': items,
         'available_dates': available_dates,
         'selected_date': selected_date,
@@ -606,6 +627,36 @@ def trip_expense_create(request, trip_id):
         form = ExpenseForm(initial={'date': initial_date} if initial_date else None)
 
     return render(request, 'trips/expense_form.html', {'form': form, 'trip': trip})
+
+#--- VIEW PARA CALCULAR O QUE JÁ FOI PAGO ---
+@require_POST
+def trip_expense_toggle_paid(request, pk):
+    expense = get_object_or_404(Expense, pk=pk)
+    expense.is_paid = not expense.is_paid # Inverte o status
+    expense.save()
+    
+    # Recalcula os totais da viagem para atualizar a tela dinamicamente
+    trip = expense.trip
+    expenses = trip.expenses.all()
+    
+    total_planned = 0
+    total_paid = 0
+    
+    for exp in expenses:
+        # Mesma lógica de conversão usada no trip_detail
+        val = exp.amount 
+        total_planned += val
+        if exp.is_paid:
+            total_paid += val
+            
+    to_pay = total_planned - total_paid
+    
+    return JsonResponse({
+        'is_paid': expense.is_paid,
+        'total_paid': total_paid,
+        'to_pay': to_pay,
+        'total_planned': total_planned
+    })
 
 #--- VIEW PARA EDITAR VIAGEM ---
 @login_required

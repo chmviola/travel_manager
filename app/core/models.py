@@ -188,7 +188,7 @@ class Expense(models.Model):
     description = models.CharField(max_length=200, verbose_name="Descrição")
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor")
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='BRL')
-    
+    is_paid = models.BooleanField(default=False, verbose_name="Pago?")
     category = models.CharField(max_length=50, verbose_name="Categoria") # Ex: Alimentação, Transporte
     date = models.DateField(default=models.functions.Now)
 

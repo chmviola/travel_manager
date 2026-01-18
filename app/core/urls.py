@@ -41,6 +41,7 @@ urlpatterns = [
     path('financeiro/', views.financial_dashboard, name='financial_dashboard'),
     path('financeiro/api/chart-data/', views.financial_chart_api, name='financial_chart_api'),
     path('fix-locations/', views.fix_locations, name='fix_locations'),
+    path('gastos/<int:pk>/alternar-pagamento/', views.trip_expense_toggle_paid, name='trip_expense_toggle_paid'),
 
     # Rotas de Gestão de Usuários
     path('usuarios/', views.user_list, name='user_list'),
