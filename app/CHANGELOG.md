@@ -1,6 +1,14 @@
 # 🚀 Release v0.1.13 — 2026-01-18
 
-*Aguardando geração de notas...*
+### ✨ Novas Funcionalidades
+- feat: adição do controle de orçamento com as opção de executado na tabela resumo financeiro nos detalhes da viagem
+
+### 📝 Outras Alterações
+- Initial commit: TravelManager Open Source v0.1.12
+
+### 📦 Commit range
+`v0.1.12..HEAD`
+
 
 # 🚀 Release v0.1.12 — 2026-01-17
 
