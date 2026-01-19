@@ -1,3 +1,12 @@
+# 🚀 Release v0.1.16 — 2026-01-19
+
+### 🐛 Correções
+- fix: abrindo o mapa somente com os itens do dia
+
+### 📦 Commit range
+`v0.1.15..HEAD`
+
+
 # 🚀 Release v0.1.15 — 2026-01-19
 
 ### 🧹 Manutenção
