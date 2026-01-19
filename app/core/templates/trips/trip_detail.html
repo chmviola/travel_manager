@@ -298,7 +298,7 @@
         <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
         <div class="card-tools">
             {% if can_edit %}
-            <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success"> 
+            <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
                 <i class="fas fa-plus"></i> Add Gasto
             </a>
             {% endif %}
@@ -693,9 +693,9 @@
         const geocoder = new google.maps.Geocoder();
         let markersCount = 0;
 
-        // Dados vindos do Django (Ajustado para trip.items.all para evitar erro de variavel vazia)
+        // Dados vindos do Django (Ajustado para usar os itens filtrados 'items' em vez de trip.items.all)
         const locations = [
-            {% for item in trip.items.all %}
+            {% for item in items %}
             {
                 name: "{{ item.name|escapejs }}",
                 address: "{{ item.location_address|default:''|escapejs }}",
@@ -771,7 +771,7 @@
 
         // 2. Recebendo os dados do Django para o JS
         const tripItems = [
-            {% for item in trip.items.all %}
+            {% for item in items %}
             {
                 name: "{{ item.name|escapejs }}",
                 type: "{{ item.get_item_type_display }}",
