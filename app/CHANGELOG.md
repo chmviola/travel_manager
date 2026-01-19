@@ -1,3 +1,12 @@
+# 🚀 Release v0.1.15 — 2026-01-19
+
+### 🧹 Manutenção
+- chore: ajustando as branchs
+
+### 📦 Commit range
+`v0.1.14..HEAD`
+
+
 # 🚀 Release v0.1.14 — 2026-01-19
 
 ### ✨ Novas Funcionalidades
