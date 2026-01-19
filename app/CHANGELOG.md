@@ -1,3 +1,17 @@
+# 🚀 Release v0.1.14 — 2026-01-19
+
+### ✨ Novas Funcionalidades
+- feat: adição do controle de orçamento com as opção de executado na tabela resumo financeiro nos detalhes da viagem
+- feat: adição do controle de orçamento com as opção de executado na tabela resumo financeiro nos detalhes da viagem
+- feat: adição do controle de orçamento com as opção de executado na tabela resumo financeiro nos detalhes da viagem
+
+### 🐛 Correções
+- fix: consertando a não conversão da planilha financeira com o GROK
+
+### 📦 Commit range
+`v0.1.13..HEAD`
+
+
 # 🚀 Release v0.1.13 — 2026-01-18
 
 ### ✨ Novas Funcionalidades
