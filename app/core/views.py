@@ -430,37 +430,30 @@ def trip_detail(request, pk):
     # --- LÓGICA FINANCEIRA ATUALIZADA ---
     expenses = trip.expenses.all()
     
-    # Calcula o total geral (convertendo se necessário, aqui assumindo soma direta ou lógica simples)
-    # Se você já tiver lógica de conversão de moeda, mantenha ela, mas separe os grupos:
-    total_planned = 0
-    total_paid = 0
-    
-    for expense in expenses:
-        # Aplica sua conversão de moeda se existir (ex: get_exchange_rate)
-        # Supondo que 'expense.amount' seja o valor base ou convertido:
-        val = expense.amount # Ou sua lógica de conversão
-        
-        total_planned += val
-        if expense.is_paid:
-            total_paid += val
-
-    to_pay = total_planned - total_paid
-
-    total_converted_brl = 0
+    total_planned_brl = Decimal('0.00')
+    total_paid_brl = Decimal('0.00')
     rates_cache = {}
 
     for expense in expenses:
-        if expense.currency == 'BRL':
-            expense.converted_value = expense.amount 
-            total_converted_brl += expense.amount
-        else:
-            if expense.currency not in rates_cache:
-                rates_cache[expense.currency] = get_exchange_rate(expense.currency)
-            
-            rate = rates_cache[expense.currency]
-            val_float = float(expense.amount) * rate
-            expense.converted_value = Decimal(str(round(val_float, 2)))
-            total_converted_brl += expense.converted_value
+        # Obtém a taxa de câmbio (com cache)
+        if expense.currency not in rates_cache:
+            rates_cache[expense.currency] = get_exchange_rate(expense.currency)
+
+        rate = Decimal(str(rates_cache[expense.currency]))  # Converte para Decimal para precisão
+
+        # Calcula o valor convertido para BRL
+        converted = Decimal(expense.amount) * rate
+        converted = converted.quantize(Decimal('0.01'))  # Arredonda para 2 casas decimais
+
+        # Atribui ao atributo temporário (padronizado para 'converted_amount')
+        expense.converted_amount = converted
+
+        # Acumula nos totais convertidos
+        total_planned_brl += converted
+        if expense.is_paid:
+            total_paid_brl += converted
+
+    to_pay_brl = total_planned_brl - total_paid_brl
 
     # 6. Cotações para Exibição (Baseado nos itens filtrados do dia)
     detected_currencies = set()
@@ -486,16 +479,16 @@ def trip_detail(request, pk):
 
     context = {
         'trip': trip,
-        'total_planned': total_planned,
-        'total_paid': total_paid,
-        'to_pay': to_pay,
+        'total_planned': total_planned_brl,
+        'total_paid': total_paid_brl,
+        'to_pay': to_pay_brl,
         'items': items,
         'available_dates': available_dates,
         'selected_date': selected_date,
         'expenses': expenses,
         'can_edit': can_edit,
         'user_role': user_role,
-        'total_spent_brl': round(total_converted_brl, 2),
+        #'total_spent_brl': round(total_converted_brl, 2),
         'trip_rates': trip_rates,
         'google_maps_api_key': google_maps_api_key
     }
@@ -639,23 +632,29 @@ def trip_expense_toggle_paid(request, pk):
     trip = expense.trip
     expenses = trip.expenses.all()
     
-    total_planned = 0
-    total_paid = 0
+    total_planned_brl = Decimal('0.00')
+    total_paid_brl = Decimal('0.00')
+    rates_cache = {}
     
     for exp in expenses:
-        # Mesma lógica de conversão usada no trip_detail
-        val = exp.amount 
-        total_planned += val
+        if exp.currency not in rates_cache:
+            rates_cache[exp.currency] = get_exchange_rate(exp.currency)
+
+        rate = Decimal(str(rates_cache[exp.currency]))
+        converted = Decimal(exp.amount) * rate
+        converted = converted.quantize(Decimal('0.01'))
+
+        total_planned_brl += converted
         if exp.is_paid:
-            total_paid += val
-            
-    to_pay = total_planned - total_paid
+            total_paid_brl += converted
+
+    to_pay_brl = total_planned_brl - total_paid_brl
     
     return JsonResponse({
         'is_paid': expense.is_paid,
-        'total_paid': total_paid,
-        'to_pay': to_pay,
-        'total_planned': total_planned
+        'total_paid': float(total_paid_brl),  # Converte para float para JSON (ou use str)
+        'to_pay': float(to_pay_brl),
+        'total_planned': float(total_planned_brl)
     })
 
 #--- VIEW PARA EDITAR VIAGEM ---
