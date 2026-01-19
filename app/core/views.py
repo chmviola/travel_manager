@@ -388,7 +388,7 @@ def trip_detail(request, pk):
         # if item.flag_code:
         #     trip.flags.add(item.flag_code)
 
-        # Lógica de Limpeza das Notas
+        # Lógica de Limpeza das Notas 
         if item.details:
             raw = item.details
             if isinstance(raw, str):
