@@ -1,6 +1,8 @@
 # 🚀 Release v0.1.17 — 2026-01-19
 
-*Aguardando geração de notas...*
+### 📦 Commit range
+`v0.1.16..HEAD`
+
 
 # 🚀 Release v0.1.16 — 2026-01-19
 
