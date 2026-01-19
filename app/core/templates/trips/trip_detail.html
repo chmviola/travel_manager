@@ -365,7 +365,7 @@
                         </td>
 
                         <td class="align-middle" style="white-space: normal;">
-                            {{ expense.title }}
+                            <span class="font-weight-bold text-dark">{{ expense.title|default:expense.description|default:"-" }}</span>
                             <br>
                             <small class="text-muted">{{ expense.category }}</small>
                         </td>
