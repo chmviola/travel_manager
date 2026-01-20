@@ -248,7 +248,7 @@
                                     <i class="fas fa-pen text-primary"></i>
                                 </a>
                                 
-                                <a href="{% url 'trip_expense_update' expense.id %}?next={{ request.path }}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
+                                <a href="{% url 'expense_update' expense.id %}?next={{ request.path }}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
                                     <i class="fas fa-trash text-danger"></i>
                                 </a>
                                 {% endif %}
