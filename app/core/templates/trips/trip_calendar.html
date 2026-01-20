@@ -423,6 +423,94 @@
     </div>
 </div>
 
+<!-- Modal para Detalhes do Item -->
+<div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header text-white" id="modalHeaderStyle" style="background-color: #3c8dbc;">
+                <h5 class="modal-title font-weight-bold" id="modalTitle">Título do Evento</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="mb-3 text-muted">
+                    <i class="far fa-clock mr-1"></i> <span id="modalTime"></span>
+                </div>
+
+                <div class="mb-3" id="modalLocationDiv">
+                    <i class="fas fa-map-marker-alt mr-2 text-danger"></i>
+                    <strong id="modalLocation"></strong>
+                </div>
+
+                <div class="callout callout-info bg-light mb-4" id="modalDescDiv">
+                    <small class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7em;">Notas / Detalhes</small>
+                    <p class="mb-0 mt-1" id="modalDescription" style="font-size: 0.95em;"></p>
+                </div>
+
+                <div class="mb-3" id="modalLinkDiv" style="display:none;">
+                    <a href="#" target="_blank" id="modalExternalLink" class="btn btn-block btn-outline-info btn-sm">
+                        <i class="fas fa-external-link-alt mr-1"></i> Acessar Link Externo
+                    </a>
+                </div>
+
+                <hr>
+
+                <div class="row text-center">
+                    <div class="col-4 mb-3">
+                        <button type="button" class="btn btn-default btn-block btn-sm shadow-sm" id="btnShowMap">
+                            <i class="fas fa-map-marked-alt text-primary"></i><br>Mapa
+                        </button>
+                    </div>
+                    <div class="col-4 mb-3">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnAttachment">
+                            <i class="fas fa-paperclip text-secondary"></i><br>Anexos
+                        </a>
+                    </div>
+                    <div class="col-4 mb-3">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnExpense">
+                            <i class="fas fa-dollar-sign text-success"></i><br>Gastos
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnEditItemLink">
+                            <i class="fas fa-link text-info"></i><br>Link
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnEditItem">
+                            <i class="fas fa-edit text-warning"></i><br>Editar
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnDeleteItem" onclick="return confirm('Tem certeza que deseja apagar este item?');">
+                            <i class="fas fa-trash text-danger"></i><br>Apagar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Mapa do Item -->
+<div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Localização</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="mapFrame" width="100%" height="450" frameborder="0" style="border:0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -443,6 +531,9 @@
         // 1. INICIALIZA O CALENDÁRIO
         var events = {{ events_json|safe }}; // Recebe do Django
 
+        // 1. INICIALIZA O CALENDÁRIO
+        var events = {{ events_json|safe }}; 
+
         $('#calendar').fullCalendar({
             header: {
                 left: 'prev,next today',
@@ -450,16 +541,84 @@
                 right: 'month,agendaWeek,agendaDay'
             },
             themeSystem: 'bootstrap4',
-            defaultView: 'agendaWeek', // Começa na visão semanal que é melhor para viagens
+            defaultView: 'agendaWeek',
             locale: 'pt-br',
             events: events,
             height: 600,
-            eventClick: function(event) {
-                // Ação ao clicar: Abre a edição (Opção C solicitada)
-                if (event.url) {
-                    window.location.href = event.url;
-                    return false;
+            
+            // --- AQUI ESTÁ A MUDANÇA: CLIQUE NO EVENTO ---
+            eventClick: function(calEvent, jsEvent, view) {
+                // Previne abrir link direto se houvesse
+                jsEvent.preventDefault();
+
+                // 1. Preenche Título e Cor
+                $('#modalTitle').text(calEvent.title);
+                $('#modalHeaderStyle').css('background-color', calEvent.backgroundColor);
+
+                // 2. Preenche Data/Hora (Formatando bonito com Moment.js)
+                var timeText = calEvent.start.format('DD/MM/YYYY HH:mm');
+                if (calEvent.end) {
+                    timeText += ' - ' + calEvent.end.format('HH:mm');
                 }
+                $('#modalTime').text(timeText);
+
+                // 3. Preenche Localização
+                if (calEvent.location) {
+                    $('#modalLocation').text(calEvent.location);
+                    $('#modalLocationDiv').show();
+                    
+                    // Configura botão do Mapa
+                    if (calEvent.lat && calEvent.lng) {
+                        $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
+                            var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + calEvent.lat + "," + calEvent.lng;
+                            $('#mapFrame').attr('src', mapUrl);
+                            $('#eventModal').modal('hide'); // Fecha o detalhe
+                            $('#mapModal').modal('show');   // Abre o mapa
+                        });
+                    } else {
+                        // Se tem endereço mas não tem lat/lng, busca pelo texto
+                        $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
+                            var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + encodeURIComponent(calEvent.location);
+                            $('#mapFrame').attr('src', mapUrl);
+                            $('#eventModal').modal('hide');
+                            $('#mapModal').modal('show');
+                        });
+                    }
+                } else {
+                    $('#modalLocationDiv').hide();
+                    $('#btnShowMap').prop('disabled', true); // Desabilita botão mapa
+                }
+
+                // 4. Preenche Descrição
+                if (calEvent.description) {
+                    $('#modalDescription').text(calEvent.description);
+                    $('#modalDescDiv').show();
+                } else {
+                    $('#modalDescDiv').hide();
+                }
+
+                // 5. Preenche Botões de Ação (Links vindos do View)
+                if (calEvent.urls) {
+                    $('#btnEditItem').attr('href', calEvent.urls.edit); // Botão Editar (o principal)
+                    $('#btnDeleteItem').attr('href', calEvent.urls.delete); // Botão Apagar
+                    $('#btnExpense').attr('href', calEvent.urls.expense); // Botão Gastos
+                    $('#btnAttachment').attr('href', calEvent.urls.attachment); // Botão Anexos
+                    
+                    // Botão Link (Redireciona para Editar item focando no link, ou abre link se existir)
+                    // Aqui simplifiquei para ir para Edição, já que "Gerenciar Link" é editar o item
+                    $('#btnEditItemLink').attr('href', calEvent.urls.edit); 
+                }
+
+                // 6. Link Externo (Se o item já tiver um link salvo)
+                if (calEvent.link) {
+                    $('#modalExternalLink').attr('href', calEvent.link);
+                    $('#modalLinkDiv').show();
+                } else {
+                    $('#modalLinkDiv').hide();
+                }
+
+                // 7. Abre o Modal
+                $('#eventModal').modal('show');
             }
         });
 

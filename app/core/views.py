@@ -530,26 +530,52 @@ def trip_calendar(request, pk):
                     elif item.type == 'FOOD': color = '#ffc107'
             except: pass
             
-            # Tenta gerar a URL de edição (AQUI É UM PONTO CRÍTICO DE ERRO)
+            # 2. Prepara URLs com o NEXT (A Mágica acontece aqui)
+            # Todas as ações voltam para o calendário
+            current_path = request.path
+            
             url_edit = '#'
+            url_delete = '#'
+            url_expense = '#'
+            url_attachment = '#'
+            
             if can_edit:
                 try:
-                    # 1. Gera a URL base de edição
-                    base_url = reverse('trip_item_update', args=[item.id])
-                    
-                    # 2. Adiciona o ?next= apontando para a página atual (/calendario/)
-                    url_edit = f"{base_url}?next={request.path}"
-                    
-                except Exception as e:
-                    print(f"AVISO: URL edição falhou item {item.id}: {e}")
-                    url_edit = '#'
+                    # URL Editar
+                    url_edit = f"{reverse('trip_item_update', args=[item.id])}?next={current_path}"
+                    # URL Deletar
+                    url_delete = f"{reverse('trip_item_delete', args=[item.id])}?next={current_path}"
+                    # URL Novo Gasto (Já vinculado ao item)
+                    # Assumindo que seu form aceita 'item' via GET, senão removemos o ?item=
+                    url_expense = f"{reverse('trip_expense_create', args=[trip.id])}?next={current_path}&item={item.id}"
+                    # URL Anexos (Geral da viagem, pois anexo por item é complexo sem ver o model)
+                    url_attachment = f"{reverse('trip_attachment_list', args=[trip.id])}?next={current_path}"
+                except: pass
 
+            # 3. Monta o Objeto do Evento Completo
             event = {
+                'id': item.id, # Importante para identificar
                 'title': item.name,
                 'start': item.start_datetime.isoformat() if item.start_datetime else '',
                 'backgroundColor': color,
                 'borderColor': color,
-                'url': url_edit
+                # Não usamos mais 'url' direta, pois vamos abrir modal
+                # 'url': url_edit, 
+                
+                # Dados Extras para o Modal
+                'description': item.details.get('notes', '') if isinstance(item.details, dict) else str(item.details),
+                'location': item.location_address or '',
+                'lat': item.location_lat or '',
+                'lng': item.location_lng or '',
+                'link': item.link if hasattr(item, 'link') and item.link else '',
+                
+                # Dicionário de URLs para os botões
+                'urls': {
+                    'edit': url_edit,
+                    'delete': url_delete,
+                    'expense': url_expense,
+                    'attachment': url_attachment
+                }
             }
             
             if item.end_datetime:
