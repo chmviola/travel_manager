@@ -303,7 +303,7 @@
         <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
         <div class="card-tools">
             {% if can_edit %}
-            <a href="{% url 'trip_expense_create' trip.id %}" class="btn btn-tool text-success">
+            <a href="{% url 'trip_expense_create' trip.id %}?next={{ request.path }}" class="btn btn-tool text-success">
                 <i class="fas fa-plus"></i> Add Gasto
             </a>
             {% endif %}
@@ -406,7 +406,7 @@
                         <td class="text-center align-middle">
                             <div class="btn-group btn-group-sm">
                                 {% if can_edit %}
-                                <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar Gasto">
+                                <a href="{% url 'trip_expense_update' expense.id %}?next={{ request.path }}" class="btn btn-default" title="Editar Gasto">
                                     <i class="fas fa-pen text-primary"></i>
                                 </a>
                                 
