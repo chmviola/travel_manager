@@ -559,44 +559,49 @@ def trip_calendar(request, pk):
         
         events_json = json.dumps(calendar_events, cls=DjangoJSONEncoder)
 
-        # --- 3. FINANCEIRO (AQUI ESTAVA O ERRO) ---
-        # Inicializamos as variáveis ANTES de tudo
+        # --- 3. FINANCEIRO (PADRONIZADO COM O TRIP_DETAIL) ---
         total_planned = Decimal(0)
         total_paid = Decimal(0)
         to_pay = Decimal(0)
-        expenses = [] # Garante que expenses existe mesmo se o bloco falhar
+        expenses = []
 
         try:
-            # Mesma lógica da trip_detail: list() para travar na memória
+            # 1. Trazemos para a memória com list() para o cálculo persistir no HTML
             expenses = list(trip.expenses.all().order_by('-date'))
             rates_cache = {}
 
             for expense in expenses:
-                rate = 1
-                if expense.currency and expense.currency != 'BRL':
-                    if expense.currency in rates_cache:
-                        rate = rates_cache[expense.currency]
-                    else:
-                        try:
-                            r = get_exchange_rate(expense.currency)
-                            rate = Decimal(str(r)) if r else 1
-                            rates_cache[expense.currency] = rate
-                        except: rate = 1
-                
-                try:
-                    val_amount = Decimal(str(expense.amount)) if expense.amount else Decimal(0)
-                    val_rate = Decimal(str(rate))
-                    val_converted = val_amount * val_rate
-                except: val_converted = Decimal(0)
+                # 2. Obtém a taxa (Lógica idêntica ao trip_detail)
+                if expense.currency not in rates_cache:
+                    try:
+                        r = get_exchange_rate(expense.currency)
+                        # Força conversão para Decimal para evitar erros de cálculo
+                        rates_cache[expense.currency] = Decimal(str(r)) if r else Decimal(1)
+                    except:
+                        rates_cache[expense.currency] = Decimal(1)
 
-                expense.converted_value = val_converted
-                total_planned += val_converted
-                if expense.is_paid: total_paid += val_converted
+                rate = rates_cache[expense.currency]
+
+                # 3. Cálculo com precisão (quantize)
+                try:
+                    converted = Decimal(str(expense.amount)) * rate
+                    converted = converted.quantize(Decimal('0.01')) # Arredonda 2 casas
+                except:
+                    converted = Decimal(0)
+
+                # 4. ATRIBUIÇÃO CORRETA (Aqui estava o erro!)
+                # Estamos usando 'converted_amount' para ficar IGUAL ao trip_detail
+                expense.converted_amount = converted
+
+                # 5. Totais
+                total_planned += converted
+                if expense.is_paid:
+                    total_paid += converted
 
             to_pay = total_planned - total_paid
+
         except Exception as e:
-            print(f"Erro no cálculo financeiro do calendário: {e}")
-            # Se der erro, as variáveis já valem 0, então não quebra a tela
+            print(f"Erro financeiro calendar: {e}")
 
         # 4. Cotações e API Key
         trip_rates = []
