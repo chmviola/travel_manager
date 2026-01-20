@@ -5,7 +5,7 @@
 
 {% block page_title %}
     <i class="far fa-calendar-alt mr-2"></i> {{ trip.title }} 
-    <small class="text-muted">Visão de Calendário</small>
+    <small class="text-muted">Visão de Calendário - {{ trip.get_status_display }}</small>
 {% endblock %}
 
 {% block extra_css %}
