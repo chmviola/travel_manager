@@ -60,6 +60,10 @@
                     <i class="fas fa-folder"></i> Detalhes
                 </a>
 
+                <a href="{% url 'trip_calendar' trip.id %}" class="btn btn-default btn-block">
+                    <i class="fas fa-calendar-alt"></i> Calendário
+                </a>
+
                 {% if trip.user == request.user %}
                     <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#modalShare{{ trip.id }}">
                         <i class="fas fa-share-alt"></i> Compartilhar

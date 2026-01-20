@@ -1,4 +1,11 @@
+# 🚀 Release v0.1.18 — 2026-01-20
+
+*Aguardando geração de notas...*
+
 # 🚀 Release v0.1.17 — 2026-01-19
+
+### 🐛 Correções
+fix: campo gasto que não mostra a descrição do gasto na planilha Resumo Financeiro
 
 ### 📦 Commit range
 `v0.1.16..HEAD`

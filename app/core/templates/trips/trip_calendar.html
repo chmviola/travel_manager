@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block page_title %}
+    <i class="far fa-calendar-alt mr-2"></i> {{ trip.title }} 
+    <small class="text-muted">Visão de Calendário</small>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css">
+<style>
+    .fc-event {
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+    .widget-map {
+        height: 300px;
+        width: 100%;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12 d-flex align-items-center justify-content-between flex-wrap">
+        <div>
+            <a href="{% url 'trip_detail' trip.id %}" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-stream"></i> Ver Timeline
+            </a>
+            
+            {% if can_edit %}
+            <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary mr-2">
+                <i class=\"fas fa-plus\"></i> Novo Item
+            </a>
+            {% endif %}
+        </div>
+        
+        <div>
+            <a href="{% url 'trip_checklist' trip.id %}" class="btn btn-default btn-sm shadow-sm mr-1">
+                <i class="fas fa-tasks text-success"></i> Checklist
+            </a>
+            <a href="#" class="btn btn-default btn-sm shadow-sm mr-1">
+                <i class="fas fa-robot text-purple"></i> Sugestões IA
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card card-primary card-outline">
+            <div class="card-body p-0">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        
+        <div class="card">
+            <div class="card-header bg-navy">
+                <h3 class="card-title"><i class="fas fa-map-marked-alt mr-1"></i> Mapa Global</h3>
+            </div>
+            <div class="card-body p-0">
+                <div id="global-map" class="widget-map"></div>
+            </div>
+        </div>
+
+        {% if trip_rates %}
+        <div class="info-box mb-3 bg-light">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-exchange-alt"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Cotação Hoje</span>
+                {% for rate in trip_rates %}
+                <span class="info-box-number" style="font-size: 0.9rem;">
+                    1 {{ rate.code }} = <small>R$</small> {{ rate.rate|floatformat:3 }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card card-outline card-warning">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Dicas Rápidas</h3>
+            </div>
+            <div class="card-body small">
+                O clima médio para o período da viagem indica dias ensolarados. Não esqueça o protetor solar!
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0">
+                <h3 class="card-title text-bold"><i class="fas fa-wallet text-success mr-2"></i> Resumo Financeiro</h3>
+                <div class="card-tools">
+                    <a href="#" class="btn btn-tool btn-sm">
+                        <i class="fas fa-chart-pie"></i> Ver Dashboard Completo
+                    </a>
+                </div>
+            </div>
+            <div class="card-body table-responsive p-0">
+                
+                <div class="px-3 pt-3">
+                    <div class="row text-center">
+                        <div class="col-sm-4 border-right">
+                            <h5 class="description-header text-primary">R$ {{ total_planned|floatformat:2 }}</h5>
+                            <span class="description-text text-muted">TOTAL</span>
+                        </div>
+                        <div class="col-sm-4 border-right">
+                            <h5 class="description-header text-success">R$ {{ total_paid|floatformat:2 }}</h5>
+                            <span class="description-text text-muted">PAGO</span>
+                        </div>
+                        <div class="col-sm-4">
+                            <h5 class="description-header text-danger">R$ {{ to_pay|floatformat:2 }}</h5>
+                            <span class="description-text text-muted">FALTA</span>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-striped table-valign-middle text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Gasto</th>
+                                <th class="text-right">Original</th>
+                                <th class="text-right">Em Reais (R$)</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>{{ expense.date|date:"d/m" }}</td>
+                                <td>
+                                    <span class="font-weight-bold">{{ expense.title|default:expense.description|default:"-" }}</span>
+                                    <br><small class="text-muted">{{ expense.category }}</small>
+                                </td>
+                                <td class="text-right"><small>{{ expense.currency }}</small> {{ expense.amount|floatformat:2 }}</td>
+                                <td class="text-right text-success font-weight-bold">
+                                    R$ {{ expense.converted_value|default:expense.amount|floatformat:2 }}
+                                </td>
+                                <td class="text-center">
+                                    {% if expense.is_paid %}
+                                        <span class="badge badge-success">Pago</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">A Pagar</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center">Nenhum gasto.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/locale/pt-br.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+
+<script>
+    $(document).ready(function() {
+        // 1. INICIALIZA O CALENDÁRIO
+        var events = {{ events_json|safe }}; // Recebe do Django
+
+        $('#calendar').fullCalendar({
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            themeSystem: 'bootstrap4',
+            defaultView: 'agendaWeek', // Começa na visão semanal que é melhor para viagens
+            locale: 'pt-br',
+            events: events,
+            height: 600,
+            eventClick: function(event) {
+                // Ação ao clicar: Abre a edição (Opção C solicitada)
+                if (event.url) {
+                    window.location.href = event.url;
+                    return false;
+                }
+            }
+        });
+
+        // 2. INICIALIZA O MAPA GLOBAL
+        function initGlobalMap() {
+            var mapEl = document.getElementById('global-map');
+            if (!mapEl) return;
+
+            var map = new google.maps.Map(mapEl, {
+                zoom: 2,
+                center: { lat: 20, lng: 0 }
+            });
+
+            var bounds = new google.maps.LatLngBounds();
+            var hasPoints = false;
+
+            // Pontos vindos do Django (items da view)
+            var points = [
+                {% for item in items %}
+                {% if item.location_lat and item.location_lng %}
+                {
+                    lat: {{ item.location_lat|unlocalize }},
+                    lng: {{ item.location_lng|unlocalize }},
+                    title: "{{ item.name|escapejs }}"
+                },
+                {% endif %}
+                {% endfor %}
+            ];
+
+            points.forEach(function(pt) {
+                new google.maps.Marker({
+                    position: pt,
+                    map: map,
+                    title: pt.title
+                });
+                bounds.extend(pt);
+                hasPoints = true;
+            });
+
+            if (hasPoints) {
+                map.fitBounds(bounds);
+            }
+        }
+
+        // Carrega o mapa
+        initGlobalMap();
+    });
+</script>
+{% endblock %}

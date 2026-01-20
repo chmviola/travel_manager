@@ -27,6 +27,7 @@ from xhtml2pdf import pisa
 from icalendar import Calendar, Event as ICalEvent
 import pytz
 from django.views.decorators.http import require_POST
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 #--- VIEW PARA A PÁGINA INICIAL (DASHBOARD) ---
@@ -338,7 +339,7 @@ def trip_remove_share(request, trip_id, user_id):
     messages.success(request, "Acesso revogado.")
     return redirect('trip_list') # O ideal seria redirecionar para um modal de gestão
 
-#--- VIEW PARA DETALHES DA VIAGEM ---
+#--- VIEW PARA DETALHES DA VIAGEM ITENS---
 @login_required
 def trip_detail(request, pk):
     # 1. Busca a Viagem e Permissões
@@ -494,6 +495,112 @@ def trip_detail(request, pk):
     }
 
     return render(request, 'trips/trip_detail.html', context)
+
+#--- VIEW PARA DETALHES DA VIAGEM CALENDÁRIO --
+@login_required
+def trip_calendar(request, pk):
+    # 1. Busca a Viagem (Mesma segurança da trip_detail)
+    trip = get_object_or_404(
+        Trip, 
+        Q(pk=pk) & (Q(user=request.user) | Q(collaborators__user=request.user))
+    )
+    user_role = trip.get_user_role(request.user)
+    can_edit = (user_role == 'owner' or user_role == 'editor')
+
+    # 2. Busca TODOS os itens para o Calendário e Mapa Global
+    items = trip.items.all().order_by('start_datetime')
+    
+    # Prepara eventos para o FullCalendar (JSON)
+    calendar_events = []
+    for item in items:
+        # Define cor baseada no tipo (Opcional, pode personalizar)
+        color = '#3c8dbc' # Azul padrão (AdminLTE Primary)
+        if item.type == 'FLIGHT': color = '#dc3545' # Vermelho
+        elif item.type == 'LODGING': color = '#28a745' # Verde
+        elif item.type == 'FOOD': color = '#ffc107' # Amarelo
+        
+        event = {
+            'title': item.name,
+            'start': item.start_datetime.isoformat(),
+            'backgroundColor': color,
+            'borderColor': color,
+            'url': reverse('trip_item_update', args=[item.id]) if can_edit else '#' # Link para Edição
+        }
+        
+        # Se tiver fim, adiciona
+        if item.end_datetime:
+            event['end'] = item.end_datetime.isoformat()
+            
+        calendar_events.append(event)
+    
+    events_json = json.dumps(calendar_events, cls=DjangoJSONEncoder)
+
+    # 3. Lógica Financeira (EXATAMENTE A MESMA DA TRIP_DETAIL CORRIGIDA)
+    expenses = list(trip.expenses.all().order_by('-date'))
+    total_planned = Decimal(0)
+    total_paid = Decimal(0)
+    rates_cache = {}
+
+    for expense in expenses:
+        rate = 1
+        if expense.currency and expense.currency != 'BRL':
+            if expense.currency in rates_cache:
+                rate = rates_cache[expense.currency]
+            else:
+                try:
+                    r = get_exchange_rate(expense.currency) # 1 argumento
+                    rate = Decimal(str(r)) if r else 1
+                    rates_cache[expense.currency] = rate
+                except: rate = 1
+        
+        try:
+            val_amount = Decimal(str(expense.amount)) if expense.amount else Decimal(0)
+            val_rate = Decimal(str(rate))
+            val_converted = val_amount * val_rate
+        except: val_converted = Decimal(0)
+
+        expense.converted_value = val_converted
+        total_planned += val_converted
+        if expense.is_paid: total_paid += val_converted
+
+    to_pay = total_planned - total_paid
+
+    # 4. Cotações (Global)
+    trip_rates = []
+    try:
+        cur_set = set()
+        for item in items:
+            if item.location_address:
+                c = get_currency_by_country(item.location_address)
+                if c and c != 'BRL': cur_set.add(c)
+        for c in cur_set:
+            r = rates_cache.get(c) or get_exchange_rate(c)
+            if r: trip_rates.append({'code': c, 'rate': r})
+    except: pass
+
+    # API Key
+    google_maps_api_key = ''
+    try:
+        from .models import APIConfiguration
+        c = APIConfiguration.objects.filter(key='GOOGLE_MAPS_API', is_active=True).first()
+        if c: google_maps_api_key = c.value
+    except: pass
+
+    context = {
+        'trip': trip,
+        'events_json': events_json, # JSON para o JS do calendário
+        'items': items,             # Para o Mapa Global
+        'expenses': expenses,       # Para a tabela financeira
+        'total_planned': total_planned,
+        'total_paid': total_paid,
+        'to_pay': to_pay,
+        'trip_rates': trip_rates,
+        'can_edit': can_edit,
+        'google_maps_api_key': google_maps_api_key,
+        'show_calendar_nav': True # Flag para destacar menu se precisar
+    }
+
+    return render(request, 'trip_calendar.html', context)
 
 #--- VIEW PARA GERAR PDF DO ROTEIRO ---
 @login_required
