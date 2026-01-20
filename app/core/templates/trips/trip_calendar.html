@@ -116,16 +116,6 @@
             </div>
         </div>
         {% endif %}
-
-        <div class="card card-outline card-warning">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Dicas Rápidas</h3>
-            </div>
-            <div class="card-body small">
-                O clima médio para o período da viagem indica dias ensolarados. Não esqueça o protetor solar!
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -256,6 +246,127 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+        <!-- Sugerir Dicas de Viagem IA -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-purple card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-lightbulb text-warning mr-1"></i> Guia de Bolso (IA)
+                        </h3>
+                        <div class="card-tools">
+                            {% if can_edit %}
+                            <a href="{% url 'trip_generate_insights' trip.id %}" 
+                               class="btn btn-tool text-purple" 
+                               title="Atualizar Dicas"
+                               onclick="btnLoadingLink(this)"> <i class="fas fa-sync-alt"></i> Atualizar Dicas
+                            </a>
+                            {% endif %}
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        {% if trip.ai_insights %}
+                        
+                        <div class="row">
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-success"><i class="fas fa-coins fa-2x mb-2"></i></h5>
+                                    <span class="description-text">MOEDA & GORJETA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.currency_tip }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-info"><i class="fas fa-plug fa-2x mb-2"></i></h5>
+                                    <span class="description-text">ELETRICIDADE</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.electricity }}</p> 
+                                    </div>
+                            </div>
+                            
+                            <div class="col-md-4 col-sm-12 border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-warning"><i class="fas fa-language fa-2x mb-2"></i></h5>
+                                    <span class="description-text">FRASES ÚTEIS</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.phrases }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 border-right">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-danger"><i class="fas fa-user-shield fa-2x mb-2"></i></h5>
+                                    <span class="description-text">SEGURANÇA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.safety }}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-sm-6">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-orange"><i class="fas fa-utensils fa-2x mb-2"></i></h5>
+                                    <span class="description-text">GASTRONOMIA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.food|default:"Atualize as dicas para ver a gastronomia."|linebreaksbr }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-light p-3 text-center text-muted font-italic border-top">
+                            <i class="fas fa-info-circle mr-1"></i> {{ trip.ai_insights.curiosity }}
+                        </div>
+
+                        {% else %}
+                        <div class="text-center p-5">
+                            <p class="text-muted">Nenhuma dica gerada para este destino ainda.</p>
+                            {% if can_edit %}
+                            <a href="{% url 'trip_generate_insights' trip.id %}" class="btn btn-app bg-purple">
+                                <i class="fas fa-magic"></i> Gerar Guia Agora
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- Modal para Sugerir Roteiro IA -->
+<div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST" onsubmit="btnLoading(this.querySelector('button[type=submit]'), 'Criando Roteiro...')">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Planejador Automático</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>A Inteligência Artificial vai analisar seu destino (<strong>{{ trip.title }}</strong>) e a duração da viagem para criar sugestões de passeios dia a dia.</p>
+                    
+                    <div class="form-group">
+                        <label>O que você gosta de fazer?</label>
+                        <textarea name="interests" class="form-control" rows="3" placeholder="Ex: Gosto de museus de arte, cafeterias históricas e parques. Não gosto de baladas. Quero um ritmo tranquilo."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info text-sm">
+                        <i class="fas fa-info-circle"></i> Os itens serão adicionados à sua linha do tempo. Você poderá editá-los ou excluí-los depois.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Gerar Roteiro</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
