@@ -770,14 +770,15 @@ def trip_expense_create(request, trip_id):
             expense.trip = trip
             expense.save()
             messages.success(request, "Despesa registrada com sucesso.")
-            # --- NOVA LÓGICA: Se tiver 'next' (veio do Calendário), volta pra lá ---
+
+            # --- INSERIR ISTO AQUI ---
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
-            # -----------------------------------------------------------------------
+            # -------------------------
 
-            # --- Redireciona para a data da despesa (Comportamento Padrão) ---
             base_url = reverse('trip_detail', args=[trip.id])
+        
             if expense.date: 
                 date_str = expense.date.strftime('%Y-%m-%d')
                 return redirect(f"{base_url}?date={date_str}")
@@ -1324,15 +1325,14 @@ def expense_update(request, pk):
         form = ExpenseForm(request.POST, instance=expense, trip_id=expense.trip.id)
         
         if form.is_valid():
-            updated_expense = form.save() # Salva e guarda o objeto
-            
-            # --- NOVA LÓGICA: Se tiver 'next' (veio do Calendário), volta pra lá ---
+            updated_expense = form.save()
+
+            # --- INSERIR ISTO AQUI ---
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
-            # -----------------------------------------------------------------------
+            # -------------------------
             
-            # --- Redirecionamento Padrão (Timeline) ---
             base_url = reverse('trip_detail', args=[expense.trip.id])
             
             if updated_expense.date:
