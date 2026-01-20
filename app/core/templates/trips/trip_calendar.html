@@ -336,5 +336,49 @@
         // Carrega o mapa
         initGlobalMap();
     });
+
+    // --- CÓDIGO PARA OS SLIDERS DE PAGAMENTO ---
+    // (Copiado da trip_detail para funcionar no Calendar)
+    $('.btn-toggle-paid').change(function() {
+        var checkbox = $(this);
+        var expenseId = checkbox.data('id');
+        var isChecked = checkbox.is(':checked');
+        
+        // URL baseada na rota que criamos
+        var url = '{% url "trip_expense_toggle_paid" 0 %}'.replace('0', expenseId);
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                // Atualiza os totais no cabeçalho financeiro se existirem
+                // Formata para moeda BRL
+                var formatter = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                });
+
+                // Tenta atualizar os cards de resumo se eles existirem na tela
+                $('.description-header.text-primary').text(formatter.format(response.total_planned));
+                $('.description-header.text-success').text(formatter.format(response.total_paid));
+                $('.description-header.text-danger').text(formatter.format(response.to_pay));
+
+                // Toast de sucesso (opcional)
+                if (typeof Toast !== 'undefined') {
+                    Toast.fire({
+                        icon: 'success',
+                        title: isChecked ? 'Gasto marcado como pago!' : 'Gasto marcado como pendente.'
+                    });
+                }
+            },
+            error: function() {
+                alert('Erro ao atualizar status. Tente novamente.');
+                checkbox.prop('checked', !isChecked); // Reverte visualmente
+            }
+        });
+    });
 </script>
 {% endblock %}

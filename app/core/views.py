@@ -559,37 +559,46 @@ def trip_calendar(request, pk):
         
         events_json = json.dumps(calendar_events, cls=DjangoJSONEncoder)
 
-        # 3. Financeiro (Mesma lógica blindada da trip_detail)
-        print("--- INICIANDO FINANCEIRO ---")
-        expenses = trip.expenses.all()
-        
-        total_planned_brl = Decimal('0.00')
-        total_paid_brl = Decimal('0.00')
-        rates_cache = {}
+        # --- 3. FINANCEIRO (AQUI ESTAVA O ERRO) ---
+        # Inicializamos as variáveis ANTES de tudo
+        total_planned = Decimal(0)
+        total_paid = Decimal(0)
+        to_pay = Decimal(0)
+        expenses = [] # Garante que expenses existe mesmo se o bloco falhar
 
-        for expense in expenses:
-            # Obtém a taxa de câmbio (com cache)
-            if expense.currency not in rates_cache:
-                rates_cache[expense.currency] = get_exchange_rate(expense.currency)
+        try:
+            # Mesma lógica da trip_detail: list() para travar na memória
+            expenses = list(trip.expenses.all().order_by('-date'))
+            rates_cache = {}
 
-            rate = Decimal(str(rates_cache[expense.currency]))  # Converte para Decimal para precisão
+            for expense in expenses:
+                rate = 1
+                if expense.currency and expense.currency != 'BRL':
+                    if expense.currency in rates_cache:
+                        rate = rates_cache[expense.currency]
+                    else:
+                        try:
+                            r = get_exchange_rate(expense.currency)
+                            rate = Decimal(str(r)) if r else 1
+                            rates_cache[expense.currency] = rate
+                        except: rate = 1
+                
+                try:
+                    val_amount = Decimal(str(expense.amount)) if expense.amount else Decimal(0)
+                    val_rate = Decimal(str(rate))
+                    val_converted = val_amount * val_rate
+                except: val_converted = Decimal(0)
 
-            # Calcula o valor convertido para BRL
-            converted = Decimal(expense.amount) * rate
-            converted = converted.quantize(Decimal('0.01'))  # Arredonda para 2 casas decimais
+                expense.converted_value = val_converted
+                total_planned += val_converted
+                if expense.is_paid: total_paid += val_converted
 
-            # Atribui ao atributo temporário (padronizado para 'converted_amount')
-            expense.converted_amount = converted
+            to_pay = total_planned - total_paid
+        except Exception as e:
+            print(f"Erro no cálculo financeiro do calendário: {e}")
+            # Se der erro, as variáveis já valem 0, então não quebra a tela
 
-            # Acumula nos totais convertidos
-            total_planned_brl += converted
-            if expense.is_paid:
-                total_paid_brl += converted
-
-        to_pay_brl = total_planned_brl - total_paid_brl
-        print("--- FINANCEIRO CONCLUÍDO ---")
-
-        # 4. Cotações
+        # 4. Cotações e API Key
         trip_rates = []
         try:
             cur_set = set()
@@ -616,7 +625,7 @@ def trip_calendar(request, pk):
             'events_json': events_json,
             'items': items,
             'expenses': expenses,
-            'total_planned': total_planned,
+            'total_planned': total_planned, # Agora essa variável existe com certeza
             'total_paid': total_paid,
             'to_pay': to_pay,
             'trip_rates': trip_rates,
