@@ -770,13 +770,18 @@ def trip_expense_create(request, trip_id):
             expense.trip = trip
             expense.save()
             messages.success(request, "Despesa registrada com sucesso.")
-            # --- MUDANÇA AQUI: Redireciona para a data da despesa ---
+            # --- NOVA LÓGICA: Se tiver 'next' (veio do Calendário), volta pra lá ---
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            # -----------------------------------------------------------------------
+
+            # --- Redireciona para a data da despesa (Comportamento Padrão) ---
             base_url = reverse('trip_detail', args=[trip.id])
-            if expense.date: # Assumindo que seu campo se chama 'date'
+            if expense.date: 
                 date_str = expense.date.strftime('%Y-%m-%d')
                 return redirect(f"{base_url}?date={date_str}")
             return redirect(base_url)
-            # --------------------------------------------------------
     else:
         # Dica: Se quiser pré-preencher a data vinda da URL na criação
         initial_date = request.GET.get('date')
@@ -1321,7 +1326,13 @@ def expense_update(request, pk):
         if form.is_valid():
             updated_expense = form.save() # Salva e guarda o objeto
             
-            # --- CORREÇÃO DO REDIRECIONAMENTO ---
+            # --- NOVA LÓGICA: Se tiver 'next' (veio do Calendário), volta pra lá ---
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            # -----------------------------------------------------------------------
+            
+            # --- Redirecionamento Padrão (Timeline) ---
             base_url = reverse('trip_detail', args=[expense.trip.id])
             
             if updated_expense.date:
@@ -1329,7 +1340,6 @@ def expense_update(request, pk):
                 return redirect(f"{base_url}?date={date_str}")
                 
             return redirect(base_url)
-            # ------------------------------------
             
     else:
         form = ExpenseForm(instance=expense, trip_id=expense.trip.id)
