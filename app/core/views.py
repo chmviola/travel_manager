@@ -1,5 +1,6 @@
 from multiprocessing import context
 from decimal import Decimal
+from urllib import request
 from django.core.mail import send_mail, get_connection
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -533,13 +534,14 @@ def trip_calendar(request, pk):
             url_edit = '#'
             if can_edit:
                 try:
-                    # Se o nome da rota no urls.py não for 'trip_item_update', vai dar erro aqui
-                    # url_edit = reverse('trip_item_update', args=[item.id]) 
-                    # Vou deixar comentado e colocar '#' para testar se é isso que está quebrando
-                    # Descomente a linha abaixo se tiver certeza do nome da rota:
-                     url_edit = reverse('trip_item_update', args=[item.id])
+                    # 1. Gera a URL base de edição
+                    base_url = reverse('trip_item_update', args=[item.id])
+                    
+                    # 2. Adiciona o ?next= apontando para a página atual (/calendario/)
+                    url_edit = f"{base_url}?next={request.path}"
+                    
                 except Exception as e:
-                    print(f"AVISO: Não foi possível gerar URL para item {item.id}: {e}")
+                    print(f"AVISO: URL edição falhou item {item.id}: {e}")
                     url_edit = '#'
 
             event = {
@@ -740,6 +742,12 @@ def trip_item_create(request, trip_id):
             messages.success(request, "Item adicionado com sucesso!")
             
             # --- Redireciona para a data do item ---
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            # -------------------------------------------------------------
+            
+            # --- Redireciona para a data do item (Comportamento Padrão) ---
             base_url = reverse('trip_detail', args=[trip.id])
             if item.start_datetime:
                 date_str = item.start_datetime.strftime('%Y-%m-%d')
@@ -932,6 +940,12 @@ def trip_item_update(request, pk):
             messages.success(request, "Item atualizado com sucesso.")
             
             # --- Redireciona para a data do item atualizado ---
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            # -----------------------------------------------------------------------
+
+            # --- Redireciona para a data do item atualizado (Comportamento Padrão) ---
             base_url = reverse('trip_detail', args=[trip.id])
             if updated_item.start_datetime:
                 # Pega a data nova (caso o usuário tenha mudado o dia)

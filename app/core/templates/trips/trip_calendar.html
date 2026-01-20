@@ -46,7 +46,7 @@
             </a>
             
             {% if can_edit %}
-            <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary mr-2">
+            <a href="{% url 'trip_item_create' trip.id %}?next={{ request.path }}" class="btn btn-primary mr-2">
                 <i class=\"fas fa-plus\"></i> Novo Item
             </a>
             {% endif %}
@@ -264,6 +264,7 @@
             </table>
         </div>
     </div>
+</div>
 
         <!-- Sugerir Dicas de Viagem IA -->
         <div class="row">
@@ -352,7 +353,6 @@
                 </div>
             </div>
         </div>
-</div>
 
 <!-- Modal para Sugerir Roteiro IA -->
 <div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">

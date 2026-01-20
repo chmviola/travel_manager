@@ -12,6 +12,11 @@
             
             <form method="post">
                 {% csrf_token %}
+
+                {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+
                 <div class="card-body">
                     
                     <div class="form-group">
@@ -56,15 +61,22 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Salvar
                     </button>
-                    
-                    {% if form.instance.pk and form.instance.start_datetime %}
-                        <a href="{% url 'trip_detail' trip.id %}?date={{ form.instance.start_datetime|date:'Y-m-d' }}" class="btn btn-secondary">
+
+                    {% if request.GET.next %}
+                        <a href="{{ request.GET.next }}" class="btn btn-secondary">
                             Cancelar
                         </a>
                     {% else %}
-                        <a href="{% url 'trip_detail' trip.id %}" class="btn btn-secondary">
-                            Cancelar
-                        </a>
+                    
+                        {% if form.instance.pk and form.instance.start_datetime %}
+                            <a href="{% url 'trip_detail' trip.id %}?date={{ form.instance.start_datetime|date:'Y-m-d' }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        {% else %}
+                            <a href="{% url 'trip_detail' trip.id %}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        {% endif %}
                     {% endif %}
                 </div>
             </form>
