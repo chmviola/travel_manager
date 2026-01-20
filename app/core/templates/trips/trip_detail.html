@@ -45,7 +45,7 @@
             {% endif %}
 
             {% if can_edit %}
-            <a href="{% url 'trip_checklist' trip.id %}?next={{ request.path }}" class="btn btn-primary btn-sm mr-2 mb-2">
+            <a href="{% url 'checklist_view' trip.id %}?next={{ request.path }}" class="btn btn-primary btn-sm mr-2 mb-2">
                 <i class="fas fa-tasks"></i> Checklist
             </a>
             {% endif %}
@@ -69,7 +69,7 @@
             </div>
 
             {% if can_edit %}
-            <a href="{% url 'trip_gallery' trip.id %}?next={{ request.path }}" class="btn btn-default btn-sm mr-2 mb-2">
+            <a href="{% url 'trip_gallery' trip.id %}" class="btn btn-default btn-sm mr-2 mb-2">
                 <i class="fas fa-images text-success mr-1"></i> Galeria
             </a>
             {% endif %}
