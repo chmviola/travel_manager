@@ -12,6 +12,8 @@ import googlemaps
 import ast
 import markdown
 import os
+import traceback
+import sys
 from datetime import datetime, time, timedelta
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
 from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration, AccessLog
