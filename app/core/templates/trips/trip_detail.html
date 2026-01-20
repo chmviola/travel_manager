@@ -27,6 +27,11 @@
         
         <!-- AÇÕES DO ROTEIRO -->
         <div class="mb-3 d-flex align-items-center flex-wrap">
+
+            <a href="{% url 'trip_calendar' trip.id %}" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-stream"></i> Ver Calendário
+            </a>
+
             {% if can_edit %}
             <a href="{% url 'trip_item_create' trip.id %}" class="btn btn-primary btn-sm mr-2 mb-2">
                 <i class="fas fa-plus"></i> Novo Item
