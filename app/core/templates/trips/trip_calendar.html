@@ -1,11 +1,23 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% load static %}
 {% load l10n %}
+{% load core_extras %} ```
+{% load static %}
 
 {% block page_title %}
-    <i class="far fa-calendar-alt mr-2"></i> {{ trip.title }} 
-    <small class="text-muted">Visão de Calendário - {{ trip.get_status_display }}</small>
+    {{ trip.title }} <small class="text-muted">Visão de Calendário - {{ trip.get_status_display }}</small>
+{% endblock %}
+
+{% block header_flags %}
+    {% if trip.flags %}
+        <div style="border-right: 1px solid #dee2e6; padding-right: 10px; margin-right: 5px;">
+        {% for flag_code in trip.flags %}
+            <span class="flag-icon flag-icon-{{ flag_code }} shadow-sm" 
+                  style="font-size: 1.2em; border-radius: 2px; margin-right: 5px;" 
+                  title="Destino"></span>
+        {% endfor %}
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block extra_css %}
