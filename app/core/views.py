@@ -561,34 +561,32 @@ def trip_calendar(request, pk):
 
         # 3. Financeiro (Mesma lógica blindada da trip_detail)
         print("--- INICIANDO FINANCEIRO ---")
-        expenses = list(trip.expenses.all().order_by('-date'))
-        total_planned = Decimal(0)
-        total_paid = Decimal(0)
+        expenses = trip.expenses.all()
+        
+        total_planned_brl = Decimal('0.00')
+        total_paid_brl = Decimal('0.00')
         rates_cache = {}
 
         for expense in expenses:
-            rate = 1
-            if expense.currency and expense.currency != 'BRL':
-                if expense.currency in rates_cache:
-                    rate = rates_cache[expense.currency]
-                else:
-                    try:
-                        r = get_exchange_rate(expense.currency)
-                        rate = Decimal(str(r)) if r else 1
-                        rates_cache[expense.currency] = rate
-                    except: rate = 1
-            
-            try:
-                val_amount = Decimal(str(expense.amount)) if expense.amount else Decimal(0)
-                val_rate = Decimal(str(rate))
-                val_converted = val_amount * val_rate
-            except: val_converted = Decimal(0)
+            # Obtém a taxa de câmbio (com cache)
+            if expense.currency not in rates_cache:
+                rates_cache[expense.currency] = get_exchange_rate(expense.currency)
 
-            expense.converted_value = val_converted
-            total_planned += val_converted
-            if expense.is_paid: total_paid += val_converted
+            rate = Decimal(str(rates_cache[expense.currency]))  # Converte para Decimal para precisão
 
-        to_pay = total_planned - total_paid
+            # Calcula o valor convertido para BRL
+            converted = Decimal(expense.amount) * rate
+            converted = converted.quantize(Decimal('0.01'))  # Arredonda para 2 casas decimais
+
+            # Atribui ao atributo temporário (padronizado para 'converted_amount')
+            expense.converted_amount = converted
+
+            # Acumula nos totais convertidos
+            total_planned_brl += converted
+            if expense.is_paid:
+                total_paid_brl += converted
+
+        to_pay_brl = total_planned_brl - total_paid_brl
         print("--- FINANCEIRO CONCLUÍDO ---")
 
         # 4. Cotações
