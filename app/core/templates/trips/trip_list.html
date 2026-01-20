@@ -56,12 +56,13 @@
 
         <div class="card-footer">
             <div class="text-right">
-                <a href="{% url 'trip_detail' trip.id %}" class="btn btn-sm btn-primary">
-                    <i class="fas fa-folder"></i> Detalhes
-                </a>
 
                 <a href="{% url 'trip_calendar' trip.id %}" class="btn btn-default btn-block">
                     <i class="fas fa-calendar-alt"></i> Calendário
+                </a>
+
+                <a href="{% url 'trip_detail' trip.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-folder"></i> Detalhes
                 </a>
 
                 {% if trip.user == request.user %}
