@@ -1,6 +1,39 @@
 # 🚀 Release v0.1.18 — 2026-01-20
 
-*Aguardando geração de notas...*
+### ✨ Novas Funcionalidades
+- feat: criação de página de viagem com calendário
+
+### 🐛 Correções
+- fix: acerto da url trip_expanse_update para expanse_update no trip_calender e trip_detail.html
+- fix: acerto dos botões salvar e cancelar do formulário de gasto para voltar ao trip_calendar ou trip_detail dependendo da origem
+- fix: acerto dos botões salvar e cancelar do formulário de gasto para voltar ao trip_calendar ou trip_detail dependendo da origem
+- fix: acerto dos botões salvar e cancelar do formulário de gasto para voltar ao trip_calendar ou trip_detail dependendo da origem
+- fix: url do link para voltar ao checklista de trip_checklist para checklist_view
+- fix: url do link para voltar ao checklista de trip_checklist para checklist_view
+- fix: acerto dos botões de galeria, checklist e voltar para voltar ao trip_calendar ou trip_detail dependendo da origem
+- fix: botões salvar e cancelar do novo item para voltar ao trip_calendar ou trip_detail dependendo da origem
+- fix: bandeira do pais que está viajando no título da página de trip_calendar
+- fix: correção da coluna Em Reais da tabela Resumo Financeiro do trip_calendar
+- fix: ordenação da caixa de dias por IA
+- fix: adição do modal de importação do google calendar
+- fix: acerto nos títulos das trips detail e calendar
+- fix: conserto dos valores da tabela financeira do trip_calendar e slider de pago funcional
+- fix: conserto dos valores da tabela financeira do trip_calendar
+- fix: conserto da tabela resumo financeiro do trip_calender igual ao do trip_detail
+- fix: inserção do botão ver calendário no topo do trip_detail.html
+- fix: ajuste dos botões no topo do trip_calendar.html
+- fix: acerto do link do botão do checklist no trip_calendar.html para resolver o Server Error (500)
+- fix: colocado {% load humanize %} no topo do trip_calendar.html para resolver o Server Error (500)
+- fix: colocado o caminho certo no return render da view trip_calendar para resolver o Server Error (500)
+- fix: consertado o nome do arquivo trip_calendar para trip_calender conforme debug do Server Error (500)
+- fix: consertado o nome do arquivo trip_calendar para trip_calender conforme debug do Server Error (500)
+- fix: volta da lógica financeira antiga na view trip_calender e colocado linhas de debug para descobrir porque do Server Error (500)
+- fix: volta da lógica financeira antiga na view trip_calender e colocado linhas de debug para descobrir porque do Server Error (500)
+- fix: copia da lógica financeira da view trip_detail para trip_calender por causa do Server Error (500)
+
+### 📦 Commit range
+`v0.1.17..HEAD`
+
 
 # 🚀 Release v0.1.17 — 2026-01-19
 
