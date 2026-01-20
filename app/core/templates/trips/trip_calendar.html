@@ -259,6 +259,41 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalImportICS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i> Importar Agenda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{% url 'trip_import_ics' trip.id %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Como importar do Google?</strong><br>
+                        1. Vá no seu Google Agenda (Configurações).<br>
+                        2. Clique em "Exportar agenda".<br>
+                        3. Extraia o ZIP e envie o arquivo <code>.ics</code> aqui.
+                    </div>
+                    <div class="form-group">
+                        <label>Selecione o arquivo .ics</label>
+                        <div class="custom-file">
+                            <input type="file" name="ics_file" class="custom-file-input" id="customFile" accept=".ics" required>
+                            <label class="custom-file-label" for="customFile">Escolher arquivo</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Importar Eventos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -268,6 +303,13 @@
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
 
 <script>
+
+        // -- Modal de importação/exportação do Google Calender ---
+    $('.custom-file-input').on('change', function() {
+        var fileName = $(this).val().split('\\').pop();
+        $(this).next('.custom-file-label').addClass("selected").html(fileName);
+    });
+
     $(document).ready(function() {
         // 1. INICIALIZA O CALENDÁRIO
         var events = {{ events_json|safe }}; // Recebe do Django
