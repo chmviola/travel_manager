@@ -627,7 +627,7 @@ def trip_calendar(request, pk):
             'show_calendar_nav': True
         }
 
-        return render(request, 'trip_calendar.html', context)
+        return render(request, 'trips/trip_calendar.html', context)
 
     except Exception:
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
