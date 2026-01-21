@@ -518,10 +518,58 @@ def trip_calendar(request, pk):
         # 2. Busca Itens
         items = trip.items.all().order_by('start_datetime')
         
-        # Prepara eventos JSON
-        calendar_events = []
+        # --- PRÉ-PROCESSAMENTO (LÓGICA DO TRIP_DETAIL) ---
+        # Isso garante que flag_code, weather e details estejam prontos
+        import ast
         for item in items:
-            # Cor baseada no tipo (com proteção caso item.type seja None)
+            # A. Bandeira (Calculada dinamicamente)
+            item.flag_code = get_country_code_from_address(item.location_address)
+            
+            # B. Limpeza das Notas
+            if item.details:
+                raw = item.details
+                notes = ''
+                # Se for string, tenta converter
+                if isinstance(raw, str):
+                    try:
+                        raw = ast.literal_eval(raw)
+                    except: pass
+                
+                # Se for dict, extrai
+                if isinstance(raw, dict):
+                    notes = raw.get('notes', '')
+                    # Limpeza profunda de dict dentro de string
+                    if isinstance(notes, str) and notes.strip().startswith("{'notes'"):
+                        try:
+                            inner = ast.literal_eval(notes)
+                            if isinstance(inner, dict):
+                                notes = inner.get('notes', notes)
+                        except: pass
+                else:
+                    notes = str(raw) # Fallback
+
+                item.details = {'notes': notes}
+            
+            # C. Detectar Clima (Se necessário)
+            # Usa getattr para garantir que não quebre se o campo não existir no model
+            w_temp = getattr(item, 'weather_temp', None)
+            if item.location_address and item.start_datetime and not w_temp:
+                try:
+                    temp, cond, icon = fetch_weather_data(item.location_address, item.start_datetime)
+                    if temp:
+                        item.weather_temp = temp
+                        item.weather_condition = cond
+                        item.weather_icon = icon
+                        item.save() # Salva no banco se mudou
+                except Exception as e:
+                    print(f"Erro ao buscar clima calendar: {e}")
+        # -------------------------------------------------
+
+        # Prepara eventos JSON (Agora seguro pois os atributos existem)
+        calendar_events = []
+        current_path = request.path
+
+        for item in items:
             color = '#3c8dbc' 
             try:
                 if hasattr(item, 'type'):
@@ -530,9 +578,7 @@ def trip_calendar(request, pk):
                     elif item.type == 'FOOD': color = '#ffc107'
             except: pass
             
-            # 2. Prepara URLs com o NEXT (Corrigido)
-            current_path = request.path
-            
+            # URLs
             url_edit = '#'
             url_delete = '#'
             url_expense = '#'
@@ -540,35 +586,16 @@ def trip_calendar(request, pk):
             
             if can_edit:
                 try:
-                    # URL Editar
                     url_edit = f"{reverse('trip_item_update', args=[item.id])}?next={current_path}"
-                    # URL Deletar
                     url_delete = f"{reverse('trip_item_delete', args=[item.id])}?next={current_path}"
-                    # URL Novo Gasto (Vinculado ao item)
                     url_expense = f"{reverse('trip_expense_create', args=[trip.id])}?next={current_path}&item={item.id}"
-                    
-                    # CORREÇÃO ANEXO: Apontar para 'trip_item_attachments' (Anexos do Item)
                     url_attachment = f"{reverse('trip_item_attachments', args=[item.id])}?next={current_path}"
-                    
-                except Exception as e: 
-                    print(f"Erro URL Calendar: {e}")
+                except: pass
 
-            # --- CÁLCULO SEGURO DE DADOS EXTRAS ---
-            # 1. Bandeira: Tenta obter do endereço usando a função utilitária
-            flag = ''
-            try:
-                if item.location_address:
-                    # Usa a função que já está importada no topo do seu arquivo
-                    flag = get_country_code_from_address(item.location_address)
-            except: 
-                flag = ''
-
-            # 2. Clima: Usa getattr para não quebrar se o campo não existir no Model
+            # Dados seguros usando getattr
             w_icon = getattr(item, 'weather_icon', '')
             w_temp = getattr(item, 'weather_temp', '')
-            # --------------------------------------
 
-            # 3. Monta o Objeto do Evento (AGORA COM BANDEIRA E CLIMA)
             event = {
                 'id': item.id,
                 'title': item.name,
@@ -576,18 +603,15 @@ def trip_calendar(request, pk):
                 'backgroundColor': color,
                 'borderColor': color,
                 'description': item.details.get('notes', '') if isinstance(item.details, dict) else str(item.details),
-                
-                # Localização
                 'location': item.location_address or '',
                 'lat': item.location_lat or '',
                 'lng': item.location_lng or '',
                 
-                # --- NOVOS CAMPOS PARA O VISUAL ---
-                'flag': item.flag_code or '',
-                'weather_icon': item.weather_icon or '',
-                'weather_temp': str(item.weather_temp) if item.weather_temp else '',
-                # ----------------------------------
-
+                # AGORA VAI FUNCIONAR: flag_code foi definido no loop anterior
+                'flag': getattr(item, 'flag_code', ''), 
+                
+                'weather_icon': w_icon,
+                'weather_temp': str(w_temp) if w_temp else '',
                 'link': item.link if hasattr(item, 'link') and item.link else '',
                 'urls': {
                     'edit': url_edit,
@@ -601,8 +625,6 @@ def trip_calendar(request, pk):
                 event['end'] = item.end_datetime.isoformat()
                 
             calendar_events.append(event)
-        
-        print(f"--- ITENS PROCESSADOS: {len(calendar_events)} ---")
         
         events_json = json.dumps(calendar_events, cls=DjangoJSONEncoder)
 
