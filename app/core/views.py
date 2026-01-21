@@ -553,6 +553,21 @@ def trip_calendar(request, pk):
                 except Exception as e: 
                     print(f"Erro URL Calendar: {e}")
 
+            # --- CÁLCULO SEGURO DE DADOS EXTRAS ---
+            # 1. Bandeira: Tenta obter do endereço usando a função utilitária
+            flag = ''
+            try:
+                if item.location_address:
+                    # Usa a função que já está importada no topo do seu arquivo
+                    flag = get_country_code_from_address(item.location_address)
+            except: 
+                flag = ''
+
+            # 2. Clima: Usa getattr para não quebrar se o campo não existir no Model
+            w_icon = getattr(item, 'weather_icon', '')
+            w_temp = getattr(item, 'weather_temp', '')
+            # --------------------------------------
+
             # 3. Monta o Objeto do Evento (AGORA COM BANDEIRA E CLIMA)
             event = {
                 'id': item.id,
