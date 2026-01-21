@@ -646,7 +646,7 @@
                         }
                         
                         // URL OFICIAL DE EMBED (v1/place) - Corrige a tela preta
-                        var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + qParam;
+                        var mapUrl = "https://maps.google.com/maps?q=" + qParam + "&hl=pt-br&z=15&output=embed";
                         
                         $('#mapFrame').attr('src', mapUrl);
                         $('#eventModal').modal('hide');
