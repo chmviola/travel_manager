@@ -440,12 +440,12 @@
                 </div>
 
                 <div class="mb-3" id="modalLocationDiv" style="display: flex; align-items: center; flex-wrap: wrap;">
-                    
-                    <span id="modalFlag" class="mr-2 shadow-sm" style="border-radius: 2px; display: none;"></span>
 
                     <i class="fas fa-map-marker-alt mr-2 text-danger"></i>
                     
                     <strong id="modalLocation" class="mr-3"></strong>
+
+                     <span id="modalFlag" class="mr-2 shadow-sm" style="border-radius: 2px; display: none;"></span>
 
                     <span id="modalWeather" class="badge badge-light border" style="display: none; align-items: center;">
                         <img id="modalWeatherIcon" src="" style="width: 25px; height: 25px; margin-right: 4px;">
@@ -656,7 +656,7 @@
                     // 2. CLIMA
                     if (calEvent.weather_icon) {
                         // Monta URL do ícone (OpenWeatherMap padrão)
-                        var iconUrl = "http://openweathermap.org/img/wn/" + calEvent.weather_icon + ".png";
+                        var iconUrl = "https://openweathermap.org/img/wn/" + calEvent.weather_icon + "@2x.png";
                         $('#modalWeatherIcon').attr('src', iconUrl);
                         
                         if (calEvent.weather_temp) {
@@ -675,7 +675,7 @@
                         } else {
                             qParam = encodeURIComponent(calEvent.location);
                         }
-                        var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + qParam + "&hl=pt-br&z=15&output=embed";
+                        var mapUrl = "https://maps.google.com/maps?q=" + qParam + "&z=15&output=embed";
                         
                         $('#mapFrame').attr('src', mapUrl);
                         $('#eventModal').modal('hide');
