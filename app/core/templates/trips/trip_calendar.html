@@ -511,6 +511,38 @@
     </div>
 </div>
 
+<!-- Modal para Gerenciar Link -->
+<div class="modal fade" id="modalLink" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-link mr-2"></i> Gerenciar Link</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="formLinkItem" method="post" action="#">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted small">Adicione um link para reserva, ticket ou site do local.</p>
+                    <div class="form-group">
+                        <label>URL / Link</label>
+                        <input type="url" name="link" id="inputLinkItem" class="form-control" placeholder="https://..." required>
+                    </div>
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="btnVisitLink" target="_blank" class="btn btn-outline-info mr-auto" style="display:none;">
+                        <i class="fas fa-external-link-alt"></i> Acessar
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -546,50 +578,48 @@
             events: events,
             height: 600,
             
-            // --- AQUI ESTÁ A MUDANÇA: CLIQUE NO EVENTO ---
+            // --- EVENT CLICK ATUALIZADO ---
             eventClick: function(calEvent, jsEvent, view) {
-                // Previne abrir link direto se houvesse
                 jsEvent.preventDefault();
 
-                // 1. Preenche Título e Cor
+                // 1. Título e Cor
                 $('#modalTitle').text(calEvent.title);
                 $('#modalHeaderStyle').css('background-color', calEvent.backgroundColor);
 
-                // 2. Preenche Data/Hora (Formatando bonito com Moment.js)
-                var timeText = calEvent.start.format('DD/MM/YYYY HH:mm');
+                // 2. Data
+                var timeText = moment(calEvent.start).format('DD/MM/YYYY HH:mm');
                 if (calEvent.end) {
-                    timeText += ' - ' + calEvent.end.format('HH:mm');
+                    timeText += ' - ' + moment(calEvent.end).format('HH:mm');
                 }
                 $('#modalTime').text(timeText);
 
-                // 3. Preenche Localização
+                // 3. Localização e MAPA (CORREÇÃO AQUI)
                 if (calEvent.location) {
                     $('#modalLocation').text(calEvent.location);
                     $('#modalLocationDiv').show();
                     
-                    // Configura botão do Mapa
-                    if (calEvent.lat && calEvent.lng) {
-                        $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
-                            var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + calEvent.lat + "," + calEvent.lng;
-                            $('#mapFrame').attr('src', mapUrl);
-                            $('#eventModal').modal('hide'); // Fecha o detalhe
-                            $('#mapModal').modal('show');   // Abre o mapa
-                        });
-                    } else {
-                        // Se tem endereço mas não tem lat/lng, busca pelo texto
-                        $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
-                            var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + encodeURIComponent(calEvent.location);
-                            $('#mapFrame').attr('src', mapUrl);
-                            $('#eventModal').modal('hide');
-                            $('#mapModal').modal('show');
-                        });
-                    }
+                    $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
+                        // URL CORRETA DA API EMBED (v1/place)
+                        // Se tiver Lat/Lng, usa coordenadas. Se não, usa endereço.
+                        var qParam = "";
+                        if (calEvent.lat && calEvent.lng) {
+                            qParam = calEvent.lat + "," + calEvent.lng;
+                        } else {
+                            qParam = encodeURIComponent(calEvent.location);
+                        }
+                        
+                        var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + qParam;
+                        
+                        $('#mapFrame').attr('src', mapUrl);
+                        $('#eventModal').modal('hide');
+                        $('#mapModal').modal('show');
+                    });
                 } else {
                     $('#modalLocationDiv').hide();
-                    $('#btnShowMap').prop('disabled', true); // Desabilita botão mapa
+                    $('#btnShowMap').prop('disabled', true);
                 }
 
-                // 4. Preenche Descrição
+                // 4. Descrição
                 if (calEvent.description) {
                     $('#modalDescription').text(calEvent.description);
                     $('#modalDescDiv').show();
@@ -597,19 +627,39 @@
                     $('#modalDescDiv').hide();
                 }
 
-                // 5. Preenche Botões de Ação (Links vindos do View)
+                // 5. Botões de Ação (Links vindos do View)
                 if (calEvent.urls) {
-                    $('#btnEditItem').attr('href', calEvent.urls.edit); // Botão Editar (o principal)
-                    $('#btnDeleteItem').attr('href', calEvent.urls.delete); // Botão Apagar
-                    $('#btnExpense').attr('href', calEvent.urls.expense); // Botão Gastos
-                    $('#btnAttachment').attr('href', calEvent.urls.attachment); // Botão Anexos
+                    $('#btnEditItem').attr('href', calEvent.urls.edit);
+                    $('#btnDeleteItem').attr('href', calEvent.urls.delete);
+                    $('#btnExpense').attr('href', calEvent.urls.expense);
                     
-                    // Botão Link (Redireciona para Editar item focando no link, ou abre link se existir)
-                    // Aqui simplifiquei para ir para Edição, já que "Gerenciar Link" é editar o item
-                    $('#btnEditItemLink').attr('href', calEvent.urls.edit); 
+                    // CORREÇÃO ANEXO: Usa a URL correta vinda da view
+                    $('#btnAttachment').attr('href', calEvent.urls.attachment); 
                 }
 
-                // 6. Link Externo (Se o item já tiver um link salvo)
+                // 6. LOGICA DO LINK (Modal ou Acesso)
+                // Configura o botão "Link" do box principal
+                $('#btnEditItemLink').off('click').on('click', function() {
+                    // Preenche o input do modal
+                    $('#inputLinkItem').val(calEvent.link || '');
+                    
+                    // Mostra/Esconde botão de visitar dentro do modal
+                    if (calEvent.link) {
+                        $('#btnVisitLink').attr('href', calEvent.link).show();
+                    } else {
+                        $('#btnVisitLink').hide();
+                    }
+
+                    // Define a ação do form (Aponta para edição do item)
+                    // Obs: Para funcionar perfeitamente, idealmente teríamos uma view só para link,
+                    // mas aqui usaremos a URL de update.
+                    $('#formLinkItem').attr('action', calEvent.urls.edit);
+
+                    $('#eventModal').modal('hide'); // Fecha box info
+                    $('#modalLink').modal('show');  // Abre box link
+                });
+
+                // Link Externo no rodapé do box (Acesso rápido)
                 if (calEvent.link) {
                     $('#modalExternalLink').attr('href', calEvent.link);
                     $('#modalLinkDiv').show();
@@ -617,10 +667,9 @@
                     $('#modalLinkDiv').hide();
                 }
 
-                // 7. Abre o Modal
+                // Abre o Modal Principal
                 $('#eventModal').modal('show');
             }
-        });
 
         // 2. INICIALIZA O MAPA GLOBAL
         function initGlobalMap() {

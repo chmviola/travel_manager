@@ -530,8 +530,7 @@ def trip_calendar(request, pk):
                     elif item.type == 'FOOD': color = '#ffc107'
             except: pass
             
-            # 2. Prepara URLs com o NEXT (A Mágica acontece aqui)
-            # Todas as ações voltam para o calendário
+            # 2. Prepara URLs com o NEXT (Corrigido)
             current_path = request.path
             
             url_edit = '#'
@@ -545,31 +544,30 @@ def trip_calendar(request, pk):
                     url_edit = f"{reverse('trip_item_update', args=[item.id])}?next={current_path}"
                     # URL Deletar
                     url_delete = f"{reverse('trip_item_delete', args=[item.id])}?next={current_path}"
-                    # URL Novo Gasto (Já vinculado ao item)
-                    # Assumindo que seu form aceita 'item' via GET, senão removemos o ?item=
+                    # URL Novo Gasto (Vinculado ao item)
                     url_expense = f"{reverse('trip_expense_create', args=[trip.id])}?next={current_path}&item={item.id}"
-                    # URL Anexos (Geral da viagem, pois anexo por item é complexo sem ver o model)
-                    url_attachment = f"{reverse('trip_attachment_list', args=[trip.id])}?next={current_path}"
-                except: pass
+                    
+                    # CORREÇÃO ANEXO: Apontar para 'trip_item_attachments' (Anexos do Item)
+                    url_attachment = f"{reverse('trip_item_attachments', args=[item.id])}?next={current_path}"
+                    
+                except Exception as e: 
+                    print(f"Erro URL Calendar: {e}")
 
-            # 3. Monta o Objeto do Evento Completo
+            # 3. Monta o Objeto do Evento (Incluindo o Link para edição)
             event = {
-                'id': item.id, # Importante para identificar
+                'id': item.id,
                 'title': item.name,
                 'start': item.start_datetime.isoformat() if item.start_datetime else '',
                 'backgroundColor': color,
                 'borderColor': color,
-                # Não usamos mais 'url' direta, pois vamos abrir modal
-                # 'url': url_edit, 
-                
-                # Dados Extras para o Modal
                 'description': item.details.get('notes', '') if isinstance(item.details, dict) else str(item.details),
                 'location': item.location_address or '',
                 'lat': item.location_lat or '',
                 'lng': item.location_lng or '',
+                
+                # Passamos o link do item para o JS poder preencher o modal
                 'link': item.link if hasattr(item, 'link') and item.link else '',
                 
-                # Dicionário de URLs para os botões
                 'urls': {
                     'edit': url_edit,
                     'delete': url_delete,
