@@ -439,19 +439,29 @@
                     <i class="far fa-clock mr-1"></i> <span id="modalTime"></span>
                 </div>
 
-                <div class="mb-3" id="modalLocationDiv" style="display: flex; align-items: center; flex-wrap: wrap;">
+                <div class="mb-3" id="modalLocationDiv" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-start w-100">
+                        
+                        <div class="text-muted text-sm mr-2" style="line-height: 1.2;">
+                            <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+                            <strong id="modalLocation"></strong>
+                        </div>
 
-                    <i class="fas fa-map-marker-alt mr-2 text-danger"></i>
-                    
-                    <strong id="modalLocation" class="mr-3"></strong>
+                        <div class="d-flex align-items-center ml-auto" style="gap: 5px;">
+                            
+                            <span id="modalFlag" class="flag-icon shadow-sm" 
+                                  style="font-size: 1.2em; border-radius: 2px; display: none;" 
+                                  title="Local">
+                            </span>
 
-                     <span id="modalFlag" class="mr-2 shadow-sm" style="border-radius: 2px; display: none;"></span>
+                            <span id="modalWeather" class="badge badge-light border text-muted shadow-sm" 
+                                  style="display: none; align-items: center; font-weight: normal; cursor: help;">
+                                <img id="modalWeatherIcon" src="" style="width: 20px; height: 20px; margin-right: 4px;">
+                                <span id="modalWeatherTemp"></span>
+                            </span>
 
-                    <span id="modalWeather" class="badge badge-light border" style="display: none; align-items: center;">
-                        <img id="modalWeatherIcon" src="" style="width: 25px; height: 25px; margin-right: 4px;">
-                        <span id="modalWeatherTemp"></span>
-                    </span>
-                </div>
+                        </div>
+                    </div>
 
                 <div class="callout callout-info bg-light mb-4" id="modalDescDiv">
                     <small class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7em;">Notas / Detalhes</small>
@@ -647,7 +657,7 @@
                     // 1. BANDEIRA
                     if (calEvent.flag) {
                         $('#modalFlag')
-                            .attr('class', 'flag-icon flag-icon-' + calEvent.flag + ' mr-2 shadow-sm')
+                            .attr('class', 'flag-icon flag-icon-' + calEvent.flag + ' shadow-sm')
                             .show();
                     } else {
                         $('#modalFlag').hide();
@@ -655,9 +665,8 @@
 
                     // 2. CLIMA
                     if (calEvent.weather_icon) {
-                        // Monta URL do ícone (OpenWeatherMap padrão)
-                        var iconUrl = "https://openweathermap.org/img/wn/" + calEvent.weather_icon + "@2x.png";
-                        $('#modalWeatherIcon').attr('src', iconUrl);
+                        // MUDANÇA: Usa o link direto vindo do banco (igual ao trip_detail)
+                        $('#modalWeatherIcon').attr('src', calEvent.weather_icon);
                         
                         if (calEvent.weather_temp) {
                             $('#modalWeatherTemp').text(calEvent.weather_temp + '°C');
