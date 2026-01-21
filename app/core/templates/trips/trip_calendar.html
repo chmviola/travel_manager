@@ -439,9 +439,18 @@
                     <i class="far fa-clock mr-1"></i> <span id="modalTime"></span>
                 </div>
 
-                <div class="mb-3" id="modalLocationDiv">
+                <div class="mb-3" id="modalLocationDiv" style="display: flex; align-items: center; flex-wrap: wrap;">
+                    
+                    <span id="modalFlag" class="mr-2 shadow-sm" style="border-radius: 2px; display: none;"></span>
+
                     <i class="fas fa-map-marker-alt mr-2 text-danger"></i>
-                    <strong id="modalLocation"></strong>
+                    
+                    <strong id="modalLocation" class="mr-3"></strong>
+
+                    <span id="modalWeather" class="badge badge-light border" style="display: none; align-items: center;">
+                        <img id="modalWeatherIcon" src="" style="width: 25px; height: 25px; margin-right: 4px;">
+                        <span id="modalWeatherTemp"></span>
+                    </span>
                 </div>
 
                 <div class="callout callout-info bg-light mb-4" id="modalDescDiv">
@@ -630,23 +639,43 @@
                 }
                 $('#modalTime').text(timeText);
 
-                // C. Localização e Mapa (CORRIGIDO)
+                // C. Localização, Bandeira e Clima (ATUALIZADO)
                 if (calEvent.location) {
                     $('#modalLocation').text(calEvent.location);
-                    $('#modalLocationDiv').show();
+                    $('#modalLocationDiv').css('display', 'flex'); // Garante flexbox
+                    
+                    // 1. BANDEIRA
+                    if (calEvent.flag) {
+                        $('#modalFlag')
+                            .attr('class', 'flag-icon flag-icon-' + calEvent.flag + ' mr-2 shadow-sm')
+                            .show();
+                    } else {
+                        $('#modalFlag').hide();
+                    }
+
+                    // 2. CLIMA
+                    if (calEvent.weather_icon) {
+                        // Monta URL do ícone (OpenWeatherMap padrão)
+                        var iconUrl = "http://openweathermap.org/img/wn/" + calEvent.weather_icon + ".png";
+                        $('#modalWeatherIcon').attr('src', iconUrl);
+                        
+                        if (calEvent.weather_temp) {
+                            $('#modalWeatherTemp').text(calEvent.weather_temp + '°C');
+                        }
+                        $('#modalWeather').css('display', 'inline-flex'); // Mostra o badge
+                    } else {
+                        $('#modalWeather').hide();
+                    }
                     
                     // Configura botão do Mapa
                     $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
                         var qParam = "";
-                        // Prioriza Lat/Lng se existir, senão usa Endereço
                         if (calEvent.lat && calEvent.lng) {
                             qParam = calEvent.lat + "," + calEvent.lng;
                         } else {
                             qParam = encodeURIComponent(calEvent.location);
                         }
-                        
-                        // URL OFICIAL DE EMBED (v1/place) - Corrige a tela preta
-                        var mapUrl = "https://maps.google.com/maps?q=" + qParam + "&hl=pt-br&z=15&output=embed";
+                        var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + qParam + "&hl=pt-br&z=15&output=embed";
                         
                         $('#mapFrame').attr('src', mapUrl);
                         $('#eventModal').modal('hide');
