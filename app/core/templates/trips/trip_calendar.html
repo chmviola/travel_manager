@@ -552,126 +552,11 @@
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
 
 <script>
-
-        // -- Modal de importação/exportação do Google Calender ---
-    $('.custom-file-input').on('change', function() {
-        var fileName = $(this).val().split('\\').pop();
-        $(this).next('.custom-file-label').addClass("selected").html(fileName);
-    });
-
     $(document).ready(function() {
-        // 1. INICIALIZA O CALENDÁRIO
-        var events = {{ events_json|safe }}; // Recebe do Django
-
-        // 1. INICIALIZA O CALENDÁRIO
-        var events = {{ events_json|safe }}; 
-
-        $('#calendar').fullCalendar({
-            header: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'month,agendaWeek,agendaDay'
-            },
-            themeSystem: 'bootstrap4',
-            defaultView: 'agendaWeek',
-            locale: 'pt-br',
-            events: events,
-            height: 600,
-            
-            // --- EVENT CLICK ATUALIZADO ---
-            eventClick: function(calEvent, jsEvent, view) {
-                jsEvent.preventDefault();
-
-                // 1. Título e Cor
-                $('#modalTitle').text(calEvent.title);
-                $('#modalHeaderStyle').css('background-color', calEvent.backgroundColor);
-
-                // 2. Data
-                var timeText = moment(calEvent.start).format('DD/MM/YYYY HH:mm');
-                if (calEvent.end) {
-                    timeText += ' - ' + moment(calEvent.end).format('HH:mm');
-                }
-                $('#modalTime').text(timeText);
-
-                // 3. Localização e MAPA (CORREÇÃO AQUI)
-                if (calEvent.location) {
-                    $('#modalLocation').text(calEvent.location);
-                    $('#modalLocationDiv').show();
-                    
-                    $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
-                        // URL CORRETA DA API EMBED (v1/place)
-                        // Se tiver Lat/Lng, usa coordenadas. Se não, usa endereço.
-                        var qParam = "";
-                        if (calEvent.lat && calEvent.lng) {
-                            qParam = calEvent.lat + "," + calEvent.lng;
-                        } else {
-                            qParam = encodeURIComponent(calEvent.location);
-                        }
-                        
-                        var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + qParam;
-                        
-                        $('#mapFrame').attr('src', mapUrl);
-                        $('#eventModal').modal('hide');
-                        $('#mapModal').modal('show');
-                    });
-                } else {
-                    $('#modalLocationDiv').hide();
-                    $('#btnShowMap').prop('disabled', true);
-                }
-
-                // 4. Descrição
-                if (calEvent.description) {
-                    $('#modalDescription').text(calEvent.description);
-                    $('#modalDescDiv').show();
-                } else {
-                    $('#modalDescDiv').hide();
-                }
-
-                // 5. Botões de Ação (Links vindos do View)
-                if (calEvent.urls) {
-                    $('#btnEditItem').attr('href', calEvent.urls.edit);
-                    $('#btnDeleteItem').attr('href', calEvent.urls.delete);
-                    $('#btnExpense').attr('href', calEvent.urls.expense);
-                    
-                    // CORREÇÃO ANEXO: Usa a URL correta vinda da view
-                    $('#btnAttachment').attr('href', calEvent.urls.attachment); 
-                }
-
-                // 6. LOGICA DO LINK (Modal ou Acesso)
-                // Configura o botão "Link" do box principal
-                $('#btnEditItemLink').off('click').on('click', function() {
-                    // Preenche o input do modal
-                    $('#inputLinkItem').val(calEvent.link || '');
-                    
-                    // Mostra/Esconde botão de visitar dentro do modal
-                    if (calEvent.link) {
-                        $('#btnVisitLink').attr('href', calEvent.link).show();
-                    } else {
-                        $('#btnVisitLink').hide();
-                    }
-
-                    // Define a ação do form (Aponta para edição do item)
-                    // Obs: Para funcionar perfeitamente, idealmente teríamos uma view só para link,
-                    // mas aqui usaremos a URL de update.
-                    $('#formLinkItem').attr('action', calEvent.urls.edit);
-
-                    $('#eventModal').modal('hide'); // Fecha box info
-                    $('#modalLink').modal('show');  // Abre box link
-                });
-
-                // Link Externo no rodapé do box (Acesso rápido)
-                if (calEvent.link) {
-                    $('#modalExternalLink').attr('href', calEvent.link);
-                    $('#modalLinkDiv').show();
-                } else {
-                    $('#modalLinkDiv').hide();
-                }
-
-                // Abre o Modal Principal
-                $('#eventModal').modal('show');
-            }
-
-        // 2. INICIALIZA O MAPA GLOBAL
+        
+        // ==========================================
+        // 1. MAPA GLOBAL (LATERAL)
+        // ==========================================
         function initGlobalMap() {
             var mapEl = document.getElementById('global-map');
             if (!mapEl) return;
@@ -684,7 +569,7 @@
             var bounds = new google.maps.LatLngBounds();
             var hasPoints = false;
 
-            // Pontos vindos do Django (items da view)
+            // Dados vindos do Django
             var points = [
                 {% for item in items %}
                 {% if item.location_lat and item.location_lng %}
@@ -711,53 +596,169 @@
                 map.fitBounds(bounds);
             }
         }
-
-        // Carrega o mapa
         initGlobalMap();
-    });
 
-    // --- CÓDIGO PARA OS SLIDERS DE PAGAMENTO ---
-    // (Copiado da trip_detail para funcionar no Calendar)
-    $('.btn-toggle-paid').change(function() {
-        var checkbox = $(this);
-        var expenseId = checkbox.data('id');
-        var isChecked = checkbox.is(':checked');
-        
-        // URL baseada na rota que criamos
-        var url = '{% url "trip_expense_toggle_paid" 0 %}'.replace('0', expenseId);
+        // ==========================================
+        // 2. CALENDÁRIO & MODAIS
+        // ==========================================
+        var events = {{ events_json|safe }}; 
 
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: {
-                'csrfmiddlewaretoken': '{{ csrf_token }}'
+        $('#calendar').fullCalendar({
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
             },
-            success: function(response) {
-                // Atualiza os totais no cabeçalho financeiro se existirem
-                // Formata para moeda BRL
-                var formatter = new Intl.NumberFormat('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL'
+            themeSystem: 'bootstrap4',
+            defaultView: 'agendaWeek',
+            locale: 'pt-br',
+            events: events,
+            height: 600,
+            
+            // --- CLIQUE NO EVENTO ---
+            eventClick: function(calEvent, jsEvent, view) {
+                jsEvent.preventDefault();
+
+                // A. Título e Cor
+                $('#modalTitle').text(calEvent.title);
+                $('#modalHeaderStyle').css('background-color', calEvent.backgroundColor);
+
+                // B. Data (Formatada)
+                var timeText = moment(calEvent.start).format('DD/MM/YYYY HH:mm');
+                if (calEvent.end) {
+                    timeText += ' - ' + moment(calEvent.end).format('HH:mm');
+                }
+                $('#modalTime').text(timeText);
+
+                // C. Localização e Mapa (CORRIGIDO)
+                if (calEvent.location) {
+                    $('#modalLocation').text(calEvent.location);
+                    $('#modalLocationDiv').show();
+                    
+                    // Configura botão do Mapa
+                    $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
+                        var qParam = "";
+                        // Prioriza Lat/Lng se existir, senão usa Endereço
+                        if (calEvent.lat && calEvent.lng) {
+                            qParam = calEvent.lat + "," + calEvent.lng;
+                        } else {
+                            qParam = encodeURIComponent(calEvent.location);
+                        }
+                        
+                        // URL OFICIAL DE EMBED (v1/place) - Corrige a tela preta
+                        var mapUrl = "https://www.google.com/maps/embed/v1/place?key={{ google_maps_api_key }}&q=" + qParam;
+                        
+                        $('#mapFrame').attr('src', mapUrl);
+                        $('#eventModal').modal('hide');
+                        $('#mapModal').modal('show');
+                    });
+                } else {
+                    $('#modalLocationDiv').hide();
+                    $('#btnShowMap').prop('disabled', true);
+                }
+
+                // D. Descrição
+                if (calEvent.description) {
+                    $('#modalDescription').text(calEvent.description);
+                    $('#modalDescDiv').show();
+                } else {
+                    $('#modalDescDiv').hide();
+                }
+
+                // E. Preenche Links dos Botões
+                if (calEvent.urls) {
+                    $('#btnEditItem').attr('href', calEvent.urls.edit);
+                    $('#btnDeleteItem').attr('href', calEvent.urls.delete);
+                    $('#btnExpense').attr('href', calEvent.urls.expense);
+                    $('#btnAttachment').attr('href', calEvent.urls.attachment);
+                }
+
+                // F. Botão de Gerenciar Link
+                $('#btnEditItemLink').off('click').on('click', function() {
+                    $('#inputLinkItem').val(calEvent.link || '');
+                    
+                    if (calEvent.link) {
+                        $('#btnVisitLink').attr('href', calEvent.link).show();
+                    } else {
+                        $('#btnVisitLink').hide();
+                    }
+                    
+                    // Aponta o form para a URL de edição
+                    $('#formLinkItem').attr('action', calEvent.urls.edit);
+                    
+                    $('#eventModal').modal('hide');
+                    $('#modalLink').modal('show');
                 });
 
-                // Tenta atualizar os cards de resumo se eles existirem na tela
-                $('.description-header.text-primary').text(formatter.format(response.total_planned));
-                $('.description-header.text-success').text(formatter.format(response.total_paid));
-                $('.description-header.text-danger').text(formatter.format(response.to_pay));
-
-                // Toast de sucesso (opcional)
-                if (typeof Toast !== 'undefined') {
-                    Toast.fire({
-                        icon: 'success',
-                        title: isChecked ? 'Gasto marcado como pago!' : 'Gasto marcado como pendente.'
-                    });
+                // Link Externo Direto
+                if (calEvent.link) {
+                    $('#modalExternalLink').attr('href', calEvent.link);
+                    $('#modalLinkDiv').show();
+                } else {
+                    $('#modalLinkDiv').hide();
                 }
-            },
-            error: function() {
-                alert('Erro ao atualizar status. Tente novamente.');
-                checkbox.prop('checked', !isChecked); // Reverte visualmente
+
+                // Abre o Modal Principal
+                $('#eventModal').modal('show');
             }
         });
-    });
+
+        // ==========================================
+        // 3. FINANCEIRO (SLIDERS & PROGRESS BAR)
+        // ==========================================
+        $('.btn-toggle-paid').change(function() {
+            var checkbox = $(this);
+            var expenseId = checkbox.data('id');
+            var isChecked = checkbox.is(':checked');
+            
+            // Monta a URL para o toggle
+            var url = '{% url "trip_expense_toggle_paid" 0 %}'.replace('0', expenseId);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    // Formata Moeda
+                    var formatter = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    });
+
+                    // Atualiza Totais
+                    $('.description-header.text-primary').text(formatter.format(response.total_planned));
+                    $('.description-header.text-success').text(formatter.format(response.total_paid));
+                    $('.description-header.text-danger').text(formatter.format(response.to_pay));
+
+                    // Atualiza a Barra de Progresso (Restaurado)
+                    updateProgressBar(response.total_paid, response.total_planned);
+
+                    if (typeof Toast !== 'undefined') {
+                        Toast.fire({
+                            icon: 'success',
+                            title: isChecked ? 'Gasto marcado como pago!' : 'Gasto marcado como pendente.'
+                        });
+                    }
+                },
+                error: function() {
+                    alert('Erro ao atualizar status.');
+                    checkbox.prop('checked', !isChecked); 
+                }
+            });
+        });
+
+        // Função Restaurada: Atualiza a barra de progresso visualmente
+        function updateProgressBar(paid, total) {
+            var percent = 0;
+            if (total > 0) {
+                percent = (paid / total) * 100;
+            }
+            // Procura o elemento da barra (se você copiou a tabela igual a trip_detail)
+            $('#progress-bar-paid').css('width', percent + '%');
+        }
+
+    }); // Fim do Document Ready
 </script>
 {% endblock %}
