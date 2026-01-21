@@ -553,7 +553,7 @@ def trip_calendar(request, pk):
                 except Exception as e: 
                     print(f"Erro URL Calendar: {e}")
 
-            # 3. Monta o Objeto do Evento (Incluindo o Link para edição)
+            # 3. Monta o Objeto do Evento (AGORA COM BANDEIRA E CLIMA)
             event = {
                 'id': item.id,
                 'title': item.name,
@@ -561,13 +561,19 @@ def trip_calendar(request, pk):
                 'backgroundColor': color,
                 'borderColor': color,
                 'description': item.details.get('notes', '') if isinstance(item.details, dict) else str(item.details),
+                
+                # Localização
                 'location': item.location_address or '',
                 'lat': item.location_lat or '',
                 'lng': item.location_lng or '',
                 
-                # Passamos o link do item para o JS poder preencher o modal
+                # --- NOVOS CAMPOS PARA O VISUAL ---
+                'flag': item.flag_code or '',
+                'weather_icon': item.weather_icon or '',
+                'weather_temp': str(item.weather_temp) if item.weather_temp else '',
+                # ----------------------------------
+
                 'link': item.link if hasattr(item, 'link') and item.link else '',
-                
                 'urls': {
                     'edit': url_edit,
                     'delete': url_delete,
