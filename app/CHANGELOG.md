@@ -1,6 +1,23 @@
 # 🚀 Release v0.1.19 — 2026-01-20
 
-*Aguardando geração de notas...*
+### ✨ Novas Funcionalidades
+- feat: abre modal com informações do item quando clicando no calendário
+
+### 🐛 Correções
+- fix: conserto da posição dos dados no modal do item no calendário
+- fix: modificação da posição da bandeira e correção do ícone do tempo qubrado
+- fix: modificação da posição da bandeira e correção do ícone do tempo qubrado, correção do ver mapa
+- fix: modificação da view trip_calendar para adição da bandeira e do clima no model do item do calendário
+- fix: modificação da view trip_calendar para adição da bandeira e do clima no model do item do calendário
+- fix: adição da bandeira e do clima no model do item do calendário
+- fix: adição da bandeira e do clima no model do item do calendário
+- fix: correção do botão ver mapa do modal do item do calendário, modificação da url de consulta
+- fix: correção dos botões ver mapa, anexo e link do novo box dos itens do calendário (javascrip do trip_calendar)
+- fix: correção dos botões ver mapa, anexo e link do novo box dos itens do calendário
+
+### 📦 Commit range
+`v0.1.18..HEAD`
+
 
 # 🚀 Release v0.1.18 — 2026-01-20
 
