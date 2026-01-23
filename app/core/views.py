@@ -830,6 +830,7 @@ def trip_item_create(request, trip_id):
 @login_required
 def trip_expense_create(request, trip_id):
     trip = get_object_or_404(Trip, pk=trip_id, user=request.user)
+    
     if request.method == 'POST':
         form = ExpenseForm(request.POST, trip_id=trip.id)
         if form.is_valid():
@@ -851,9 +852,17 @@ def trip_expense_create(request, trip_id):
                 return redirect(f"{base_url}?date={date_str}")
             return redirect(base_url)
     else:
-        # Dica: Se quiser pré-preencher a data vinda da URL na criação
         initial_date = request.GET.get('date')
-        form = ExpenseForm(initial={'date': initial_date} if initial_date else None)
+        initial_item = request.GET.get('item')
+        
+        initial_data = {}
+        if initial_date:
+            initial_data['date'] = initial_date
+        if initial_item:
+            initial_data['item'] = initial_item
+            
+        # AGORA PASSAMOS O TRIP_ID PARA ATIVAR O FILTRO NO FORM
+        form = ExpenseForm(initial=initial_data if initial_data else None, trip_id=trip.id)
 
     return render(request, 'trips/expense_form.html', {'form': form, 'trip': trip})
 
