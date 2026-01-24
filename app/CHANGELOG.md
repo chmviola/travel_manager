@@ -1,6 +1,22 @@
 # 🚀 Release v0.1.20 — 2026-01-23
 
-*Aguardando geração de notas...*
+### ✨ Novas Funcionalidades
+- feat: função de envio de email e marcardor no item para enviar lembrete por email
+- feat: função de envio de email e marcardor no item para enviar lembrete por email
+- feat: função de envio de email e marcardor no item para enviar lembrete por email
+
+### 🐛 Correções
+- fix: correção do envio de email de llembrete
+- fix: correção do envio de email de llembrete
+- fix: correção do erro de não validar as informações do item salvo
+- fix: correção do erro de não validar as informações do item salvo
+- fix: correção do erro de não validar as informações do item salvo
+- fix: corrige o script de cotação das moedas
+- fix: somente os item de gasto da viagem aparecem
+
+### 📦 Commit range
+`v0.1.19..HEAD`
+
 
 # 🚀 Release v0.1.19 — 2026-01-20
 
