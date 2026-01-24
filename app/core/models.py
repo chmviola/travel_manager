@@ -126,6 +126,7 @@ class TripItem(models.Model):
         (24, '24 horas (1 dia) antes'),
         (48, '48 horas (2 dias) antes'),
         (168, '1 semana antes'),
+        (720, '1 mês antes'),
     ]
     
     reminder_hours = models.IntegerField(choices=REMINDER_CHOICES, default=0, verbose_name="Lembrete por E-mail")
