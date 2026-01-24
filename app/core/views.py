@@ -2077,24 +2077,21 @@ def access_logs_view(request):
 
 # --- VIEW SOBRE O SISTEMA ---
 def about_view(request):
-    import os
-    # settings.BASE_DIR = /usr/src/app
-    base_root = os.path.dirname(settings.BASE_DIR) # /usr/src
+    base_root = os.path.dirname(settings.BASE_DIR)
     readme_path = os.path.join(base_root, 'readme.md')
     
     content = ""
-    
-    # Validação Robusta
-    if os.path.isdir(readme_path):
-        content = "# Erro de Configuração\nO sistema detectou que `/usr/src/readme.md` é um diretório e não um arquivo. Verifique o mapeamento do volume no Docker."
-    elif os.path.exists(readme_path):
-        try:
-            with open(readme_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-        except Exception as e:
-            content = f"# Erro de Leitura\nNão foi possível ler o arquivo: {str(e)}"
+    if os.path.exists(readme_path):
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+            # --- CORREÇÃO DE CAMINHO DE IMAGEM ---
+            # Procura por caminhos que comecem com 'app/core/static/' ou 'static/'
+            # e troca pelo caminho relativo que o navegador entende (/static/)
+            content = content.replace('app/core/static/', '/static/')
+            content = content.replace('static/', '/static/')
     else:
-        content = f"# Arquivo não encontrado\nO caminho `{readme_path}` não existe no container."
+        content = "# Erro\nArquivo não encontrado."
 
     html_content = markdown.markdown(content, extensions=['extra', 'codehilite', 'toc'])
     
@@ -2102,4 +2099,3 @@ def about_view(request):
         'about_content': html_content,
         'title': 'Sobre o Sistema'
     })
-
