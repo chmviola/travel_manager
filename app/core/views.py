@@ -2080,7 +2080,7 @@ def about_view(request):
     # settings.BASE_DIR aponta para /var/data/travel_manager/app
     # Precisamos subir um nível para chegar na raiz do repositório
     base_dir = settings.BASE_DIR
-    readme_path = os.path.join(os.path.dirname(base_dir), 'readme.md') # Sobe um nível e busca readme.md
+    readme_path = os.path.join(os.path.dirname(settings.BASE_DIR), 'readme.md')
     
     content = ""
     if os.path.exists(readme_path):

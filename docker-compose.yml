@@ -25,6 +25,7 @@ services:
     
     volumes:
       # Não mapeamos mais o código (./app), apenas os dados persistentes
+      - ./readme.md:/usr/src/readme.md:ro
       - /var/data/media_data:/usr/src/app/media
       - /var/data/migrations:/usr/src/app/core/migrations
 

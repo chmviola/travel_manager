@@ -20,6 +20,7 @@ services:
     command: sh -c "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       # - ./app:/usr/src/app  <-- Mantive comentado como no original
+      - ./readme.md:/usr/src/readme.md:ro
       - /var/data/media_data_dev:/usr/src/app/media
       - /var/data/migrations-dev:/usr/src/app/core/migrations
     environment:
