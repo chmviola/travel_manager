@@ -36,7 +36,7 @@ class TripItemForm(forms.ModelForm):
 
     class Meta:
         model = TripItem
-        fields = ['trip', 'name', 'type', 'start_datetime', 'end_datetime', 
+        fields = ['trip', 'name', 'item_type', 'start_datetime', 'end_datetime', 
                   'location_address', 'location_lat', 'location_lng', 
                   'details', 'link', 'reminder_hours']
         
@@ -45,7 +45,7 @@ class TripItemForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'location_address': forms.TextInput(attrs={'class': 'form-control'}),
             'reminder_hours': forms.Select(attrs={'class': 'form-control'}),
-            
+
             # O type='datetime-local' cria o calendário com hora
             # DateTimeInput precisa do formato exato com 'T'
             'start_datetime': forms.DateTimeInput(
