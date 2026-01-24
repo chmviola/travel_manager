@@ -1,6 +1,14 @@
 # 🚀 Release v0.1.21 — 2026-01-24
 
-*Aguardando geração de notas...*
+### ✨ Novas Funcionalidades
+- feat: incrementando o email enviado e adicionando a opção de 1 mês de lembrete
+
+### 🐛 Correções
+- fix: conserto do campo notas no email enviado
+
+### 📦 Commit range
+`v0.1.20..HEAD`
+
 
 # 🚀 Release v0.1.20 — 2026-01-23
 
