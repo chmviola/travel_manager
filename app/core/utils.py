@@ -6,6 +6,7 @@ from datetime import timedelta, datetime
 from openai import OpenAI
 from .models import APIConfiguration, Trip
 from django.core.mail import get_connection
+from django.core.cache import cache
 
 
 #-- Função Adicional para Buscar Dicas de Viagem AI --#
@@ -48,40 +49,65 @@ def get_travel_intel(destination):
 def get_exchange_rate(from_currency):
     """
     Busca a cotação atual de uma moeda para Real (BRL).
-    Ex: from_currency='USD' retorna quanto vale 1 dólar em reais.
+    Prioridade:
+    1. API em Tempo Real
+    2. Cache (Última cotação válida coletada)
+    3. Valor Fixo (Apenas se nunca houve conexão)
     """
     if from_currency == 'BRL':
         return 1.0
     
+    # Define uma chave única para salvar essa moeda
+    cache_key = f"exchange_rate_{from_currency}"
+    
     try:
-        # Consulta a AwesomeAPI (USD-BRL, EUR-BRL, etc)
+        # Tenta conectar na API
         url = f"https://economia.awesomeapi.com.br/json/last/{from_currency}-BRL"
-        response = requests.get(url, timeout=5)
-        data = response.json()
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         
-        # O retorno é algo como: {'USDBRL': {'bid': '5.10', ...}}
+        response = requests.get(url, timeout=5, headers=headers)
+        response.raise_for_status()
+        
+        data = response.json()
         key = f"{from_currency}BRL"
-        return float(data[key]['bid'])
+        rate = float(data[key]['bid'])
+        
+        # SUCESSO!
+        # Salva este valor no cache por 30 dias (tempo longo para servir de backup)
+        # Assim, garantimos que "a última cotação coletada" fique salva.
+        cache.set(cache_key, rate, timeout=60*60*24*30)
+        
+        return rate
+
     except Exception as e:
-        print(f"Erro ao buscar cotação: {e}")
-        # Valores aproximados de segurança (Fallback)
+        print(f"Erro ao buscar cotação ({from_currency}): {e}")
+        
+        # FALHA NA API:
+        # 1. Tenta pegar a "última cotação coletada" do cache
+        cached_rate = cache.get(cache_key)
+        if cached_rate:
+            print(f"Fallback: Usando valor em cache para {from_currency}: {cached_rate}")
+            return cached_rate
+
+        # 2. Cache vazio? (Primeira vez rodando sem internet?)
+        # Só então usamos os valores fixos
+        print(f"Fallback Crítico: Usando valor fixo para {from_currency}")
         fallback_rates = {
-            'USD': 6.00, 
-            'EUR': 6.30, 
-            'GBP': 7.50,
-            'CAD': 4.20,
-            'AUD': 3.80,
-            'CHF': 6.50,
-            'JPY': 0.04,
-            # América do Sul (Valores muito pequenos em relação ao Real)
-            'CLP': 0.0063, # 1 Peso Chileno vale aprox 0.006 Reais
-            'ARS': 0.0060,
-            'UYU': 0.14,
-            'COP': 0.0014,
-            'PEN': 1.60
+            'USD': 5.85, 
+            'EUR': 6.15, 
+            'GBP': 7.30,
+            'CAD': 4.15,
+            'AUD': 3.75,
+            'CHF': 6.45,
+            'JPY': 0.039,
+            'CLP': 0.0060,
+            'ARS': 0.0058,
+            'UYU': 0.13,
+            'COP': 0.0013,
+            'PEN': 1.55
         }
         return fallback_rates.get(from_currency, 1.0)
-    
+
 #-- Função Adicional para Mapear Moeda por País/Cidade --#
 def get_currency_by_country(country_name):
     """
