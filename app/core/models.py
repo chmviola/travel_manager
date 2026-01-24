@@ -119,6 +119,18 @@ class TripItem(models.Model):
     # Aqui guardamos: gate do voo, número do quarto, confirmação de reserva, etc.
     details = models.JSONField(default=dict, blank=True, verbose_name="Detalhes Específicos")
 
+    # OPÇÕES DE LEMBRETE
+    REMINDER_CHOICES = [
+        (0, 'Sem lembrete'),
+        (1, '1 hora antes'),
+        (24, '24 horas (1 dia) antes'),
+        (48, '48 horas (2 dias) antes'),
+        (168, '1 semana antes'),
+    ]
+    
+    reminder_hours = models.IntegerField(choices=REMINDER_CHOICES, default=0, verbose_name="Lembrete por E-mail")
+    reminder_sent = models.BooleanField(default=False) # Controle interno
+
     class Meta:
         ordering = ['start_datetime']
         verbose_name = "Item da Viagem"
