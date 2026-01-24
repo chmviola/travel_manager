@@ -7,6 +7,7 @@ from django.conf import settings
 from datetime import timedelta
 from core.models import TripItem, EmailConfiguration
 from core.utils import get_db_mail_connection
+import ast
 
 class Command(BaseCommand):
     help = 'Verifica itens com lembrete configurado e envia e-mails HTML'
@@ -44,6 +45,33 @@ class Command(BaseCommand):
         subject = f"🔔 Lembrete: {item.name} (em {item.trip.title})"
         user = item.trip.user
         
+        # --- LÓGICA DE LIMPEZA DA NOTA ---
+        clean_notes = ""
+        if item.details:
+            raw = item.details
+            # Se for string (como vem do banco às vezes), tenta converter para dict
+            if isinstance(raw, str):
+                try:
+                    raw = ast.literal_eval(raw)
+                except:
+                    clean_notes = raw # Se falhar, usa o que tiver
+            
+            # Se for (ou virou) um dicionário, pega a chave 'notes'
+            if isinstance(raw, dict):
+                clean_notes = raw.get('notes', '')
+                
+                # Segunda camada de limpeza (caso o dicionário esteja aninhado)
+                if isinstance(clean_notes, str) and clean_notes.strip().startswith("{'notes'"):
+                    try:
+                        inner = ast.literal_eval(clean_notes)
+                        if isinstance(inner, dict):
+                            clean_notes = inner.get('notes', clean_notes)
+                    except:
+                        pass
+            else:
+                clean_notes = str(raw)
+        # ---------------------------------
+
         # URL do sistema
         base_url = getattr(settings, 'BASE_URL', 'https://travel-dev.chmviola.com.br')
         # Link direto para detalhes da viagem na data do evento
@@ -53,6 +81,7 @@ class Command(BaseCommand):
         context = {
             'user': user,
             'item': item,
+            'clean_notes': clean_notes,
             'trip': item.trip,
             'system_url': trip_url,
         }
