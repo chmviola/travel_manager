@@ -17,6 +17,7 @@ urlpatterns = [
     path('viagens/<int:pk>/excluir/', views.trip_delete, name='trip_delete'),
     path('trips/<int:pk>/pdf/', views.trip_detail_pdf, name='trip_detail_pdf'),
     path('viagens/<int:pk>/calendario/', views.trip_calendar, name='trip_calendar'),
+    path('sobre/', views.about_view, name='about'),
     
     # Rotas de Itens
     path('viagens/<int:trip_id>/adicionar-item/', views.trip_item_create, name='trip_item_create'),

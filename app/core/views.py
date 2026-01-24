@@ -2075,3 +2075,23 @@ def access_logs_view(request):
     
     return render(request, 'config/access_logs.html', context)
 
+# --- VIEW SOBRE O SISTEMA ---
+def about_view(request):
+    # Caminho para o README.md na raiz do projeto
+    readme_path = os.path.join(settings.BASE_DIR, 'README.md')
+    
+    content = ""
+    if os.path.exists(readme_path):
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    
+    # Converte Markdown para HTML
+    html_content = markdown.markdown(
+        content, 
+        extensions=['extra', 'codehilite', 'toc']
+    )
+    
+    return render(request, 'config/about.html', {
+        'about_content': html_content,
+        'title': 'Sobre o Sistema'
+    })
