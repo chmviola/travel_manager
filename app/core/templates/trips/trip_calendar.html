@@ -643,18 +643,19 @@
                 $('#modalTitle').text(calEvent.title);
                 $('#modalHeaderStyle').css('background-color', calEvent.backgroundColor);
 
-                // B. Data (Formatada)
+                // B. Data e Lembrete
                 var timeText = moment(calEvent.start).format('DD/MM/YYYY HH:mm');
                 if (calEvent.end) {
                     timeText += ' - ' + moment(calEvent.end).format('HH:mm');
                 }
-
+                
                 // Adiciona ícone de sino se tiver lembrete
                 if (calEvent.reminder) {
                     timeText += ' <i class="fas fa-bell text-warning ml-2" title="Lembrete Ativo"></i>';
                 }
-
-                $('#modalTime').text(timeText);
+                
+                // .html() em vez de .text() para renderizar o ícone <i>
+                $('#modalTime').html(timeText);
 
                 // C. Localização, Bandeira e Clima (ATUALIZADO)
                 if (calEvent.location) {
