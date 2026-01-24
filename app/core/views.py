@@ -2077,13 +2077,18 @@ def access_logs_view(request):
 
 # --- VIEW SOBRE O SISTEMA ---
 def about_view(request):
-    # Caminho para o README.md na raiz do projeto
-    readme_path = os.path.join(settings.BASE_DIR, 'README.md')
+    # settings.BASE_DIR aponta para /var/data/travel_manager/app
+    # Precisamos subir um nível para chegar na raiz do repositório
+    base_dir = settings.BASE_DIR
+    readme_path = os.path.join(os.path.dirname(base_dir), 'readme.md') # Sobe um nível e busca readme.md
     
     content = ""
     if os.path.exists(readme_path):
         with open(readme_path, 'r', encoding='utf-8') as f:
             content = f.read()
+    else:
+        # Debug caso continue em branco (você verá no terminal do docker)
+        print(f"ERRO: Arquivo não encontrado em: {readme_path}")
     
     # Converte Markdown para HTML
     html_content = markdown.markdown(
