@@ -2077,36 +2077,29 @@ def access_logs_view(request):
 
 # --- VIEW SOBRE O SISTEMA ---
 def about_view(request):
-    try:
-        # settings.BASE_DIR é /usr/src/app
-        # os.path.dirname(settings.BASE_DIR) é /usr/src
-        # O arquivo deve estar em /usr/src/readme.md (conforme o volume mapeado)
-        base_root = os.path.dirname(settings.BASE_DIR)
-        readme_path = os.path.join(base_root, 'readme.md')
-        
-        content = ""
-        if os.path.exists(readme_path):
+    import os
+    # settings.BASE_DIR = /usr/src/app
+    base_root = os.path.dirname(settings.BASE_DIR) # /usr/src
+    readme_path = os.path.join(base_root, 'readme.md')
+    
+    content = ""
+    
+    # Validação Robusta
+    if os.path.isdir(readme_path):
+        content = "# Erro de Configuração\nO sistema detectou que `/usr/src/readme.md` é um diretório e não um arquivo. Verifique o mapeamento do volume no Docker."
+    elif os.path.exists(readme_path):
+        try:
             with open(readme_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-        else:
-            content = f"# Erro\nArquivo não encontrado no caminho: {readme_path}"
-            # Isso vai forçar aparecer algo no log do container se o arquivo faltar
-            sys.stderr.write(f"DEBUG: Readme path target: {readme_path}\n")
+        except Exception as e:
+            content = f"# Erro de Leitura\nNão foi possível ler o arquivo: {str(e)}"
+    else:
+        content = f"# Arquivo não encontrado\nO caminho `{readme_path}` não existe no container."
 
-        # Converte Markdown para HTML
-        html_content = markdown.markdown(
-            content, 
-            extensions=['extra', 'codehilite', 'toc']
-        )
-        
-        return render(request, 'config/about.html', {
-            'about_content': html_content,
-            'title': 'Sobre o Sistema'
-        })
-        
-    except Exception as e:
-        # Se der qualquer erro, ele imprime o rastreio completo no log do container
-        traceback.print_exc()
-        messages.error(request, f"Erro ao carregar o Sobre: {str(e)}")
-        return redirect('dashboard')
+    html_content = markdown.markdown(content, extensions=['extra', 'codehilite', 'toc'])
+    
+    return render(request, 'config/about.html', {
+        'about_content': html_content,
+        'title': 'Sobre o Sistema'
+    })
 
