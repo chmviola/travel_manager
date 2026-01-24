@@ -648,6 +648,12 @@
                 if (calEvent.end) {
                     timeText += ' - ' + moment(calEvent.end).format('HH:mm');
                 }
+
+                // Adiciona ícone de sino se tiver lembrete
+                if (calEvent.reminder) {
+                    timeText += ' <i class="fas fa-bell text-warning ml-2" title="Lembrete Ativo"></i>';
+                }
+
                 $('#modalTime').text(timeText);
 
                 // C. Localização, Bandeira e Clima (ATUALIZADO)

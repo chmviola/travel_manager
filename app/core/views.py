@@ -609,7 +609,7 @@ def trip_calendar(request, pk):
                 
                 # AGORA VAI FUNCIONAR: flag_code foi definido no loop anterior
                 'flag': getattr(item, 'flag_code', ''), 
-                
+                'reminder': item.reminder_hours > 0,
                 'weather_icon': w_icon,
                 'weather_temp': str(w_temp) if w_temp else '',
                 'link': item.link if hasattr(item, 'link') and item.link else '',

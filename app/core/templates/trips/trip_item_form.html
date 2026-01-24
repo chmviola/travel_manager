@@ -45,6 +45,12 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Lembrete por E-mail</label>
+                        {{ form.reminder_hours }}
+                        <small class="text-muted">Você receberá um e-mail de aviso antes do horário de início.</small>
+                    </div>
+                    
+                    <div class="form-group">
                         <label>Endereço / Localização <small class="text-muted">(Para o Google Maps)</small></label>
                         {{ form.location_address }}
                     </div>

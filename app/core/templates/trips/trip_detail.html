@@ -140,7 +140,13 @@
                         </i>
 
                         <div class="timeline-item">
-                            <span class="time"><i class="fas fa-clock"></i> {{ item.start_datetime|date:"H:i" }}</span>
+                            <span class="time">
+                                    {% if item.reminder_hours > 0 %}
+                                        <i class="fas fa-bell text-warning mr-1" 
+                                           title="Lembrete configurado para {{ item.get_reminder_hours_display }}"></i>
+                                    {% endif %}
+                                    <i class="fas fa-clock"></i> {{ item.start_datetime|date:"H:i" }}
+                                </span>
                             
                             <h3 class="timeline-header">
                                 <strong>{{ item.get_item_type_display }}:</strong> {{ item.name }}
