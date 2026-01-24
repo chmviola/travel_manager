@@ -39,10 +39,8 @@ class TripItemForm(forms.ModelForm):
         # CORREÇÃO: 
         # 1. Removemos 'trip' (pois é preenchido automaticamente pela View)
         # 2. Alteramos 'type' para 'item_type' (nome correto do campo no Model)
-        fields = ['name', 'item_type', 'start_datetime', 'end_datetime', 
-                  'location_address', 'location_lat', 'location_lng', 
-                  'details', 'link', 'reminder_hours']
-        
+        fields = ['item_type', 'name', 'start_datetime', 'end_datetime', 'location_address', 'details', 'reminder_hours']
+
         widgets = {
             'item_type': forms.Select(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
