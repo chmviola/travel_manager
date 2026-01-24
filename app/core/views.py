@@ -2077,9 +2077,8 @@ def access_logs_view(request):
 
 # --- VIEW SOBRE O SISTEMA ---
 def about_view(request):
-    # settings.BASE_DIR aponta para /var/data/travel_manager/app
-    # Precisamos subir um nível para chegar na raiz do repositório
-    # base_dir = settings.BASE_DIR
+    # settings.BASE_DIR aponta para /usr/src/app dentro do container
+    # Como mapeamos o volume para /usr/src/readme.md, subimos um nível
     readme_path = os.path.join(os.path.dirname(settings.BASE_DIR), 'readme.md')
     
     content = ""
@@ -2087,15 +2086,17 @@ def about_view(request):
         with open(readme_path, 'r', encoding='utf-8') as f:
             content = f.read()
     else:
-        # Debug caso continue em branco (você verá no terminal do docker)
+        content = "# Erro\nArquivo `readme.md` não encontrado no container."
         print(f"ERRO: Arquivo não encontrado em: {readme_path}")
     
     # Converte Markdown para HTML
+    # Certifique-se de que o import markdown está no topo do arquivo
     html_content = markdown.markdown(
         content, 
         extensions=['extra', 'codehilite', 'toc']
     )
     
+    # O ERRO ESTAVA AQUI: Você precisa passar 'about_content': html_content
     return render(request, 'config/about.html', {
         'about_content': html_content,
         'title': 'Sobre o Sistema'
