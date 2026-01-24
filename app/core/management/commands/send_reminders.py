@@ -1,12 +1,3 @@
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.conf import settings
-from datetime import timedelta
-from core.models import TripItem
-from core.utils import get_db_mail_connection
-
 class Command(BaseCommand):
     help = 'Verifica itens com lembrete configurado e envia e-mails'
 
@@ -21,10 +12,9 @@ class Command(BaseCommand):
 
         for item in items:
             # Calcula quando o lembrete deveria ser enviado
-            # Ex: Se evento é dia 10 às 14h e lembrete é 24h antes -> Gatilho é dia 09 às 14h
             reminder_trigger = item.start_datetime - timedelta(hours=item.reminder_hours)
             
-            # Se AGORA já passou do horário do gatilho (e ainda não enviamos)
+            # Se AGORA já passou do horário do gatilho
             if now >= reminder_trigger:
                 try:
                     self.send_reminder_email(item)
@@ -44,7 +34,10 @@ class Command(BaseCommand):
         subject = f"Lembrete de Viagem: {item.name}"
         user = item.trip.user
         
-        # Corpo do e-mail simples
+        # Define base_url de forma segura
+        base_url = getattr(settings, 'BASE_URL', 'https://travel-dev.chmviola.com.br')
+
+        # Corpo do e-mail
         message = f"""
         Olá, {user.first_name or user.username}!
         
@@ -54,16 +47,25 @@ class Command(BaseCommand):
         QUANDO: {item.start_datetime.strftime('%d/%m/%Y às %H:%M')}
         ONDE: {item.location_address or 'Não informado'}
         
-        Ver detalhes no sistema: {settings.BASE_URL if hasattr(settings, 'BASE_URL') else 'No sistema'}
+        Acesse o sistema para mais detalhes: {base_url}
         """
         
-        # Tenta usar a conexão configurada no banco (sua função customizada)
+        # --- CORREÇÃO: Busca o remetente no banco ---
+        from_email = settings.DEFAULT_FROM_EMAIL # Fallback padrão
+        try:
+            email_config = EmailConfiguration.objects.first()
+            if email_config and email_config.default_from_email:
+                from_email = email_config.default_from_email
+        except Exception:
+            pass # Se der erro na busca, mantém o padrão
+            
+        # Tenta usar a conexão configurada no banco
         connection = get_db_mail_connection()
         
         send_mail(
             subject,
             message,
-            settings.DEFAULT_FROM_EMAIL, # Remetente padrão
+            from_email, # <--- Agora usa o e-mail do seu domínio
             [user.email],
             connection=connection,
             fail_silently=False,
