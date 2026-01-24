@@ -1,3 +1,13 @@
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
+from datetime import timedelta
+# Adicionamos EmailConfiguration aqui para ler o remetente
+from core.models import TripItem, EmailConfiguration 
+from core.utils import get_db_mail_connection
+
 class Command(BaseCommand):
     help = 'Verifica itens com lembrete configurado e envia e-mails'
 
