@@ -2077,20 +2077,25 @@ def access_logs_view(request):
 
 # --- VIEW SOBRE O SISTEMA ---
 def about_view(request):
+    import sys
+    # Isso aparecerá no 'docker logs' independente de qualquer configuração
+    sys.stderr.write(">>> Acessando a view SOBRE\n")
+    
     base_root = os.path.dirname(settings.BASE_DIR)
     readme_path = os.path.join(base_root, 'readme.md')
     
+    sys.stderr.write(f">>> Caminho do arquivo: {readme_path}\n")
+
     content = ""
     if os.path.exists(readme_path):
         with open(readme_path, 'r', encoding='utf-8') as f:
             content = f.read()
-            
-            # --- CORREÇÃO DE CAMINHO DE IMAGEM ---
-            # Procura por caminhos que comecem com 'app/core/static/' ou 'static/'
-            # e troca pelo caminho relativo que o navegador entende (/static/)
+            # Substituição agressiva para as imagens
             content = content.replace('app/core/static/', '/static/')
-            content = content.replace('static/', '/static/')
+            content = content.replace('core/static/', '/static/')
+            sys.stderr.write(">>> Arquivo lido com sucesso\n")
     else:
+        sys.stderr.write(">>> ERRO: Arquivo não existe no caminho especificado\n")
         content = "# Erro\nArquivo não encontrado."
 
     html_content = markdown.markdown(content, extensions=['extra', 'codehilite', 'toc'])
