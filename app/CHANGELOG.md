@@ -1,6 +1,21 @@
 # 🚀 Release v0.1.22 — 2026-01-24
 
-*Aguardando geração de notas...*
+### ✨ Novas Funcionalidades
+- feat: página sobre o sistema
+
+### 🐛 Correções
+- fix: correção da view do readme na página sobre o sistema
+- fix: correção da view do readme na página sobre o sistema
+- fix: correção da view do readme na página sobre o sistema
+- fix: correção da view do readme na página sobre o sistema
+- fix: correção da view do readme na página sobre o sistema
+- fix: local do arquivo do readme na página sobre o sistema
+- fix: local do arquivo do readme na página sobre o sistema
+- fix: local do arquivo do readme na página sobre o sistema
+
+### 📦 Commit range
+`v0.1.21..HEAD`
+
 
 # 🚀 Release v0.1.21 — 2026-01-24
 
