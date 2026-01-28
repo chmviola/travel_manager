@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Galeria: {{ trip.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header p-2">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        {% if request.GET.next %}
+                            <a class="nav-link" href="{{ request.GET.next }}">
+                        {% else %}
+                            <a class="nav-link" href="{% url 'trip_detail' trip.id %}">
+                        {% endif %}
+                            <i class="fas fa-arrow-left mr-1"></i> Voltar
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body">
+                {% if can_edit %}
+                <div class="callout callout-info bg-light">
+                    <h5><i class="fas fa-camera"></i> Adicionar Fotos</h5>
+                    <form method="POST" enctype="multipart/form-data" class="form-inline">
+                        {% csrf_token %}
+                        <div class="form-group mb-2 mr-2">
+                            <div class="custom-file" style="width: 300px;">
+                                <input type="file" name="image" multiple class="custom-file-input" id="id_image" required>
+                                <label class="custom-file-label" for="id_image">Escolher arquivos...</label>
+                            </div>
+                        </div>
+                        <div class="form-group mb-2 mr-2">
+                            {{ form.caption }}
+                        </div>
+                        <button type="submit" class="btn btn-primary mb-2">
+                            <i class="fas fa-cloud-upload-alt mr-1"></i> Carregar
+                        </button>
+                    </form>
+                    <small class="text-muted">Você pode selecionar várias fotos de uma vez (Segure Ctrl ou Shift).</small>
+                </div>
+                <hr>
+                {% endif %}
+
+                <div class="row">
+                    {% for photo in photos %}
+                    <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <a href="#" data-toggle="modal" data-target="#modalPhoto{{ photo.id }}">
+                                <div style="height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #eee;">
+                                    <img src="{{ photo.image.url }}" class="card-img-top" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            </a>
+                            
+                            <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                <small class="text-muted text-truncate" style="max-width: 80%;">
+                                    {{ photo.caption|default:photo.uploaded_at|date:"d/m/Y H:i" }}
+                                </small>
+                                
+                                {% if can_edit %}
+                                <a href="{% url 'trip_photo_delete' photo.id %}" class="text-danger" onclick="return confirm('Apagar foto?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="modalPhoto{{ photo.id }}" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-lg modal-dialog-centered bg-transparent" role="document">
+                            <div class="modal-content shadow-lg">
+                                <div class="modal-body p-0 position-relative">
+                                    <button type="button" class="close position-absolute text-white" data-dismiss="modal" style="right: 15px; top: 10px; z-index: 999; text-shadow: 0 0 3px #000;">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    <img src="{{ photo.image.url }}" class="img-fluid w-100" style="border-radius: 4px;">
+                                    {% if photo.caption %}
+                                    <div class="bg-dark text-white p-2 text-center">
+                                        {{ photo.caption }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% empty %}
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="fas fa-images fa-4x mb-3"></i>
+                        <p>A galeria está vazia. Comece a adicionar suas memórias!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Script para atualizar o nome do arquivo no input customizado do Bootstrap
+    $('.custom-file-input').on('change', function() {
+        var files = $(this)[0].files;
+        var fileName = files.length > 1 ? files.length + " arquivos selecionados" : files[0].name;
+        $(this).next('.custom-file-label').html(fileName);
+    });
+</script>
+{% endblock %}

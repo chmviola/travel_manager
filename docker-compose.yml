@@ -1,0 +1,53 @@
+services:
+  # Container do Banco de Dados
+  travel_db:
+    image: postgres:15-alpine
+    container_name: travel_manager_db
+    volumes:
+      - /var/data/travel_db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    restart: always
+    networks:
+      - chmviola
+
+# Container da Aplicação (Backend + Frontend Django)
+  travel_web:
+    # --- MUDANÇA PRINCIPAL: Usa a imagem do DockerHub ---
+    image: chmviola/travelmanager:latest
+    
+    container_name: travel_manager_web
+    
+    # O comando inicia o Gunicorn e coleta estáticos
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    
+    volumes:
+      # Não mapeamos mais o código (./app), apenas os dados persistentes
+      - /var/data/travel_manager/readme.md:/usr/src/readme.md:ro
+      - /var/data/media_data:/usr/src/app/media
+      - /var/data/migrations:/usr/src/app/core/migrations
+
+    environment:
+      # Variáveis injetadas pelo Portainer (Environment variables da Stack)
+      - DEBUG=0
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - CSRF_TRUSTED_ORIGINS=https://travel.chmviola.com.br
+      - SQL_ENGINE=django.db.backends.postgresql
+      - SQL_DATABASE=${DB_NAME}
+      - SQL_USER=${DB_USER}
+      - SQL_PASSWORD=${DB_PASSWORD}
+      - SQL_HOST=travel_db
+      - SQL_PORT=5432
+
+    restart: always
+    networks:
+      - chmviola
+    depends_on:
+      - travel_db
+
+networks:
+  chmviola:
+    external: true

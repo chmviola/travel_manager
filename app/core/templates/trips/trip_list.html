@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}
+    {{ trip.title }} <small class="text-muted" style="font-size: 0.6em;">Minhas Viagens</small>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 text-right">
+        <a href="{% url 'trip_create' %}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nova Viagem
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for trip in trips %}
+    <div class="col-md-4">
+        <div class="card card-outline 
+            {% if trip.status == 'CONFIRMED' %}card-success{% elif trip.status == 'COMPLETED' %}card-secondary{% else %}card-warning{% endif %}">
+            
+            <div class="card-header">
+                <h3 class="card-title font-weight-bold">{{ trip.title }}</h3>
+                
+                <div class="card-tools">
+                    {% if trip.flags %}
+                        {% for flag_code in trip.flags %}
+                            <span class="flag-icon flag-icon-{{ flag_code }} mr-2 shadow-sm" 
+                                  style="font-size: 1.2em; border-radius: 2px;" 
+                                  title="País identificado"></span>
+                        {% endfor %}
+                    {% endif %}
+                    <span class="badge 
+                        {% if trip.status == 'CONFIRMED' %}badge-success{% elif trip.status == 'COMPLETED' %}badge-secondary{% else %}badge-warning{% endif %}">
+                        {{ trip.get_status_display }}
+                    </span>
+
+                </div>
+            </div>
+
+            <div class="card-body">
+                <p class="text-muted">
+                    <i class="far fa-calendar-alt mr-1"></i> 
+                    {% if trip.start_date %}
+                        {{ trip.start_date|date:"d/m/Y" }} até {{ trip.end_date|date:"d/m/Y" }}
+                    {% else %}
+                        Datas não definidas
+                    {% endif %}
+                </p>
+                
+                <p>
+                    <small>Cadastrada em: {{ trip.created_at|date:"d/m/Y" }}</small>
+                </p>
+            </div>
+
+        <div class="card-footer">
+            <div class="text-right">
+
+                <a href="{% url 'trip_calendar' trip.id %}" class="btn btn-default btn-block">
+                    <i class="fas fa-calendar-alt"></i> Calendário
+                </a>
+
+                <a href="{% url 'trip_detail' trip.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-folder"></i> Detalhes
+                </a>
+
+                {% if trip.user == request.user %}
+                    <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#modalShare{{ trip.id }}">
+                        <i class="fas fa-share-alt"></i> Compartilhar
+                    </button>
+                    <a href="{% url 'trip_update' trip.id %}" class="btn btn-sm btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    <a href="{% url 'trip_delete' trip.id %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                
+                {% else %}
+                    <span class="badge badge-secondary" title="Compartilhado com você">
+                        <i class="fas fa-user-friends"></i> 
+                        {% if trip.current_user_role == 'editor' %}Editor{% else %}Leitor{% endif %}
+                    </span>
+                    
+                    {% if trip.current_user_role == 'editor' %}
+                         <a href="{% url 'trip_update' trip.id %}" class="btn btn-sm btn-warning"><i class="fas fa-pencil-alt"></i></a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        {% if trip.user == request.user %}
+        <div class="modal fade" id="modalShare{{ trip.id }}" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Compartilhar "{{ trip.title }}"</h5>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{% url 'trip_share' trip.id %}" method="POST" class="mb-4">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>E-mail do Usuário</label>
+                                <input type="email" name="email" class="form-control" placeholder="amigo@email.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Permissão</label>
+                                <select name="role" class="form-control">
+                                    <option value="viewer">Somente Leitura</option>
+                                    <option value="editor">Acesso Total</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block">Convidar</button>
+                        </form>
+
+                        <h6>Pessoas com acesso:</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for collab in trip.collaborators.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ collab.user.get_full_name|default:collab.user.username }}</strong>
+                                    <small class="text-muted d-block">{{ collab.get_role_display }}</small>
+                                </div>
+                                <a href="{% url 'trip_remove_share' trip.id collab.user.id %}" class="text-danger" onclick="return confirm('Remover acesso?')">
+                                    <i class="fas fa-times-circle"></i>
+                                </a>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item text-muted text-center small">Ninguém convidado ainda.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5><i class="icon fas fa-info"></i> Nenhuma viagem encontrada!</h5>
+            Você ainda não cadastrou nenhuma viagem. Clique no botão "Nova Viagem" para começar.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

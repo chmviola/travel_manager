@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8"> <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">Dados do Usuário</h3>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="card-body">
+                    
+                    <div class="form-group">
+                        <label>{{ form.username.label }}</label>
+                        {{ form.username }}
+                        <small class="text-danger">{{ form.username.errors }}</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ form.email.label }}</label>
+                        {{ form.email }}
+                        <small class="text-danger">{{ form.email.errors }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>{{ form.groups.label }}</label>
+                        {{ form.groups }}
+                        <small class="form-text text-muted">Segure "Control" (ou Command) para selecionar múltiplos.</small>
+                    </div>
+
+                    <div class="row mt-4 mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label font-weight-bold ml-2">    Usuário Ativo</label>
+                                <small class="d-block text-muted">Desmarque para bloquear acesso sem excluir.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.is_superuser }}
+                                <label class="form-check-label font-weight-bold ml-2">    Superusuário</label>
+                                <small class="d-block text-muted">Acesso total ao sistema.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5 class="text-muted mb-3"><i class="fas fa-lock mr-2"></i>Segurança</h5>
+                    <div class="alert alert-light border">
+                        <small><i class="fas fa-info-circle"></i> Preencha abaixo apenas se desejar alterar a senha do usuário.</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ form.password.label }}</label>
+                                {{ form.password }}
+                                {% if form.password.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.password.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="mt-2 p-2 bg-light rounded border">
+                                    <small class="text-muted">
+                                        <strong>Requisitos obrigatórios:</strong>
+                                        <ul class="pl-3 mb-0 mt-1" style="line-height: 1.4;">
+                                            <li>Mínimo de 8 caracteres</li>
+                                            <li>Pelo menos 1 letra maiúscula (A-Z)</li>
+                                            <li>Pelo menos 1 número (0-9)</li>
+                                            <li>Pelo menos 1 caractere especial (!, @, #, etc.)</li>
+                                        </ul>
+                                    </small>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>{{ form.confirm_password.label }}</label>
+                                {{ form.confirm_password }}
+                                {% if form.confirm_password.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.confirm_password.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <a href="{% url 'user_list' %}" class="btn btn-default float-right">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

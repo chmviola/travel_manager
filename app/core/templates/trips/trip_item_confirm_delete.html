@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card card-danger">
+    <div class="card-header"><h3 class="card-title">Excluir Item</h3></div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="card-body">
+            <p>Deseja remover <strong>"{{ item.name }}"</strong> da sua viagem?</p>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-danger">Excluir</button>
+            <a href="{% url 'trip_detail' item.trip.id %}" class="btn btn-default">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

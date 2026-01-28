@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+
+    environment {
+        COMPOSE_PROJECT_NAME = "travel_manager_dev"
+        DJANGO_ENV = "development"
+    }
+
+    stages {
+        // REMOVIDA A ETAPA DE CHECKOUT MANUAL
+        // O Jenkins já fez o checkout automaticamente ao iniciar o job.
+        
+        stage('Validar Arquivos') {
+            steps {
+                script {
+                    // Vamos listar os arquivos só para garantir que tudo está lá
+                    sh 'ls -la'
+                    echo 'Verificando se o docker-compose-dev.yml existe...'
+                    sh 'ls -la docker-compose-dev.yml'
+                }
+            }
+        }
+
+        stage('Deploy via Portainer') {
+            steps {
+                // O withCredentials busca o segredo pelo ID 'portainer-webhook-dev'
+                // e o coloca dentro da variável 'WEBHOOK_URL'
+                withCredentials([string(credentialsId: 'portainer-webhook-dev', variable: 'WEBHOOK_URL')]) {
+                    script {
+                        echo 'Solicitando atualização ao Portainer...'
+                        
+                        // O Jenkins substitui $WEBHOOK_URL pelo valor real (e oculta no log com ****)
+                        sh 'curl -X POST -d "" "$WEBHOOK_URL"'
+                        
+                        echo 'Sinal enviado! O Portainer vai baixar o código e recriar a stack.'
+                    }
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                script {
+                    echo 'Aguardando containers subirem...'
+                    sleep 15
+                    // Verifica se o container web dev está rodando
+                    sh 'docker ps | grep travel_manager_web_dev'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Sucesso! O ambiente DEVELOP foi atualizado.'
+        }
+        failure {
+            echo 'FALHA no deploy da branch develop.'
+        }
+    }
+}

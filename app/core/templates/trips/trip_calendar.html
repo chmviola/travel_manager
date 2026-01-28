@@ -1,0 +1,810 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load l10n %}
+{% load core_extras %} ```
+{% load static %}
+
+{% block page_title %}
+    {{ trip.title }} <small class="text-muted">Visão de Calendário - {{ trip.get_status_display }}</small>
+{% endblock %}
+
+{% block header_flags %}
+    {% if trip.flags %}
+        <div style="border-right: 1px solid #dee2e6; padding-right: 10px; margin-right: 5px;">
+        {% for flag_code in trip.flags %}
+            <span class="flag-icon flag-icon-{{ flag_code }} shadow-sm" 
+                  style="font-size: 1.2em; border-radius: 2px; margin-right: 5px;" 
+                  title="Destino"></span>
+        {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css">
+<style>
+    .fc-event {
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+    .widget-map {
+        height: 300px;
+        width: 100%;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Lista de botões -->
+<div class="row mb-3">
+    <div class="col-md-12 d-flex align-items-center justify-content-between flex-wrap">
+        <div>
+            <a href="{% url 'trip_detail' trip.id %}" class="btn btn-outline-secondary mr-2">
+                <i class="fas fa-stream"></i> Ver Timeline
+            </a>
+            
+            {% if can_edit %}
+            <a href="{% url 'trip_item_create' trip.id %}?next={{ request.path }}" class="btn btn-primary mr-2">
+                <i class=\"fas fa-plus\"></i> Novo Item
+            </a>
+            {% endif %}
+            
+            {% if can_edit %}
+            <button type="button" class="btn btn-warning btn-sm shadow-sm mr-2 mb-2" data-toggle="modal" data-target="#modalAutoItinerary">
+                <i class="fas fa-magic mr-1"></i> Sugerir Roteiro IA
+            </button>
+            {% endif %}
+
+            {% if can_edit %}
+            <a href="{% url 'checklist_view' trip.id %}?next={{ request.path }}" class="btn btn-default btn-sm shadow-sm mr-1">
+                <i class="fas fa-tasks text-success"></i> Checklist
+            </a>
+            {% endif %}
+
+            <div class="btn-group mr-2 mb-2">
+                <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="far fa-calendar-alt text-info mr-1"></i> Agenda
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{% url 'trip_export_ics' trip.id %}">
+                        <i class="fas fa-download mr-2 text-primary"></i> Exportar Google/Outlook
+                    </a>
+
+                    {% if can_edit %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalImportICS">
+                            <i class="fas fa-upload mr-2 text-success"></i> Importar Google Calendar
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            {% if can_edit %}
+            <a href="{% url 'trip_gallery' trip.id %}?next={{ request.path }}" class="btn btn-default btn-sm shadow-sm mr-1">
+                <i class="fas fa-images text-primary"></i> Galeria
+            </a>
+            {% endif %}
+
+            <a href="{% url 'trip_detail_pdf' trip.id %}" target="_blank" 
+               class="btn btn-default btn-sm mr-2 mb-2" title="Imprimir Roteiro">
+                <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Botão Calendário -->
+<div class="row">
+    <div class="col-md-9">
+        <div class="card card-primary card-outline">
+            <div class="card-body p-0">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapa Global -->
+    <div class="col-md-3">
+        
+        <div class="card">
+            <div class="card-header bg-navy">
+                <h3 class="card-title"><i class="fas fa-map-marked-alt mr-1"></i> Mapa Global</h3>
+            </div>
+            <div class="card-body p-0">
+                <div id="global-map" class="widget-map"></div>
+            </div>
+        </div>
+
+        {% if trip_rates %}
+        <div class="info-box mb-3 bg-light">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-exchange-alt"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Cotação Hoje</span>
+                {% for rate in trip_rates %}
+                <span class="info-box-number" style="font-size: 0.9rem;">
+                    1 {{ rate.code }} = <small>R$</small> {{ rate.rate|floatformat:3 }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Planilha Resumo Financeiro -->
+<div class="card card-outline card-success">
+    <div class="card-header">
+        <h3 class="card-title text-success"><i class="fas fa-coins"></i> Resumo Financeiro</h3>
+        <div class="card-tools">
+            {% if can_edit %}
+            <a href="{% url 'trip_expense_create' trip.id %}?next={{ request.path }}" class="btn btn-tool text-success">
+                <i class="fas fa-plus"></i> Add Gasto
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card-body table-responsive p-0">
+        
+        <div class="px-3 pt-3">
+            <div class="row text-center">
+                <div class="col-sm-4 border-right">
+                    <div class="description-block">
+                        <h5 class="description-header text-primary" id="display-total-planned">
+                            R$ {{ total_planned|floatformat:2 }}
+                        </h5>
+                        <span class="description-text text-muted">TOTAL</span>
+                    </div>
+                </div>
+                <div class="col-sm-4 border-right">
+                    <div class="description-block">
+                        <h5 class="description-header text-success" id="display-total-paid">
+                            R$ {{ total_paid|floatformat:2 }}
+                        </h5>
+                        <span class="description-text text-muted">PAGO</span>
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <div class="description-block">
+                        <h5 class="description-header text-danger" id="display-to-pay">
+                            R$ {{ to_pay|floatformat:2 }}
+                        </h5>
+                        <span class="description-text text-muted">FALTA</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress mt-2 mb-2" style="height: 6px;">
+                <div class="progress-bar bg-success" id="progress-bar-paid" role="progressbar" 
+                     style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
+            <p class="text-muted small text-center mb-0">
+                Câmbio atualizado automaticamente via AwesomeAPI.
+            </p>
+            <hr>
+        </div>
+        <div style="height: 300px; overflow-y: auto;">
+            <table class="table table-striped table-valign-middle table-head-fixed text-nowrap">
+                <thead>
+                    <tr>
+                        <th>Data</th> 
+                        <th>Gasto</th>
+                        <th class="text-right">Original</th>
+                        <th class="text-right">Em Reais (R$)</th>
+                        <th class="text-center">Pago?</th>
+                        <th class="text-center" style="width: 80px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td class="align-middle">
+                            <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ expense.date|date:"d/m" }}</small>
+                        </td>
+
+                        <td class="align-middle" style="white-space: normal;">
+                            <span class="font-weight-bold text-dark">{{ expense.title|default:expense.description|default:"-" }}</span>
+                            <br>
+                            <small class="text-muted">{{ expense.category }}</small>
+                        </td>
+                        
+                        <td class="text-right align-middle">
+                            <span class="badge badge-light" style="font-size: 0.9em;">
+                                {{ expense.currency }} {{ expense.amount|floatformat:2 }}
+                            </span>
+                        </td>
+                        
+                        <td class="text-right text-success font-weight-bold align-middle">
+                            R$ {{ expense.converted_amount|default:expense.amount|floatformat:2 }}
+                        </td>
+
+                        <td class="text-center align-middle">
+                            {% if can_edit %}
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input btn-toggle-paid" 
+                                       id="paidSwitch_{{ expense.id }}" 
+                                       data-id="{{ expense.id }}"
+                                       {% if expense.is_paid %}checked{% endif %}>
+                                <label class="custom-control-label" for="paidSwitch_{{ expense.id }}"></label>
+                            </div>
+                            {% else %}
+                                {% if expense.is_paid %}
+                                    <span class="badge badge-success">Sim</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Não</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center align-middle">
+                            <div class="btn-group btn-group-sm">
+                                {% if can_edit %}
+                                <a href="{% url 'expense_update' expense.id %}" class="btn btn-default" title="Editar Gasto">
+                                    <i class="fas fa-pen text-primary"></i>
+                                </a>
+                                
+                                <a href="{% url 'expense_update' expense.id %}?next={{ request.path }}" class="btn btn-default" title="Excluir Gasto" onclick="return confirm('Tem certeza que deseja apagar este gasto?');">
+                                    <i class="fas fa-trash text-danger"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum gasto registrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+        <!-- Sugerir Dicas de Viagem IA -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-purple card-outline">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-lightbulb text-warning mr-1"></i> Guia de Bolso (IA)
+                        </h3>
+                        <div class="card-tools">
+                            {% if can_edit %}
+                            <a href="{% url 'trip_generate_insights' trip.id %}" 
+                               class="btn btn-tool text-purple" 
+                               title="Atualizar Dicas"
+                               onclick="btnLoadingLink(this)"> <i class="fas fa-sync-alt"></i> Atualizar Dicas
+                            </a>
+                            {% endif %}
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        {% if trip.ai_insights %}
+                        
+                        <div class="row">
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-success"><i class="fas fa-coins fa-2x mb-2"></i></h5>
+                                    <span class="description-text">MOEDA & GORJETA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.currency_tip }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 col-sm-6 border-right border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-info"><i class="fas fa-plug fa-2x mb-2"></i></h5>
+                                    <span class="description-text">ELETRICIDADE</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.electricity }}</p> 
+                                    </div>
+                            </div>
+                            
+                            <div class="col-md-4 col-sm-12 border-bottom">
+                                <div class="description-block">
+                                    <h5 class="description-header text-warning"><i class="fas fa-language fa-2x mb-2"></i></h5>
+                                    <span class="description-text">FRASES ÚTEIS</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.phrases }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 col-sm-6 border-right">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-danger"><i class="fas fa-user-shield fa-2x mb-2"></i></h5>
+                                    <span class="description-text">SEGURANÇA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.safety }}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-sm-6">
+                                <div class="description-block mt-3">
+                                    <h5 class="description-header text-orange"><i class="fas fa-utensils fa-2x mb-2"></i></h5>
+                                    <span class="description-text">GASTRONOMIA</span>
+                                    <p class="text-muted mt-2 small px-3">{{ trip.ai_insights.food|default:"Atualize as dicas para ver a gastronomia."|linebreaksbr }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-light p-3 text-center text-muted font-italic border-top">
+                            <i class="fas fa-info-circle mr-1"></i> {{ trip.ai_insights.curiosity }}
+                        </div>
+
+                        {% else %}
+                        <div class="text-center p-5">
+                            <p class="text-muted">Nenhuma dica gerada para este destino ainda.</p>
+                            {% if can_edit %}
+                            <a href="{% url 'trip_generate_insights' trip.id %}" class="btn btn-app bg-purple">
+                                <i class="fas fa-magic"></i> Gerar Guia Agora
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!-- Modal para Sugerir Roteiro IA -->
+<div class="modal fade" id="modalAutoItinerary" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form action="{% url 'trip_generate_itinerary' trip.id %}" method="POST" onsubmit="btnLoading(this.querySelector('button[type=submit]'), 'Criando Roteiro...')">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title"><i class="fas fa-magic mr-2"></i>Planejador Automático</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>A Inteligência Artificial vai analisar seu destino (<strong>{{ trip.title }}</strong>) e a duração da viagem para criar sugestões de passeios dia a dia.</p>
+                    
+                    <div class="form-group">
+                        <label>O que você gosta de fazer?</label>
+                        <textarea name="interests" class="form-control" rows="3" placeholder="Ex: Gosto de museus de arte, cafeterias históricas e parques. Não gosto de baladas. Quero um ritmo tranquilo."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info text-sm">
+                        <i class="fas fa-info-circle"></i> Os itens serão adicionados à sua linha do tempo. Você poderá editá-los ou excluí-los depois.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Gerar Roteiro</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Importar Agenda -->
+<div class="modal fade" id="modalImportICS" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i> Importar Agenda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{% url 'trip_import_ics' trip.id %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Como importar do Google?</strong><br>
+                        1. Vá no seu Google Agenda (Configurações).<br>
+                        2. Clique em "Exportar agenda".<br>
+                        3. Extraia o ZIP e envie o arquivo <code>.ics</code> aqui.
+                    </div>
+                    <div class="form-group">
+                        <label>Selecione o arquivo .ics</label>
+                        <div class="custom-file">
+                            <input type="file" name="ics_file" class="custom-file-input" id="customFile" accept=".ics" required>
+                            <label class="custom-file-label" for="customFile">Escolher arquivo</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Importar Eventos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Detalhes do Item -->
+<div class="modal fade" id="eventModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header text-white" id="modalHeaderStyle" style="background-color: #3c8dbc;">
+                <h5 class="modal-title font-weight-bold" id="modalTitle">Título do Evento</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="mb-3 text-muted">
+                    <i class="far fa-clock mr-1"></i> <span id="modalTime"></span>
+                </div>
+
+                <div class="mb-3" id="modalLocationDiv" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-start w-100">
+                        
+                        <div class="text-muted text-sm mr-2" style="line-height: 1.2;">
+                            <i class="fas fa-map-marker-alt text-danger mr-1"></i>
+                            <strong id="modalLocation"></strong>
+                        </div>
+
+                        <div class="d-flex align-items-center ml-auto" style="gap: 5px;">
+                            
+                            <span id="modalFlag" class="flag-icon shadow-sm" 
+                                  style="font-size: 1.2em; border-radius: 2px; display: none;" 
+                                  title="Local">
+                            </span>
+
+                            <span id="modalWeather" class="badge badge-light border text-muted shadow-sm" 
+                                  style="display: none; align-items: center; font-weight: normal; cursor: help;">
+                                <img id="modalWeatherIcon" src="" style="width: 20px; height: 20px; margin-right: 4px;">
+                                <span id="modalWeatherTemp"></span>
+                            </span>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout callout-info bg-light mb-4" id="modalDescDiv">
+                    <small class="text-uppercase text-muted font-weight-bold" style="font-size: 0.7em;">Notas / Detalhes</small>
+                    <p class="mb-0 mt-1" id="modalDescription" style="font-size: 0.95em;"></p>
+                </div>
+
+                <div class="mb-3" id="modalLinkDiv" style="display:none;">
+                    <a href="#" target="_blank" id="modalExternalLink" class="btn btn-block btn-outline-info btn-sm">
+                        <i class="fas fa-external-link-alt mr-1"></i> Acessar Link Externo
+                    </a>
+                </div>
+
+                <hr>
+
+                <div class="row text-center">
+                    <div class="col-4 mb-3">
+                        <button type="button" class="btn btn-default btn-block btn-sm shadow-sm" id="btnShowMap">
+                            <i class="fas fa-map-marked-alt text-primary"></i><br>Mapa
+                        </button>
+                    </div>
+                    <div class="col-4 mb-3">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnAttachment">
+                            <i class="fas fa-paperclip text-secondary"></i><br>Anexos
+                        </a>
+                    </div>
+                    <div class="col-4 mb-3">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnExpense">
+                            <i class="fas fa-dollar-sign text-success"></i><br>Gastos
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnEditItemLink">
+                            <i class="fas fa-link text-info"></i><br>Link
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnEditItem">
+                            <i class="fas fa-edit text-warning"></i><br>Editar
+                        </a>
+                    </div>
+                    <div class="col-4">
+                        <a href="#" class="btn btn-default btn-block btn-sm shadow-sm" id="btnDeleteItem" onclick="return confirm('Tem certeza que deseja apagar este item?');">
+                            <i class="fas fa-trash text-danger"></i><br>Apagar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Mapa do Item -->
+<div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Localização</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="mapFrame" width="100%" height="450" frameborder="0" style="border:0" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Gerenciar Link -->
+<div class="modal fade" id="modalLink" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-link mr-2"></i> Gerenciar Link</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="formLinkItem" method="post" action="#">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted small">Adicione um link para reserva, ticket ou site do local.</p>
+                    <div class="form-group">
+                        <label>URL / Link</label>
+                        <input type="url" name="link" id="inputLinkItem" class="form-control" placeholder="https://..." required>
+                    </div>
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                </div>
+                <div class="modal-footer">
+                    <a href="#" id="btnVisitLink" target="_blank" class="btn btn-outline-info mr-auto" style="display:none;">
+                        <i class="fas fa-external-link-alt"></i> Acessar
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/locale/pt-br.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+
+<script>
+    $(document).ready(function() {
+        
+        // ==========================================
+        // 1. MAPA GLOBAL (LATERAL)
+        // ==========================================
+        function initGlobalMap() {
+            var mapEl = document.getElementById('global-map');
+            if (!mapEl) return;
+
+            var map = new google.maps.Map(mapEl, {
+                zoom: 2,
+                center: { lat: 20, lng: 0 }
+            });
+
+            var bounds = new google.maps.LatLngBounds();
+            var hasPoints = false;
+
+            // Dados vindos do Django
+            var points = [
+                {% for item in items %}
+                {% if item.location_lat and item.location_lng %}
+                {
+                    lat: {{ item.location_lat|unlocalize }},
+                    lng: {{ item.location_lng|unlocalize }},
+                    title: "{{ item.name|escapejs }}"
+                },
+                {% endif %}
+                {% endfor %}
+            ];
+
+            points.forEach(function(pt) {
+                new google.maps.Marker({
+                    position: pt,
+                    map: map,
+                    title: pt.title
+                });
+                bounds.extend(pt);
+                hasPoints = true;
+            });
+
+            if (hasPoints) {
+                map.fitBounds(bounds);
+            }
+        }
+        initGlobalMap();
+
+        // ==========================================
+        // 2. CALENDÁRIO & MODAIS
+        // ==========================================
+        var events = {{ events_json|safe }}; 
+
+        $('#calendar').fullCalendar({
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            themeSystem: 'bootstrap4',
+            defaultView: 'agendaWeek',
+            locale: 'pt-br',
+            events: events,
+            height: 600,
+            
+            // --- CLIQUE NO EVENTO ---
+            eventClick: function(calEvent, jsEvent, view) {
+                jsEvent.preventDefault();
+
+                // A. Título e Cor
+                $('#modalTitle').text(calEvent.title);
+                $('#modalHeaderStyle').css('background-color', calEvent.backgroundColor);
+
+                // B. Data e Lembrete
+                var timeText = moment(calEvent.start).format('DD/MM/YYYY HH:mm');
+                if (calEvent.end) {
+                    timeText += ' - ' + moment(calEvent.end).format('HH:mm');
+                }
+                
+                // Adiciona ícone de sino se tiver lembrete
+                if (calEvent.reminder) {
+                    timeText += ' <i class="fas fa-bell text-warning ml-2" title="Lembrete Ativo"></i>';
+                }
+                
+                // .html() em vez de .text() para renderizar o ícone <i>
+                $('#modalTime').html(timeText);
+
+                // C. Localização, Bandeira e Clima (ATUALIZADO)
+                if (calEvent.location) {
+                    $('#modalLocation').text(calEvent.location);
+                    $('#modalLocationDiv').css('display', 'flex'); // Garante flexbox
+                    
+                    // 1. BANDEIRA
+                    if (calEvent.flag) {
+                        $('#modalFlag')
+                            .attr('class', 'flag-icon flag-icon-' + calEvent.flag + ' shadow-sm')
+                            .show();
+                    } else {
+                        $('#modalFlag').hide();
+                    }
+
+                    // 2. CLIMA
+                    if (calEvent.weather_icon) {
+                        // MUDANÇA: Usa o link direto vindo do banco (igual ao trip_detail)
+                        $('#modalWeatherIcon').attr('src', calEvent.weather_icon);
+                        
+                        if (calEvent.weather_temp) {
+                            $('#modalWeatherTemp').text(calEvent.weather_temp + '°C');
+                        }
+                        $('#modalWeather').css('display', 'inline-flex'); // Mostra o badge
+                    } else {
+                        $('#modalWeather').hide();
+                    }
+                    
+                    // Configura botão do Mapa
+                    $('#btnShowMap').prop('disabled', false).off('click').on('click', function() {
+                        var qParam = "";
+                        if (calEvent.lat && calEvent.lng) {
+                            qParam = calEvent.lat + "," + calEvent.lng;
+                        } else {
+                            qParam = encodeURIComponent(calEvent.location);
+                        }
+                        var mapUrl = "https://maps.google.com/maps?q=" + qParam + "&z=15&output=embed";
+                        
+                        $('#mapFrame').attr('src', mapUrl);
+                        $('#eventModal').modal('hide');
+                        $('#mapModal').modal('show');
+                    });
+                } else {
+                    $('#modalLocationDiv').hide();
+                    $('#btnShowMap').prop('disabled', true);
+                }
+
+                // D. Descrição
+                if (calEvent.description) {
+                    $('#modalDescription').text(calEvent.description);
+                    $('#modalDescDiv').show();
+                } else {
+                    $('#modalDescDiv').hide();
+                }
+
+                // E. Preenche Links dos Botões
+                if (calEvent.urls) {
+                    $('#btnEditItem').attr('href', calEvent.urls.edit);
+                    $('#btnDeleteItem').attr('href', calEvent.urls.delete);
+                    $('#btnExpense').attr('href', calEvent.urls.expense);
+                    $('#btnAttachment').attr('href', calEvent.urls.attachment);
+                }
+
+                // F. Botão de Gerenciar Link
+                $('#btnEditItemLink').off('click').on('click', function() {
+                    $('#inputLinkItem').val(calEvent.link || '');
+                    
+                    if (calEvent.link) {
+                        $('#btnVisitLink').attr('href', calEvent.link).show();
+                    } else {
+                        $('#btnVisitLink').hide();
+                    }
+                    
+                    // Aponta o form para a URL de edição
+                    $('#formLinkItem').attr('action', calEvent.urls.edit);
+                    
+                    $('#eventModal').modal('hide');
+                    $('#modalLink').modal('show');
+                });
+
+                // Link Externo Direto
+                if (calEvent.link) {
+                    $('#modalExternalLink').attr('href', calEvent.link);
+                    $('#modalLinkDiv').show();
+                } else {
+                    $('#modalLinkDiv').hide();
+                }
+
+                // Abre o Modal Principal
+                $('#eventModal').modal('show');
+            }
+        });
+
+        // ==========================================
+        // 3. FINANCEIRO (SLIDERS & PROGRESS BAR)
+        // ==========================================
+        $('.btn-toggle-paid').change(function() {
+            var checkbox = $(this);
+            var expenseId = checkbox.data('id');
+            var isChecked = checkbox.is(':checked');
+            
+            // Monta a URL para o toggle
+            var url = '{% url "trip_expense_toggle_paid" 0 %}'.replace('0', expenseId);
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    // Formata Moeda
+                    var formatter = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    });
+
+                    // Atualiza Totais
+                    $('.description-header.text-primary').text(formatter.format(response.total_planned));
+                    $('.description-header.text-success').text(formatter.format(response.total_paid));
+                    $('.description-header.text-danger').text(formatter.format(response.to_pay));
+
+                    // Atualiza a Barra de Progresso (Restaurado)
+                    updateProgressBar(response.total_paid, response.total_planned);
+
+                    if (typeof Toast !== 'undefined') {
+                        Toast.fire({
+                            icon: 'success',
+                            title: isChecked ? 'Gasto marcado como pago!' : 'Gasto marcado como pendente.'
+                        });
+                    }
+                },
+                error: function() {
+                    alert('Erro ao atualizar status.');
+                    checkbox.prop('checked', !isChecked); 
+                }
+            });
+        });
+
+        // Função Restaurada: Atualiza a barra de progresso visualmente
+        function updateProgressBar(paid, total) {
+            var percent = 0;
+            if (total > 0) {
+                percent = (paid / total) * 100;
+            }
+            // Procura o elemento da barra (se você copiou a tabela igual a trip_detail)
+            $('#progress-bar-paid').css('width', percent + '%');
+        }
+
+    }); // Fim do Document Ready
+</script>
+{% endblock %}

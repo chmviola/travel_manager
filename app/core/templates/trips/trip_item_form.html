@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Adicionar Item ao Roteiro{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card card-info">
+            <div class="card-header">
+                <h3 class="card-title">Novo Evento para: <strong>{{ trip.title }}</strong></h3>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+
+                {% if request.GET.next %}
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                {% endif %}
+
+                <div class="card-body">
+                    
+                    <div class="form-group">
+                        <label>Tipo de Evento</label>
+                        {{ form.item_type }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome / Título</label>
+                        {{ form.name }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Início / Check-in / Partida</label>
+                                {{ form.start_datetime }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fim / Check-out / Chegada</label>
+                                {{ form.end_datetime }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lembrete por E-mail</label>
+                        {{ form.reminder_hours }}
+                        <small class="text-muted">Você receberá um e-mail de aviso antes do horário de início.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Endereço / Localização <small class="text-muted">(Para o Google Maps)</small></label>
+                        {{ form.location_address }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Detalhes Extras</label>
+                        {{ form.details }}
+                        <small class="text-muted">Informe número de reserva, assento, notas, etc.</small>
+                    </div>
+
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar
+                    </button>
+
+                    {% if request.GET.next %}
+                        <a href="{{ request.GET.next }}" class="btn btn-secondary">
+                            Cancelar
+                        </a>
+                    {% else %}
+                    
+                        {% if form.instance.pk and form.instance.start_datetime %}
+                            <a href="{% url 'trip_detail' trip.id %}?date={{ form.instance.start_datetime|date:'Y-m-d' }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        {% else %}
+                            <a href="{% url 'trip_detail' trip.id %}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
