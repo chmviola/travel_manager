@@ -2196,17 +2196,14 @@ def trip_note_delete(request, note_id):
 def trip_note_ai_generate(request, trip_id):
     import sys
     import requests
-    # Imports locais para evitar erro de referência global
     from .models import Trip, TripNote, APIConfiguration 
     
-    # 1. Debug Inicial - Se isso não aparecer no log, o erro é no urls.py ou no HTML
-    sys.stderr.write(f">>> [DEBUG] Iniciando trip_note_ai_generate para Trip ID: {trip_id}\n")
+    sys.stderr.write(f">>> [DEBUG] Iniciando AI para Trip ID: {trip_id}\n")
     
     try:
         trip = get_object_or_404(Trip, pk=trip_id)
         
         if request.method != 'POST':
-            sys.stderr.write(">>> [DEBUG] Método não é POST. Redirecionando.\n")
             return redirect('trip_notes_list', trip_id=trip.id)
 
         user_prompt = request.POST.get('prompt')
@@ -2214,32 +2211,35 @@ def trip_note_ai_generate(request, trip_id):
             messages.warning(request, "Digite o que deseja pesquisar.")
             return redirect('trip_notes_list', trip_id=trip.id)
 
-        # 2. Busca API Key no Banco (Garante que pega a primeira config válida)
-        api_config = APIConfiguration.objects.first()
-        
-        if not api_config or not api_config.openai_api_key:
-            sys.stderr.write(">>> [ERRO] Chave OpenAI não encontrada no banco.\n")
-            messages.error(request, "Chave da OpenAI não configurada no Admin.")
+        # --- CORREÇÃO AQUI ---
+        # Buscamos a linha específica onde key='OPENAI_API'
+        try:
+            # Tenta pegar a configuração ativa da OpenAI
+            api_config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
+            openai_key = api_config.value # O valor da chave está no campo 'value'
+        except APIConfiguration.DoesNotExist:
+            sys.stderr.write(">>> [ERRO] Chave OPENAI_API não encontrada ou inativa.\n")
+            messages.error(request, "Chave OpenAI não cadastrada ou inativa nas Configurações de API.")
+            return redirect('trip_notes_list', trip_id=trip.id)
+        except Exception as e:
+            sys.stderr.write(f">>> [ERRO] Falha ao buscar chave: {e}\n")
+            messages.error(request, "Erro ao buscar configuração de API.")
             return redirect('trip_notes_list', trip_id=trip.id)
 
-        # 3. Prepara a chamada
-        sys.stderr.write(">>> [DEBUG] Chave encontrada. Chamando OpenAI...\n")
-        
+        # 3. Prepara a chamada (agora usando a variável openai_key correta)
         headers = {
-            "Authorization": f"Bearer {api_config.openai_api_key}",
+            "Authorization": f"Bearer {openai_key}",
             "Content-Type": "application/json"
         }
         
-        # Prompt de Sistema Refinado
         system_prompt = (
-            "Você é um guia de viagens experiente e prático. "
-            "Responda usando formatação HTML segura (<b>, <ul>, <li>, <br>, <p>). "
-            "Não use Markdown (```). "
-            "Se a pergunta for sobre regras (bagagem, visto), seja preciso. "
+            "Você é um guia de viagens experiente. "
+            "Responda usando formatação HTML segura (<b>, <ul>, <li>, <br>). "
+            "Seja direto."
         )
 
         payload = {
-            "model": "gpt-3.5-turbo", # Troque por "gpt-4o" se sua chave permitir
+            "model": "gpt-3.5-turbo",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -2247,16 +2247,14 @@ def trip_note_ai_generate(request, trip_id):
             "temperature": 0.5
         }
 
-        # 4. Request (com timeout curto para não travar o server)
+        # 4. Request
         response = requests.post(
-            "[https://api.openai.com/v1/chat/completions](https://api.openai.com/v1/chat/completions)", 
+            "https://api.openai.com/v1/chat/completions", 
             headers=headers, 
             json=payload, 
             timeout=20
         )
         
-        sys.stderr.write(f">>> [DEBUG] OpenAI respondeu: {response.status_code}\n")
-
         if response.status_code == 200:
             data = response.json()
             ai_content = data['choices'][0]['message']['content']
@@ -2270,19 +2268,16 @@ def trip_note_ai_generate(request, trip_id):
             )
             messages.success(request, "Nota criada pela IA!")
         else:
-            # Tenta pegar a mensagem de erro detalhada da OpenAI
             try:
                 error_detail = response.json()['error']['message']
             except:
-                error_detail = response.text
-                
+                error_detail = f"Status {response.status_code}"
+            
             sys.stderr.write(f">>> [ERRO API] {error_detail}\n")
             messages.error(request, f"Erro na IA: {error_detail}")
 
     except Exception as e:
-        # Pega o erro completo (Traceback)
         import traceback
-        sys.stderr.write(f">>> [CRITICAL ERROR]: {str(e)}\n")
         traceback.print_exc()
         messages.error(request, "Erro interno ao processar IA.")
 
