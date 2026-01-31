@@ -2257,4 +2257,3 @@ def trip_note_ai_generate(request, trip_id):
 
     return redirect('trip_notes_list', trip_id=trip.id)
 
-### --- VIEWS DE 
