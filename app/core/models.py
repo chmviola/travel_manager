@@ -298,6 +298,36 @@ class TripPhoto(models.Model):
                 os.remove(self.image.path)
         super().delete(*args, **kwargs)
 
+# --- MODELO DE NOTAS DA VIAGEM (DIÁRIO DE BORDO) ---
+class TripNote(models.Model):
+    CATEGORY_CHOICES = [
+        ('GENERAL', 'Geral'),
+        ('FLIGHT_RULES', 'Regras Aéreas'),
+        ('LUGGAGE', 'Bagagem'),
+        ('DOCS', 'Documentação/Vistos'),
+        ('SHOPPING', 'Compras'),
+        ('ITINERARY', 'Roteiro/Dicas'),
+    ]
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name='notes')
+    title = models.CharField(max_length=200, verbose_name="Título da Nota")
+    content = models.TextField(help_text="Aceita Markdown ou HTML simples", verbose_name="Conteúdo")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='GENERAL', verbose_name="Categoria")
+    
+    # Campo para identificar se a nota foi criada pela IA
+    is_ai_generated = models.BooleanField(default=False, verbose_name="Gerado por IA?")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at'] # Notas mais recentes primeiro
+        verbose_name = "Nota de Viagem"
+        verbose_name_plural = "Notas de Viagem"
+
+    def __str__(self):
+        return f"{self.title} ({self.get_category_display()})"
+
 # --- MODELO DE CONFIGURAÇÕES DE E-MAIL ---
 class EmailConfiguration(models.Model):
     backend = models.CharField(max_length=100, default='django.core.mail.backends.smtp.EmailBackend', verbose_name="Backend")
