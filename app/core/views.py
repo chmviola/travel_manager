@@ -17,9 +17,16 @@ import traceback
 import sys
 from datetime import datetime, time, timedelta
 from .utils import get_exchange_rate, get_currency_by_country, fetch_weather_data, get_travel_intel, generate_checklist_ai, generate_itinerary_ai, generate_trip_insights_ai, get_country_code_from_address
-from .models import Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator, TripPhoto, EmailConfiguration, AccessLog
+from .models import (
+    Trip, TripItem, Expense, TripAttachment, APIConfiguration, Checklist, ChecklistItem, TripCollaborator,
+    TripPhoto, EmailConfiguration, AccessLog, TripNote
+)
 from django.conf import settings
-from .forms import TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm, APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm, TripPhotoForm, EmailConfigurationForm, ICSImportForm
+from .forms import (
+    TripForm, TripItemForm, ExpenseForm, AttachmentForm, UserProfileForm, CustomPasswordChangeForm,
+    APIConfigurationForm, UserCreateForm, UserEditForm, APIConfigurationForm, ShareTripForm,
+    TripPhotoForm, EmailConfigurationForm, ICSImportForm, TripNoteForm
+)
 from django.db.models import Sum, Q, Case, When, F, DecimalField
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
@@ -31,6 +38,7 @@ from icalendar import Calendar, Event as ICalEvent
 import pytz
 from django.views.decorators.http import require_POST
 from django.core.serializers.json import DjangoJSONEncoder
+import requests
 
 
 #--- VIEW PARA A PÁGINA INICIAL (DASHBOARD) ---
@@ -2104,3 +2112,173 @@ def about_view(request):
         'about_content': html_content,
         'title': 'Sobre o Sistema'
     })
+
+# ==========================================
+#   MÓDULO: NOTAS DE VIAGEM (Notebook)
+# ==========================================
+@login_required
+def trip_notes_list(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id)
+    
+    # Verifica permissão
+    if trip.user != request.user and trip.get_user_role(request.user) is None:
+        messages.error(request, "Acesso negado a esta viagem.")
+        return redirect('dashboard')
+
+    notes = trip.notes.all().order_by('-updated_at')
+    
+    return render(request, 'trips/trip_notes_list.html', {
+        'trip': trip,
+        'notes': notes
+    })
+
+@login_required
+def trip_note_create(request, trip_id):
+    trip = get_object_or_404(Trip, pk=trip_id)
+    
+    if request.method == 'POST':
+        form = TripNoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.trip = trip
+            note.save()
+            messages.success(request, "Nota criada com sucesso!")
+            return redirect('trip_notes_list', trip_id=trip.id)
+    else:
+        form = TripNoteForm()
+    
+    return render(request, 'trips/trip_note_form.html', {
+        'form': form,
+        'trip': trip,
+        'title': 'Nova Nota'
+    })
+
+@login_required
+def trip_note_update(request, note_id):
+    note = get_object_or_404(TripNote, pk=note_id)
+    trip = note.trip
+    
+    # Verificação de segurança simplificada (dono ou colaborador)
+    if trip.user != request.user and trip.get_user_role(request.user) != 'editor':
+        messages.error(request, "Sem permissão para editar esta nota.")
+        return redirect('trip_notes_list', trip_id=trip.id)
+
+    if request.method == 'POST':
+        form = TripNoteForm(request.POST, instance=note)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Nota atualizada!")
+            return redirect('trip_notes_list', trip_id=trip.id)
+    else:
+        form = TripNoteForm(instance=note)
+    
+    return render(request, 'trips/trip_note_form.html', {
+        'form': form,
+        'trip': trip,
+        'title': f'Editar: {note.title}'
+    })
+
+@login_required
+def trip_note_delete(request, note_id):
+    note = get_object_or_404(TripNote, pk=note_id)
+    trip_id = note.trip.id
+    
+    if note.trip.user == request.user or note.trip.get_user_role(request.user) == 'editor':
+        note.delete()
+        messages.success(request, "Nota excluída.")
+    else:
+        messages.error(request, "Erro de permissão.")
+        
+    return redirect('trip_notes_list', trip_id=trip_id)
+
+# --- A MÁGICA DA IA: GERAR NOTA AUTOMÁTICA ---
+@login_required
+def trip_note_ai_generate(request, trip_id):
+    import sys
+    import requests
+    from .models import Trip, TripNote, APIConfiguration 
+    
+    sys.stderr.write(f">>> [DEBUG] Iniciando AI para Trip ID: {trip_id}\n")
+    
+    try:
+        trip = get_object_or_404(Trip, pk=trip_id)
+        
+        if request.method != 'POST':
+            return redirect('trip_notes_list', trip_id=trip.id)
+
+        user_prompt = request.POST.get('prompt')
+        if not user_prompt:
+            messages.warning(request, "Digite o que deseja pesquisar.")
+            return redirect('trip_notes_list', trip_id=trip.id)
+
+        # --- CORREÇÃO AQUI ---
+        # Buscamos a linha específica onde key='OPENAI_API'
+        try:
+            # Tenta pegar a configuração ativa da OpenAI
+            api_config = APIConfiguration.objects.get(key='OPENAI_API', is_active=True)
+            openai_key = api_config.value # O valor da chave está no campo 'value'
+        except APIConfiguration.DoesNotExist:
+            sys.stderr.write(">>> [ERRO] Chave OPENAI_API não encontrada ou inativa.\n")
+            messages.error(request, "Chave OpenAI não cadastrada ou inativa nas Configurações de API.")
+            return redirect('trip_notes_list', trip_id=trip.id)
+        except Exception as e:
+            sys.stderr.write(f">>> [ERRO] Falha ao buscar chave: {e}\n")
+            messages.error(request, "Erro ao buscar configuração de API.")
+            return redirect('trip_notes_list', trip_id=trip.id)
+
+        # 3. Prepara a chamada (agora usando a variável openai_key correta)
+        headers = {
+            "Authorization": f"Bearer {openai_key}",
+            "Content-Type": "application/json"
+        }
+        
+        system_prompt = (
+            "Você é um guia de viagens experiente. "
+            "Responda usando formatação HTML segura (<b>, <ul>, <li>, <br>). "
+            "Seja direto."
+        )
+
+        payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.5
+        }
+
+        # 4. Request
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions", 
+            headers=headers, 
+            json=payload, 
+            timeout=20
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            ai_content = data['choices'][0]['message']['content']
+            
+            TripNote.objects.create(
+                trip=trip,
+                title=f"🤖 {user_prompt[:40]}...",
+                content=ai_content,
+                category='GENERAL',
+                is_ai_generated=True
+            )
+            messages.success(request, "Nota criada pela IA!")
+        else:
+            try:
+                error_detail = response.json()['error']['message']
+            except:
+                error_detail = f"Status {response.status_code}"
+            
+            sys.stderr.write(f">>> [ERRO API] {error_detail}\n")
+            messages.error(request, f"Erro na IA: {error_detail}")
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        messages.error(request, "Erro interno ao processar IA.")
+
+    return redirect('trip_notes_list', trip_id=trip_id)

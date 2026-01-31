@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.forms import PasswordResetForm, PasswordChangeForm
-from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto, EmailConfiguration
+from .models import Expense, Trip, TripItem, TripAttachment, APIConfiguration, TripCollaborator, TripPhoto, TripNote, EmailConfiguration
 from .utils import get_db_mail_connection
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
@@ -454,3 +454,14 @@ class CustomPasswordResetForm(PasswordResetForm):
 
             email_message.send()
 
+# --- FORMULÁRIO DE NOTAS DE VIAGEM ---
+class TripNoteForm(forms.ModelForm):
+    class Meta:
+        model = TripNote
+        fields = ['title', 'category', 'content']
+        
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Regras de Bagagem Latam'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 10, 'placeholder': 'Escreva suas anotações ou cole as regras aqui...'}),
+        }

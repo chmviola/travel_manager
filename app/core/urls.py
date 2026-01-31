@@ -18,6 +18,13 @@ urlpatterns = [
     path('trips/<int:pk>/pdf/', views.trip_detail_pdf, name='trip_detail_pdf'),
     path('viagens/<int:pk>/calendario/', views.trip_calendar, name='trip_calendar'),
     path('sobre/', views.about_view, name='about'),
+
+    # --- ROTAS DE NOTAS DE VIAGEM (Faltaram estas!) ---
+    path('viagens/<int:trip_id>/notas/', views.trip_notes_list, name='trip_notes_list'),
+    path('viagens/<int:trip_id>/notas/criar/', views.trip_note_create, name='trip_note_create'),
+    path('notas/<int:note_id>/editar/', views.trip_note_update, name='trip_note_update'),
+    path('notas/<int:note_id>/excluir/', views.trip_note_delete, name='trip_note_delete'),
+    path('viagens/<int:trip_id>/notas/ia/', views.trip_note_ai_generate, name='trip_note_ai_generate'),
     
     # Rotas de Itens
     path('viagens/<int:trip_id>/adicionar-item/', views.trip_item_create, name='trip_item_create'),
