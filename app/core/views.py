@@ -2194,6 +2194,10 @@ def trip_note_delete(request, note_id):
 # --- A MÁGICA DA IA: GERAR NOTA AUTOMÁTICA ---
 @login_required
 def trip_note_ai_generate(request, trip_id):
+    # Importação interna para garantir que não falte
+    import requests
+    import sys
+    
     trip = get_object_or_404(Trip, pk=trip_id)
     
     if request.method == 'POST':
@@ -2204,19 +2208,25 @@ def trip_note_ai_generate(request, trip_id):
             return redirect('trip_notes_list', trip_id=trip.id)
 
         # 1. Busca a API Key no banco
-        api_config = APIConfiguration.objects.first()
-        if not api_config or not api_config.openai_api_key:
-            messages.error(request, "Chave da OpenAI não configurada no sistema.")
+        # Proteção extra: usa .first() e verifica se existe
+        try:
+            api_config = APIConfiguration.objects.first()
+        except Exception as e:
+            sys.stderr.write(f"ERRO BANCO: {e}\n")
+            messages.error(request, "Erro ao acessar configurações do sistema.")
             return redirect('trip_notes_list', trip_id=trip.id)
 
-        # 2. Chama a OpenAI (Usando requests para compatibilidade universal)
+        if not api_config or not api_config.openai_api_key:
+            messages.error(request, "Chave da OpenAI não configurada. Vá em Configurações > APIs.")
+            return redirect('trip_notes_list', trip_id=trip.id)
+
+        # 2. Chama a OpenAI
         try:
             headers = {
                 "Authorization": f"Bearer {api_config.openai_api_key}",
                 "Content-Type": "application/json"
             }
             
-            # Contexto para a IA ser uma especialista em viagens
             system_prompt = (
                 "Você é um assistente de viagens especialista. "
                 "Responda à solicitação do usuário com informações úteis, regras atualizadas ou listas organizadas. "
@@ -2225,7 +2235,7 @@ def trip_note_ai_generate(request, trip_id):
             )
 
             payload = {
-                "model": "gpt-3.5-turbo", # Ou gpt-4o se preferir
+                "model": "gpt-3.5-turbo",
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -2233,27 +2243,38 @@ def trip_note_ai_generate(request, trip_id):
                 "temperature": 0.7
             }
 
+            # Log para debug no terminal
+            sys.stderr.write(f">>> Enviando request OpenAI para Trip {trip.id}\n")
+            
             response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
                 ai_content = data['choices'][0]['message']['content']
                 
-                # 3. Cria a Nota Automaticamente
+                # 3. Cria a Nota
                 TripNote.objects.create(
                     trip=trip,
-                    title=f"IA: {user_prompt[:30]}...", # Título baseado na pergunta
+                    title=f"IA: {user_prompt[:30]}...",
                     content=ai_content,
                     category='GENERAL',
                     is_ai_generated=True
                 )
                 messages.success(request, "Nota gerada pela IA com sucesso!")
             else:
-                error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
+                # Tenta ler o erro do JSON, se falhar usa o status code
+                try:
+                    error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
+                except:
+                    error_msg = f"Status Code {response.status_code}"
+                
+                sys.stderr.write(f">>> Erro OpenAI: {error_msg}\n")
                 messages.error(request, f"Erro na OpenAI: {error_msg}")
 
         except Exception as e:
-            messages.error(request, f"Erro de conexão com IA: {str(e)}")
+            sys.stderr.write(f">>> EXCEÇÃO CRÍTICA IA: {str(e)}\n")
+            messages.error(request, f"Erro de conexão: {str(e)}")
 
+    # OBRIGATÓRIO: Se não for POST ou se acabar a execução, volta para a lista
     return redirect('trip_notes_list', trip_id=trip.id)
 
