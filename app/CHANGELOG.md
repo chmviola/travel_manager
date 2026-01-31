@@ -1,3 +1,7 @@
+# 🚀 Release vv0.1.23 — 2026-01-31
+
+*Aguardando geração de notas...*
+
 # 🚀 Release v0.1.22 — 2026-01-24
 
 ### ✨ Novas Funcionalidades
