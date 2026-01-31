@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-pen-fancy mr-2"></i> {{ title }}
+                </h3>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="card-body">
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            Corrija os erros abaixo.
+                        </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label>Título</label>
+                        {{ form.title }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Categoria</label>
+                        {{ form.category }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Conteúdo</label>
+                        {{ form.content }}
+                        <small class="text-muted">Dica: Você pode colar textos de e-mails ou sites aqui.</small>
+                    </div>
+
+                    {% if form.instance.is_ai_generated %}
+                    <div class="callout callout-info">
+                        <i class="fas fa-robot text-purple"></i> 
+                        Esta nota foi gerada originalmente por Inteligência Artificial. Verifique as informações.
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <div class="card-footer d-flex justify-content-between">
+                    <a href="{% url 'trip_notes_list' trip.id %}" class="btn btn-secondary">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Nota
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

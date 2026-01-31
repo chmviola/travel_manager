@@ -15,6 +15,7 @@ urlpatterns = [
     path('viagens/<int:pk>/', views.trip_detail, name='trip_detail'),
     path('viagens/<int:pk>/editar/', views.trip_update, name='trip_update'),
     path('viagens/<int:pk>/excluir/', views.trip_delete, name='trip_delete'),
+    path('viagens/<int:trip_id>/notas/ia/', views.trip_note_ai_generate, name='trip_note_ai_generate'),
     path('trips/<int:pk>/pdf/', views.trip_detail_pdf, name='trip_detail_pdf'),
     path('viagens/<int:pk>/calendario/', views.trip_calendar, name='trip_calendar'),
     path('sobre/', views.about_view, name='about'),
