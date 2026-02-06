@@ -17,9 +17,10 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.contrib.auth import views as auth_views
-from core import views as core_views # Importaremos a view da home
+from core import views as core_views
+from django.views.static import serve
 
 # --- IMPORTS OBRIGATÓRIOS PARA MÍDIA ---
 from django.conf import settings
@@ -38,8 +39,15 @@ urlpatterns = [
 
     # Inclui as URLs do app Core
     path('', include('core.urls')),
+
+    # --- SOLUÇÃO DE MÍDIA (FORÇADA) ---
+    # Esta rota intercepta qualquer URL começando com /media/ e serve o arquivo
+    # Funciona mesmo com DEBUG=False ou atrás do Nginx Proxy Manager
+    re_path(r'^media/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+    }),
 ]
 
-# --- BLOCO DE CONFIGURAÇÃO DE MÍDIA (FORA DA LISTA) ---
+# (Opcional) Mantém o static padrão para CSS/JS se o DEBUG funcionar um dia
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
