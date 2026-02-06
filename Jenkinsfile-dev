@@ -42,7 +42,7 @@ pipeline {
             steps {
                 script {
                     echo 'Aguardando containers subirem...'
-                    sleep 15
+                    sleep 60
                     // Verifica se o container web dev está rodando
                     sh 'docker ps | grep travel_manager_web_dev'
                 }
