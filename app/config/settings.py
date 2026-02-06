@@ -74,7 +74,7 @@ WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY')
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-chave-temporaria-fallback')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'# Adicione esta lógica para ler a variável de ambiente
+DEBUG = os.environ.get('DEBUG', 'False') in ['True', 'true', '1', 1]
 
 # 1. ALLOWED_HOSTS (Blindado contra erros de formatação)
 allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS')
@@ -141,7 +141,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -232,4 +231,16 @@ LOGIN_URL = 'login' # Caso o usuário tente acessar uma página restrita sem est
 
 # Configuração de Arquivos de Mídia (Uploads)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Deve apontar para /usr/src/app/media
+
+# --- CONFIGURAÇÕES DE PROXY (ESSENCIAL PARA NGINX PROXY MANAGER) ---
+# Diz ao Django para confiar no cabeçalho X-Forwarded-Proto que o NPM envia
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Repassa o Host original
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# Garante que os cookies funcionem através do proxy
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True

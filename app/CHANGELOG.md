@@ -1,3 +1,9 @@
+# 🚀 Release v0.1.24 — 2026-02-06
+
+### 📦 Commit range
+`v0.1.24..HEAD`
+
+
 # 🚀 Release vv0.1.23 — 2026-01-31
 
 ### ✨ Novas Funcionalidades
