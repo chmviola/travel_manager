@@ -74,7 +74,7 @@ WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY')
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-chave-temporaria-fallback')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'# Adicione esta lógica para ler a variável de ambiente
+DEBUG = os.environ.get('DEBUG', 'False') in ['True', 'true', '1', 1]
 
 # 1. ALLOWED_HOSTS (Blindado contra erros de formatação)
 allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS')
