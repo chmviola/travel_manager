@@ -40,8 +40,6 @@ services:
       - travel_db_dev
     networks:
       - chmviola
-    ports:
-      - "8000:8000"
 
 networks:
   chmviola:
