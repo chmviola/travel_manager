@@ -232,4 +232,4 @@ LOGIN_URL = 'login' # Caso o usuário tente acessar uma página restrita sem est
 
 # Configuração de Arquivos de Mídia (Uploads)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') # Deve apontar para /usr/src/app/media
