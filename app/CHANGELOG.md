@@ -1,6 +1,11 @@
 # 🚀 Release v0.1.25 — 2026-02-11
 
-*Aguardando geração de notas...*
+### 🧹 Manutenção
+- chore: release v0.1.24
+
+### 📦 Commit range
+`v0.1.24..HEAD`
+
 
 # 🚀 Release v0.1.24 — 2026-02-11
 
