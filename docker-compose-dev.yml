@@ -9,7 +9,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-    restart: always
+    restart: unless-stopped
     networks:
       - chmviola
 
@@ -38,6 +38,7 @@ services:
       - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY} 
     depends_on:
       - travel_db_dev
+    restart: unless-stopped
     networks:
       - chmviola
 
