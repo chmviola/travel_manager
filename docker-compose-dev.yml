@@ -3,13 +3,13 @@ services:
   travel_db_dev:
     image: postgres:15-alpine
     container_name: travel_manager_db_dev
+    restart: unless-stopped
     volumes:
       - /var/data/travel_db_data_dev:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-    restart: always
     networks:
       - chmviola
 
@@ -17,6 +17,7 @@ services:
   travel_web_dev:
     build: ./app
     container_name: travel_manager_web_dev
+    restart: unless-stopped
     command: sh -c "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       # - ./app:/usr/src/app  <-- Mantive comentado como no original
